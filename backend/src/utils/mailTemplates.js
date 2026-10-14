@@ -39,6 +39,18 @@ export const otpEmail = ({ name, code, minutes }) => ({
   ),
 });
 
+export const signupOtpEmail = ({ name, code, minutes }) => ({
+  subject: `${code} is your Vaultrix verification code`,
+  text: `Hi ${name || 'there'},\n\nUse this code to finish creating your Vaultrix account: ${code}.\nIt expires in ${minutes} minutes.\n\nIf you did not try to create a Vaultrix account, you can ignore this email and no account will be created.\n`,
+  html: shell(
+    'Verify your email',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, use this code to finish creating your Vaultrix account.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">The code expires in ${minutes} minutes and can only be used once.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you did not try to create a Vaultrix account, you can ignore this email and no account will be created.</p>`
+  ),
+});
+
 export const passwordChangedEmail = ({ name }) => ({
   subject: 'Your Vaultrix password was changed',
   text: `Hi ${name || 'there'},\n\nThe password for your Vaultrix account was just changed and all other sessions were signed out.\n\nIf this was not you, reset your password again right away.\n`,
