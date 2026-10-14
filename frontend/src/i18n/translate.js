@@ -55,6 +55,7 @@ const SERVER_MESSAGE_KEYS = {
   'That code has expired. Request a new one.': 'errors.otpExpired',
   'Too many wrong codes. Request a new one.': 'errors.otpTooManyAttempts',
   'Your reset session has expired. Please start again.': 'errors.resetSessionExpired',
+  'Your signup session has expired. Please start again.': 'errors.signupSessionExpired',
   'Enter a new password to continue.': 'errors.newPasswordRequired',
   'Password is too long. Use 64 characters or fewer.': 'errors.passwordTooLong',
   'Password must include at least one letter and one number.': 'errors.passwordNeedsMix',
