@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Home, Wallet, Users, Receipt } from 'lucide-react';
+import { Home, Wallet, Users, Receipt, Wifi } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
 
@@ -169,6 +169,25 @@ function BillsCard() {
   );
 }
 
+function StatusBarIcons() {
+  return (
+    <div className="flex items-center gap-1">
+      <svg width="13" height="9" viewBox="0 0 13 9" fill="none" className="text-white/90">
+        <rect x="0" y="5.3" width="2.1" height="3.7" rx="0.5" fill="currentColor" />
+        <rect x="3.2" y="3.6" width="2.1" height="5.4" rx="0.5" fill="currentColor" />
+        <rect x="6.4" y="1.9" width="2.1" height="7.1" rx="0.5" fill="currentColor" />
+        <rect x="9.6" y="0" width="2.1" height="9" rx="0.5" fill="currentColor" />
+      </svg>
+      <span className="text-[7.5px] font-semibold tracking-tight text-white/90">5G</span>
+      <Wifi className="h-2.5 w-2.5 text-white/90" strokeWidth={2.5} />
+      <span className="relative ml-0.5 flex h-[9px] w-[19px] items-center rounded-[3px] border border-white/60 pl-[1.5px]">
+        <span className="block h-[5.5px] w-[13px] rounded-[1px] bg-white/90" />
+        <span className="absolute -right-[2.5px] top-1/2 h-[4px] w-[1.5px] -translate-y-1/2 rounded-r-sm bg-white/60" />
+      </span>
+    </div>
+  );
+}
+
 function CardHeader({ icon: Icon, label }) {
   return (
     <div className="flex items-center gap-1.5 px-0.5">
@@ -194,12 +213,8 @@ function PhoneScreen({ index }) {
   return (
     <div className="flex h-full w-full flex-col bg-gradient-to-b from-[#101015] to-[#0a0a0d] p-3">
       <div className="flex items-center justify-between px-0.5">
-        <span className="text-[10px] font-medium text-white/50">{f.formatTime(new Date(2026, 8, 28, 9, 41))}</span>
-        <div className="flex items-center gap-0.5">
-          <span className="h-1.5 w-0.5 rounded-full bg-white/40" />
-          <span className="h-2 w-0.5 rounded-full bg-white/40" />
-          <span className="h-2.5 w-0.5 rounded-full bg-white/60" />
-        </div>
+        <span className="text-[10px] font-medium text-white/85">{f.formatTime(new Date(2026, 8, 28, 9, 41))}</span>
+        <StatusBarIcons />
       </div>
 
       <div className="mt-2.5 flex items-center justify-between px-0.5">
