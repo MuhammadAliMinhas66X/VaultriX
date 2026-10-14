@@ -10,6 +10,15 @@ export const signup = async (payload) => {
   }
 };
 
+export const verifySignupCode = async ({ email, code }) => {
+  try {
+    const { data } = await api.post('/auth/signup/verify', { email, code });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
 export const login = async (payload) => {
   try {
     const { data } = await api.post('/auth/login', payload);
