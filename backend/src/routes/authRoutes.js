@@ -1,5 +1,15 @@
 import { Router } from 'express';
-import { signup, verifySignupOtp, login, logout, googleAuth, googleCallback, refresh, me } from '../controllers/authController.js';
+import {
+  signup,
+  verifySignupOtp,
+  login,
+  loginStatus,
+  logout,
+  googleAuth,
+  googleCallback,
+  refresh,
+  me,
+} from '../controllers/authController.js';
 import {
   validateEmailAddress,
   forgotPassword,
@@ -16,6 +26,7 @@ import {
   verifyCodeLimiter,
   resetLimiter,
   emailCheckLimiter,
+  loginStatusLimiter,
 } from '../middleware/rateLimiters.js';
 import { verifyCaptcha } from '../middleware/captcha.js';
 
@@ -24,6 +35,7 @@ const router = Router();
 router.post('/signup', signupLimiter, signup);
 router.post('/signup/verify', verifyCodeLimiter, verifySignupOtp);
 router.post('/login', loginLimiter, verifyCaptcha, login);
+router.post('/login-status', loginStatusLimiter, loginStatus);
 router.post('/logout', logout);
 router.post('/google', googleLimiter, googleAuth);
 router.post('/google/callback', googleLimiter, googleCallback);

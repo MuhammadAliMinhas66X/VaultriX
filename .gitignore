@@ -6,3 +6,5 @@ build/
 *.log
 backend/uploads/avatars/*
 !backend/uploads/avatars/.gitkeep
+scripts
+unlockAccount

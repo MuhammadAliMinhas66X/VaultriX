@@ -28,6 +28,15 @@ export const login = async (payload) => {
   }
 };
 
+export const getLoginStatus = async (email) => {
+  try {
+    const { data } = await api.post('/auth/login-status', { email });
+    return data;
+  } catch (error) {
+    return null;
+  }
+};
+
 export const logout = async () => {
   try {
     await api.post('/auth/logout');
