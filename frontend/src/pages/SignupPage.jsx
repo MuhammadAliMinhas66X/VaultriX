@@ -10,6 +10,7 @@ import Button from '../components/Button.jsx';
 import Captcha, { captchaEnabled } from '../components/Captcha.jsx';
 import PasswordStrength from '../components/PasswordStrength.jsx';
 import { passwordIssue } from '../utils/emailRules.js';
+import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import PageLoader from '../components/PageLoader.jsx';
 import { signup, verifySignupCode } from '../services/authService.js';
@@ -68,7 +69,7 @@ function SignupPage() {
   const validate = () => {
     const next = {};
     if (!name.trim()) next.name = 'auth.nameRequired';
-    else if (name.trim().length < 2 || name.trim().length > 60 || /[<>{}\[\]\\/$`]/.test(name)) next.name = 'errors.nameInvalid';
+    else if (!isValidName(name)) next.name = 'errors.nameInvalid';
     if (!email.trim()) next.email = 'auth.emailRequired';
     else if (!EMAIL_PATTERN.test(email.trim()) || emailStatus === 'invalid') next.email = 'auth.emailInvalid';
     else if (emailStatus === 'disposable') next.email = 'auth.emailDisposable';
@@ -173,7 +174,7 @@ function SignupPage() {
                 label={t('auth.fullNameLabel')}
                 value={name}
                 onChange={(event) => {
-                  setName(event.target.value);
+                  setName(sanitizeNameInput(event.target.value));
                   clearError('name');
                 }}
                 placeholder={t('auth.fullNamePlaceholder')}

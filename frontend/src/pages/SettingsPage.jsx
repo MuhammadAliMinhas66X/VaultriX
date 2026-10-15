@@ -8,6 +8,7 @@ import Combobox from '../components/Combobox.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { updateProfile, changePassword, uploadAvatar } from '../services/userService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
+import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
@@ -77,6 +78,11 @@ function ProfileSection() {
       return;
     }
 
+    if (!isValidName(name)) {
+      setNameError('errors.nameInvalid');
+      return;
+    }
+
     setSavingName(true);
     try {
       const data = await updateProfile({ name });
@@ -136,7 +142,7 @@ function ProfileSection() {
           label={t('settings.fullName')}
           value={name}
           onChange={(event) => {
-            setName(event.target.value);
+            setName(sanitizeNameInput(event.target.value));
             setNameError('');
           }}
           error={nameError && t(nameError)}

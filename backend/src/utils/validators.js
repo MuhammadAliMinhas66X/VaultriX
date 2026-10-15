@@ -6,7 +6,13 @@ export const PASSWORD_MESSAGES = {
   needsMix: 'Password must include at least one letter and one special character.',
 };
 
-export const NAME_MESSAGE = 'Enter a valid name between 2 and 60 characters.';
+export const NAME_MESSAGE = 'Enter a valid name using letters only.';
+
+// Letters (any script, via \p{L}) and combining marks (accents, via \p{M}), plus
+// spaces, apostrophes and hyphens for names like "O'Brien" or "Anne-Marie".
+// Must start with a letter - no leading space/punctuation. Digits and symbols
+// (!@#$%^&* etc.) are rejected outright.
+const NAME_PATTERN = /^[\p{L}\p{M}][\p{L}\p{M} '-]*$/u;
 
 export const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
@@ -23,7 +29,7 @@ export const cleanName = (raw) => {
   if (typeof raw !== 'string') return null;
   const value = raw.replace(/\s+/g, ' ').trim();
   if (value.length < 2 || value.length > 60) return null;
-  if (/[<>{}[\]\\/$`\u0000-\u001f\u007f]/u.test(value)) return null;
+  if (!NAME_PATTERN.test(value)) return null;
   return value;
 };
 
