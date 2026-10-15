@@ -10,6 +10,7 @@ import PasswordStrength from '../components/PasswordStrength.jsx';
 import Button from '../components/Button.jsx';
 import Captcha, { captchaEnabled } from '../components/Captcha.jsx';
 import { requestPasswordReset, verifyResetCode, resetPassword } from '../services/authService.js';
+import { passwordIssue } from '../utils/emailRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
 
@@ -161,8 +162,8 @@ function ForgotPasswordPage() {
     event.preventDefault();
 
     const next = {};
-    if (!password) next.password = t('auth.passwordRequired');
-    else if (password.length < 8) next.password = t('auth.passwordTooShort');
+    const issue = passwordIssue(password);
+    if (issue) next.password = t(issue);
     if (!confirm) next.confirm = t('forgot.confirmRequired');
     else if (confirm !== password) next.confirm = t('forgot.passwordMismatch');
     setPasswordErrors(next);

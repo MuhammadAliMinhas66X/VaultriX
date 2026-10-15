@@ -26,15 +26,17 @@ export const evaluateEmail = (raw) => {
   };
 };
 
+const SPECIAL_CHAR_PATTERN = /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/;
+
 export const scorePassword = (password) => {
   const length = password.length;
   if (length === 0) return 0;
-  if (length < 8) return 1;
+  if (length <= 8) return 1;
 
   let points = 0;
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) points += 1;
   if (/\d/.test(password)) points += 1;
-  if (/[^A-Za-z0-9]/.test(password)) points += 1;
+  if (SPECIAL_CHAR_PATTERN.test(password)) points += 1;
   if (length >= 12) points += 1;
 
   if (points <= 1) return 1;
@@ -44,8 +46,8 @@ export const scorePassword = (password) => {
 
 export const passwordIssue = (password) => {
   if (!password) return 'auth.passwordRequired';
-  if (password.length < 8) return 'auth.passwordTooShort';
+  if (password.length <= 8) return 'auth.passwordTooShort';
   if (password.length > 64) return 'errors.passwordTooLong';
-  if (!/\p{L}/u.test(password) || !/\p{N}/u.test(password)) return 'errors.passwordNeedsMix';
+  if (!/\p{L}/u.test(password) || !SPECIAL_CHAR_PATTERN.test(password)) return 'errors.passwordNeedsMix';
   return null;
 };
