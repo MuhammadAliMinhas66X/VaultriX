@@ -60,7 +60,7 @@ const SERVER_MESSAGE_KEYS = {
   'Password is too long. Use 64 characters or fewer.': 'errors.passwordTooLong',
   'Password must include at least one letter and one special character.': 'errors.passwordNeedsMix',
   'Enter a valid name between 2 and 60 characters.': 'errors.nameInvalid',
-  'Too many failed sign-in attempts. Please try again in 15 minutes.': 'errors.accountLocked',
+  'Too many failed sign-in attempts. Please try again later.': 'errors.accountLocked',
   'Please complete the security check and try again.': 'errors.captchaRequired',
   'The security check failed. Please refresh the page and try again.': 'errors.captchaFailed',
   'The security check is unavailable right now. Please try again in a moment.': 'errors.captchaUnavailable',
