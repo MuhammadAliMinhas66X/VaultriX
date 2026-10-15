@@ -9,6 +9,7 @@ import Captcha, { captchaEnabled } from '../components/Captcha.jsx';
 import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import PageLoader from '../components/PageLoader.jsx';
 import LockScreen from '../components/LockScreen.jsx';
+import LockTimerBadge from '../components/LockTimerBadge.jsx';
 import { login, getLoginStatus } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -38,7 +39,6 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [loginBlocked, setLoginBlocked] = useState(false);
   const [lockUntil, setLockUntil] = useState(null);
   const [lockTier, setLockTier] = useState(0);
   const [now, setNow] = useState(() => Date.now());
@@ -117,7 +117,6 @@ function LoginPage() {
       notify.error(tServer(error));
       captchaRef.current?.reset();
       setLoading(false);
-      setLoginBlocked(true);
       if (error?.data?.lockUntil) {
         setLockUntil(new Date(error.data.lockUntil));
         setLockTier(error.data.lockTier || 1);
@@ -127,7 +126,6 @@ function LoginPage() {
 
   const clearError = (field) => {
     setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-    setLoginBlocked(false);
   };
 
   if (redirecting) {
@@ -140,6 +138,8 @@ function LoginPage() {
 
   return (
     <AuthLayout title={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
+      {isLocked && <LockTimerBadge display={formatCountdown(secondsRemaining)} />}
+
       <GoogleAuthButton onError={(message) => notify.error(message)} />
 
       <div className="my-6 flex items-center gap-3">
@@ -195,19 +195,13 @@ function LoginPage() {
           </Link>
         </div>
 
-        {isLocked && (
-          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
-            {t('auth.lockedMessage', { time: formatCountdown(secondsRemaining) })}
-          </div>
-        )}
-
         <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
         <Button
           type="submit"
           loading={loading}
           loadingLabel={t('auth.signingIn')}
-          disabled={isLocked || loginBlocked || (captchaEnabled && !captchaToken)}
+          disabled={isLocked || (captchaEnabled && !captchaToken)}
         >
           {captchaEnabled && !captchaToken ? t('captcha.verifying') : t('auth.signIn')}
         </Button>
