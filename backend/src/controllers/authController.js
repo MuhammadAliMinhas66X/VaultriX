@@ -337,6 +337,21 @@ export const loginStatus = async (req, res, next) => {
 };
 
 export const logout = async (req, res) => {
+  const token = req.cookies?.[REFRESH_COOKIE_NAME];
+
+  // Bumping tokenVersion makes the refresh token (and any access token minted
+  // from it) invalid immediately, instead of just clearing the cookie and
+  // leaving a copied/stolen refresh token usable for up to 30 days. This logs
+  // the account out everywhere, not just this device - the safe default.
+  if (token) {
+    try {
+      const payload = verifyRefreshToken(token);
+      await User.updateOne({ _id: payload.sub }, { $inc: { tokenVersion: 1 } });
+    } catch (error) {
+      // Token was already invalid or expired - nothing to revoke.
+    }
+  }
+
   res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
   res.json({ success: true });
 };
