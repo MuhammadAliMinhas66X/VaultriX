@@ -8,12 +8,19 @@ import Button from '../components/Button.jsx';
 import Captcha, { captchaEnabled } from '../components/Captcha.jsx';
 import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import PageLoader from '../components/PageLoader.jsx';
-import { login } from '../services/authService.js';
+import LockScreen from '../components/LockScreen.jsx';
+import { login, getLoginStatus } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const formatCountdown = (totalSeconds) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -32,6 +39,9 @@ function LoginPage() {
   const [redirecting, setRedirecting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [loginBlocked, setLoginBlocked] = useState(false);
+  const [lockUntil, setLockUntil] = useState(null);
+  const [lockTier, setLockTier] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get('google_error')) {
@@ -39,6 +49,42 @@ function LoginPage() {
       navigate('/login', { replace: true });
     }
   }, []);
+
+  // The lock is tracked on the server against the account, not the browser,
+  // so it shows the same countdown after a refresh or from a different device.
+  useEffect(() => {
+    const value = email.trim();
+    if (!EMAIL_PATTERN.test(value)) return undefined;
+
+    const timer = setTimeout(() => {
+      getLoginStatus(value).then((data) => {
+        if (data?.locked && data.lockUntil) {
+          setLockUntil(new Date(data.lockUntil));
+          setLockTier(data.lockTier || 1);
+        } else {
+          setLockUntil(null);
+          setLockTier(0);
+        }
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [email]);
+
+  useEffect(() => {
+    if (!lockUntil) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [lockUntil]);
+
+  const isLocked = Boolean(lockUntil) && now < lockUntil.getTime();
+  const secondsRemaining = isLocked ? Math.max(0, Math.ceil((lockUntil.getTime() - now) / 1000)) : 0;
+
+  useEffect(() => {
+    if (lockUntil && now >= lockUntil.getTime()) {
+      setLockUntil(null);
+    }
+  }, [now, lockUntil]);
 
   const proceedAfterAuth = (data) => {
     setSession(data);
@@ -61,7 +107,7 @@ function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validate()) return;
+    if (!validate() || isLocked) return;
 
     setLoading(true);
     try {
@@ -72,6 +118,10 @@ function LoginPage() {
       captchaRef.current?.reset();
       setLoading(false);
       setLoginBlocked(true);
+      if (error?.data?.lockUntil) {
+        setLockUntil(new Date(error.data.lockUntil));
+        setLockTier(error.data.lockTier || 1);
+      }
     }
   };
 
@@ -82,6 +132,10 @@ function LoginPage() {
 
   if (redirecting) {
     return <PageLoader label={t('auth.settingUp')} />;
+  }
+
+  if (isLocked && lockTier >= 2) {
+    return <LockScreen display={formatCountdown(secondsRemaining)} />;
   }
 
   return (
@@ -141,13 +195,19 @@ function LoginPage() {
           </Link>
         </div>
 
+        {isLocked && (
+          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+            {t('auth.lockedMessage', { time: formatCountdown(secondsRemaining) })}
+          </div>
+        )}
+
         <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
         <Button
           type="submit"
           loading={loading}
           loadingLabel={t('auth.signingIn')}
-          disabled={loginBlocked || (captchaEnabled && !captchaToken)}
+          disabled={isLocked || loginBlocked || (captchaEnabled && !captchaToken)}
         >
           {captchaEnabled && !captchaToken ? t('captcha.verifying') : t('auth.signIn')}
         </Button>
