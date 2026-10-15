@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'Your name',
   'auth.forgotPassword': 'Forgot password?',
   'auth.lockedMessage': 'Too many failed attempts. Try again in {time}.',
+  'auth.lockedBadgeLabel': 'Locked',
   'auth.lockedHeavyTitle': 'Account locked',
   'auth.lockedHeavySubtitle': 'Too many failed attempts. For your security, sign-in is paused until the timer ends.',
   'auth.signIn': 'Sign in',

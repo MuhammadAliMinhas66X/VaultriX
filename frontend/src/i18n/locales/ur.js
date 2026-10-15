@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'آپ کا نام',
   'auth.forgotPassword': 'پاس ورڈ بھول گئے؟',
   'auth.lockedMessage': 'بہت زیادہ غلط کوششیں۔ {time} میں دوبارہ کوشش کریں۔',
+  'auth.lockedBadgeLabel': 'مقفل',
   'auth.lockedHeavyTitle': 'اکاؤنٹ لاک ہو گیا',
   'auth.lockedHeavySubtitle': 'بہت زیادہ غلط کوششیں ہوئیں۔ آپ کی حفاظت کے لیے، ٹائمر ختم ہونے تک سائن ان روک دیا گیا ہے۔',
   'auth.signIn': 'سائن ان',

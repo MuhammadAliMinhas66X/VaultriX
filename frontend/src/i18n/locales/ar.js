@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'اسمك',
   'auth.forgotPassword': 'نسيت كلمة المرور؟',
   'auth.lockedMessage': 'محاولات فاشلة كثيرة جدًا. حاول مرة أخرى خلال {time}.',
+  'auth.lockedBadgeLabel': 'مقفل',
   'auth.lockedHeavyTitle': 'الحساب مقفل',
   'auth.lockedHeavySubtitle': 'محاولات فاشلة كثيرة جدًا. لأمانك، تم إيقاف تسجيل الدخول مؤقتًا حتى ينتهي العداد.',
   'auth.signIn': 'تسجيل الدخول',

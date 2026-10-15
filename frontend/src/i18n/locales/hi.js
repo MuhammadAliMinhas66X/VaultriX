@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'आपका नाम',
   'auth.forgotPassword': 'पासवर्ड भूल गए?',
   'auth.lockedMessage': 'बहुत ज़्यादा गलत प्रयास। {time} में दोबारा कोशिश करें।',
+  'auth.lockedBadgeLabel': 'लॉक्ड',
   'auth.lockedHeavyTitle': 'खाता लॉक है',
   'auth.lockedHeavySubtitle': 'बहुत ज़्यादा गलत प्रयास हुए। आपकी सुरक्षा के लिए, टाइमर खत्म होने तक साइन इन रोक दिया गया है।',
   'auth.signIn': 'साइन इन',

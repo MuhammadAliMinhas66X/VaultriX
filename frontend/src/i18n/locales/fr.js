@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'Votre nom',
   'auth.forgotPassword': 'Mot de passe oublié ?',
   'auth.lockedMessage': 'Trop de tentatives échouées. Réessayez dans {time}.',
+  'auth.lockedBadgeLabel': 'Verrouillé',
   'auth.lockedHeavyTitle': 'Compte verrouillé',
   'auth.lockedHeavySubtitle': 'Trop de tentatives échouées. Pour votre sécurité, la connexion est suspendue jusqu’à la fin du minuteur.',
   'auth.signIn': 'Se connecter',

@@ -16,6 +16,7 @@ export default {
   'auth.fullNamePlaceholder': 'Tu nombre',
   'auth.forgotPassword': '¿Olvidaste tu contraseña?',
   'auth.lockedMessage': 'Demasiados intentos fallidos. Vuelve a intentarlo en {time}.',
+  'auth.lockedBadgeLabel': 'Bloqueado',
   'auth.lockedHeavyTitle': 'Cuenta bloqueada',
   'auth.lockedHeavySubtitle': 'Demasiados intentos fallidos. Por tu seguridad, el inicio de sesión está en pausa hasta que termine el temporizador.',
   'auth.signIn': 'Iniciar sesión',
