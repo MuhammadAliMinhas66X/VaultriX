@@ -31,6 +31,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [loginBlocked, setLoginBlocked] = useState(false);
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get('google_error')) {
@@ -70,10 +71,14 @@ function LoginPage() {
       notify.error(tServer(error));
       captchaRef.current?.reset();
       setLoading(false);
+      setLoginBlocked(true);
     }
   };
 
-  const clearError = (field) => setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+  const clearError = (field) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    setLoginBlocked(false);
+  };
 
   if (redirecting) {
     return <PageLoader label={t('auth.settingUp')} />;
@@ -142,7 +147,7 @@ function LoginPage() {
           type="submit"
           loading={loading}
           loadingLabel={t('auth.signingIn')}
-          disabled={captchaEnabled && !captchaToken}
+          disabled={loginBlocked || (captchaEnabled && !captchaToken)}
         >
           {captchaEnabled && !captchaToken ? t('captcha.verifying') : t('auth.signIn')}
         </Button>
