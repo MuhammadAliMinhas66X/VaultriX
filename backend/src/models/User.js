@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
     tokenVersion: { type: Number, default: 0 },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
+    lockTier: { type: Number, default: 0 },
     lastLoginAt: { type: Date, default: null },
   },
   { timestamps: true }

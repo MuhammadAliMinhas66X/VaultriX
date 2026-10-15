@@ -16,9 +16,10 @@ import { signupOtpEmail } from '../utils/mailTemplates.js';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const REFRESH_COOKIE_NAME = 'vaultrix_refresh';
-const MAX_FAILED_LOGINS = 5;
-const LOCK_MINUTES = 15;
-const LOCK_MS = LOCK_MINUTES * 60 * 1000;
+const MAX_FAILED_LOGINS_TIER1 = 5;
+const LOCK_MS_TIER1 = 15 * 60 * 1000;
+const MAX_FAILED_LOGINS_TIER2 = 2;
+const LOCK_MS_TIER2 = 60 * 60 * 1000;
 const MAX_PASSWORD_INPUT = 128;
 const DUMMY_HASH = bcrypt.hashSync('vaultrix-timing-guard', 12);
 
@@ -36,7 +37,7 @@ const MESSAGES = {
   invalidLogin: 'That email or password is not right.',
   signupRequired: 'Name, email and password are all required.',
   duplicate: 'An account with this email already exists.',
-  locked: `Too many failed sign-in attempts. Please try again in ${LOCK_MINUTES} minutes.`,
+  locked: 'Too many failed sign-in attempts. Please try again later.',
   googleAccount: 'This account was created with Google. Use the Google sign-in button instead.',
   googleUnverified: 'Google sign-in could not be verified.',
   otpWait: 'Please wait a moment before requesting another code.',
@@ -77,6 +78,11 @@ const publicUser = (user) => ({
 });
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
+
+const failLocked = (res, lockUntil, lockTier) =>
+  res
+    .status(429)
+    .json({ success: false, message: MESSAGES.locked, lockUntil: lockUntil.toISOString(), lockTier });
 
 const startSession = (res, user, status = 200) => {
   const accessToken = signAccessToken(user);
@@ -270,8 +276,8 @@ export const login = async (req, res, next) => {
     }
 
     if (user.lockUntil && user.lockUntil > new Date()) {
-      securityLog('login_while_locked', req, { userId: String(user._id) });
-      return fail(res, 429, MESSAGES.locked);
+      securityLog('login_while_locked', req, { userId: String(user._id), tier: user.lockTier || 1 });
+      return failLocked(res, user.lockUntil, user.lockTier || 1);
     }
 
     if (!user.passwordHash) {
@@ -283,13 +289,19 @@ export const login = async (req, res, next) => {
     if (!passwordMatches) {
       const updated = await User.findByIdAndUpdate(user._id, { $inc: { failedLoginAttempts: 1 } }, { new: true });
 
-      if (updated && updated.failedLoginAttempts >= MAX_FAILED_LOGINS) {
-        await User.updateOne(
-          { _id: user._id },
-          { $set: { lockUntil: new Date(Date.now() + LOCK_MS), failedLoginAttempts: 0 } }
-        );
-        securityLog('account_locked', req, { userId: String(user._id) });
-        return fail(res, 429, MESSAGES.locked);
+      // The first five wrong attempts earn a 15 minute lock. Once an account has
+      // been locked once, it is treated as already warned, so only two more wrong
+      // attempts are tolerated before escalating to a one hour lock. It stays at
+      // that stricter tier until a successful login resets it.
+      const escalated = (updated?.lockTier || 0) >= 1;
+      const threshold = escalated ? MAX_FAILED_LOGINS_TIER2 : MAX_FAILED_LOGINS_TIER1;
+
+      if (updated && updated.failedLoginAttempts >= threshold) {
+        const nextTier = escalated ? 2 : 1;
+        const lockUntil = new Date(Date.now() + (nextTier === 2 ? LOCK_MS_TIER2 : LOCK_MS_TIER1));
+        await User.updateOne({ _id: user._id }, { $set: { lockUntil, failedLoginAttempts: 0, lockTier: nextTier } });
+        securityLog('account_locked', req, { userId: String(user._id), tier: nextTier });
+        return failLocked(res, lockUntil, nextTier);
       }
 
       securityLog('login_failed', req, { userId: String(user._id) });
@@ -298,10 +310,27 @@ export const login = async (req, res, next) => {
 
     await User.updateOne(
       { _id: user._id },
-      { $set: { failedLoginAttempts: 0, lockUntil: null, lastLoginAt: new Date() } }
+      { $set: { failedLoginAttempts: 0, lockUntil: null, lockTier: 0, lastLoginAt: new Date() } }
     );
 
     startSession(res, user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const loginStatus = async (req, res, next) => {
+  try {
+    const parsed = parseEmail(req.body?.email);
+    if (!parsed) return res.json({ success: true, locked: false, lockUntil: null, lockTier: 0 });
+
+    const user = await User.findOne({ email: parsed.email });
+
+    if (!user || !user.lockUntil || user.lockUntil <= new Date()) {
+      return res.json({ success: true, locked: false, lockUntil: null, lockTier: 0 });
+    }
+
+    res.json({ success: true, locked: true, lockUntil: user.lockUntil.toISOString(), lockTier: user.lockTier || 1 });
   } catch (error) {
     next(error);
   }
