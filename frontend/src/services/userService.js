@@ -32,3 +32,30 @@ export const uploadAvatar = async (file) => {
     throw toApiError(error);
   }
 };
+
+export const listSessions = async () => {
+  try {
+    const { data } = await api.get('/users/me/sessions');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const revokeSession = async (id) => {
+  try {
+    const { data } = await api.delete(`/users/me/sessions/${id}`);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const logoutAllSessions = async () => {
+  try {
+    const { data } = await api.post('/users/me/sessions/logout-all');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};

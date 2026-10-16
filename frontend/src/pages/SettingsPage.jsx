@@ -1,16 +1,24 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Laptop, Loader2 } from 'lucide-react';
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
 import Combobox from '../components/Combobox.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { updateProfile, changePassword, uploadAvatar } from '../services/userService.js';
+import {
+  updateProfile,
+  changePassword,
+  uploadAvatar,
+  listSessions,
+  revokeSession,
+  logoutAllSessions,
+} from '../services/userService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
+import { useFormat } from '../i18n/useFormat.js';
 import { notify } from '../i18n/notifications.js';
 import { serverMessageKey, translate } from '../i18n/translate.js';
 
@@ -256,6 +264,117 @@ function PasswordSection() {
   );
 }
 
+function DevicesSection() {
+  const { clearSession } = useAuth();
+  const { t, tServer } = useTranslation();
+  const { formatDate } = useFormat();
+
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [revokingId, setRevokingId] = useState(null);
+  const [loggingOutAll, setLoggingOutAll] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await listSessions();
+        if (!cancelled) setSessions(data?.sessions || []);
+      } catch (error) {
+        if (!cancelled) notify.error(tServer(error));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleRevoke = async (id) => {
+    setRevokingId(id);
+    try {
+      await revokeSession(id);
+      setSessions((prev) => prev.filter((session) => session.id !== id));
+      notify.success(t('status.sessionRevoked'));
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setRevokingId(null);
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    setLoggingOutAll(true);
+    try {
+      await logoutAllSessions();
+      notify.success(t('status.loggedOutEverywhere'));
+      clearSession();
+    } catch (error) {
+      notify.error(tServer(error));
+      setLoggingOutAll(false);
+    }
+  };
+
+  const lastActiveLabel = (value) =>
+    t('settings.lastActive', { time: formatDate(new Date(value), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) });
+
+  return (
+    <SettingsCard title={t('settings.devicesTitle')} subtitle={t('settings.devicesSubtitle')}>
+      {loading ? (
+        <p className="text-sm text-muted">{t('common.loading')}</p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-border">
+          {sessions.map((session) => (
+            <li key={session.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-muted">
+                  <Laptop className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">
+                    {session.device}
+                    {session.isCurrent && (
+                      <span className="ml-2 rounded-full bg-ink/5 px-2 py-0.5 text-xs font-semibold text-ink/70">
+                        {t('settings.thisDevice')}
+                      </span>
+                    )}
+                  </p>
+                  <p className="truncate text-xs text-muted">{lastActiveLabel(session.lastUsedAt)}</p>
+                </div>
+              </div>
+
+              {!session.isCurrent && (
+                <button
+                  type="button"
+                  onClick={() => handleRevoke(session.id)}
+                  disabled={revokingId === session.id}
+                  className="shrink-0 text-sm font-medium text-red-600 hover:text-red-700 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {revokingId === session.id ? t('common.revoking') : t('settings.revoke')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-5 border-t border-border pt-5">
+        <Button
+          type="button"
+          onClick={handleLogoutAll}
+          loading={loggingOutAll}
+          loadingLabel={t('common.loggingOutEverywhere')}
+        >
+          {t('settings.logoutEverywhere')}
+        </Button>
+      </div>
+    </SettingsCard>
+  );
+}
+
 function PreferencesSection() {
   const { user, updateUser, language, currency } = useAuth();
   const { t, tServer } = useTranslation();
@@ -368,6 +487,7 @@ function SettingsPage() {
 
         <ProfileSection />
         <PasswordSection />
+        <DevicesSection />
         <PreferencesSection />
       </div>
     </div>
