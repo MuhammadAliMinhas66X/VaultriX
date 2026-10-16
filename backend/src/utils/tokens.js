@@ -7,8 +7,13 @@ export const signAccessToken = (user) =>
     { expiresIn: '15m', algorithm: 'HS256' }
   );
 
-export const signRefreshToken = (user) =>
-  jwt.sign({ sub: user._id, tokenVersion: user.tokenVersion || 0 }, process.env.JWT_REFRESH_SECRET, {
+// jti ties this refresh token to one row in the Session collection, so a
+// single device can be revoked by deleting just that row. tokenVersion is
+// kept as a separate, coarser kill switch: bumping it (password change,
+// "log out everywhere") invalidates every refresh token at once, even ones
+// whose Session row hasn't been individually deleted yet.
+export const signRefreshToken = (user, sessionId) =>
+  jwt.sign({ sub: user._id, tokenVersion: user.tokenVersion || 0, jti: String(sessionId) }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: '30d',
     algorithm: 'HS256',
   });
