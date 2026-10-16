@@ -20,3 +20,4 @@ export const resetLimiter = build(15 * 60 * 1000, 15);
 export const emailCheckLimiter = build(5 * 60 * 1000, 80);
 export const passwordChangeLimiter = build(15 * 60 * 1000, 10);
 export const loginStatusLimiter = build(5 * 60 * 1000, 60);
+export const sessionsLimiter = build(15 * 60 * 1000, 60);

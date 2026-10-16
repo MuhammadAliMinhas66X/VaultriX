@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import PasswordReset from '../models/PasswordReset.js';
+import Session from '../models/Session.js';
 import { signResetToken, verifyResetToken } from '../utils/tokens.js';
 import { checkEmail, parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
@@ -214,6 +215,11 @@ export const resetPassword = async (req, res, next) => {
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
+
+    // tokenVersion already makes every existing refresh token fail its check
+    // in refresh(); this just clears out the now-dead Session rows too so
+    // they don't linger in the devices list until their 30-day TTL expires.
+    await Session.deleteMany({ userId: user._id });
 
     await PasswordReset.deleteMany({ email: record.email });
 

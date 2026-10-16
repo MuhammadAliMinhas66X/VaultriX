@@ -2,7 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
-import { signAccessToken, signRefreshToken } from '../utils/tokens.js';
+import Session from '../models/Session.js';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
+import { describeDevice } from '../utils/deviceLabel.js';
 import { AVATAR_DIR } from '../middleware/upload.js';
 import { validatePassword, cleanName, NAME_MESSAGE, isCountryCode, isCurrencyCode } from '../utils/validators.js';
 
@@ -10,13 +12,22 @@ import { validatePassword, cleanName, NAME_MESSAGE, isCountryCode, isCurrencyCod
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
 
 const REFRESH_COOKIE_NAME = 'vaultrix_refresh';
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax',
-  maxAge: 30 * 24 * 60 * 60 * 1000,
+  maxAge: REFRESH_TOKEN_TTL_MS,
 };
+
+const createSession = (req, user) =>
+  Session.create({
+    userId: user._id,
+    userAgent: req.headers['user-agent'] || '',
+    ip: req.ip,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+  });
 
 const publicUser = (user) => ({
   id: user._id,
@@ -126,8 +137,13 @@ export const changePassword = async (req, res, next) => {
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
+    // Changing your password signs every other device out: delete every
+    // existing session row, then issue a fresh one for this device only.
+    await Session.deleteMany({ userId: user._id });
+    const session = await createSession(req, user);
+
     const accessToken = signAccessToken(user);
-    const refreshToken = signRefreshToken(user);
+    const refreshToken = signRefreshToken(user, session._id);
 
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.json({ success: true, accessToken, user: publicUser(user) });
@@ -156,6 +172,73 @@ export const changeAvatar = async (req, res, next) => {
     await user.save();
 
     res.json({ success: true, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// The current request's own refresh cookie is read (not exposed to the
+// frontend otherwise, since it's httpOnly) purely to flag which row in the
+// list is "this device" - it is never used to authorize the request itself,
+// authenticate() already did that via the Bearer access token.
+const currentSessionId = (req) => {
+  const token = req.cookies?.[REFRESH_COOKIE_NAME];
+  if (!token) return null;
+  try {
+    return String(verifyRefreshToken(token).jti);
+  } catch (error) {
+    return null;
+  }
+};
+
+export const listSessions = async (req, res, next) => {
+  try {
+    const activeId = currentSessionId(req);
+    const sessions = await Session.find({ userId: req.user.id }).sort({ lastUsedAt: -1 }).lean();
+
+    res.json({
+      success: true,
+      sessions: sessions.map((session) => ({
+        id: String(session._id),
+        device: describeDevice(session.userAgent),
+        ip: session.ip,
+        createdAt: session.createdAt,
+        lastUsedAt: session.lastUsedAt,
+        isCurrent: String(session._id) === activeId,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const revokeSession = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await Session.deleteOne({ _id: id, userId: req.user.id });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: 'That session is already signed out.' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    // An invalid id shape (not a valid ObjectId) throws a CastError here -
+    // treat it the same as "not found" rather than a 500.
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ success: false, message: 'That session is already signed out.' });
+    }
+    next(error);
+  }
+};
+
+export const logoutAllSessions = async (req, res, next) => {
+  try {
+    await Session.deleteMany({ userId: req.user.id });
+    await User.updateOne({ _id: req.user.id }, { $inc: { tokenVersion: 1 } });
+
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }
