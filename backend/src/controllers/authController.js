@@ -4,6 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import PendingSignup from '../models/PendingSignup.js';
+import Session from '../models/Session.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
 import { checkEmail, parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
@@ -56,11 +57,13 @@ const sendOtpInBackground = (message, to) => {
   });
 };
 
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax',
-  maxAge: 30 * 24 * 60 * 60 * 1000,
+  maxAge: REFRESH_TOKEN_TTL_MS,
 };
 
 const publicUser = (user) => ({
@@ -84,9 +87,18 @@ const failLocked = (res, lockUntil, lockTier) =>
     .status(429)
     .json({ success: false, message: MESSAGES.locked, lockUntil: lockUntil.toISOString(), lockTier });
 
-const startSession = (res, user, status = 200) => {
+const createSession = (req, user) =>
+  Session.create({
+    userId: user._id,
+    userAgent: req.headers['user-agent'] || '',
+    ip: req.ip,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+  });
+
+const startSession = async (req, res, user, status = 200) => {
+  const session = await createSession(req, user);
   const accessToken = signAccessToken(user);
-  const refreshToken = signRefreshToken(user);
+  const refreshToken = signRefreshToken(user, session._id);
 
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
   res.status(status).json({ success: true, accessToken, user: publicUser(user) });
@@ -236,7 +248,7 @@ export const verifySignupOtp = async (req, res, next) => {
 
     await PendingSignup.deleteOne({ email });
 
-    startSession(res, user, 201);
+    await startSession(req, res, user, 201);
   } catch (error) {
     if (organization) {
       Organization.findByIdAndDelete(organization._id).catch(() => {});
@@ -313,7 +325,7 @@ export const login = async (req, res, next) => {
       { $set: { failedLoginAttempts: 0, lockUntil: null, lockTier: 0, lastLoginAt: new Date() } }
     );
 
-    startSession(res, user);
+    await startSession(req, res, user);
   } catch (error) {
     next(error);
   }
@@ -339,14 +351,14 @@ export const loginStatus = async (req, res, next) => {
 export const logout = async (req, res) => {
   const token = req.cookies?.[REFRESH_COOKIE_NAME];
 
-  // Bumping tokenVersion makes the refresh token (and any access token minted
-  // from it) invalid immediately, instead of just clearing the cookie and
-  // leaving a copied/stolen refresh token usable for up to 30 days. This logs
-  // the account out everywhere, not just this device - the safe default.
+  // Deletes only this device's Session row, so the refresh token tied to it
+  // is immediately invalid (refresh() looks the row up by jti and fails if
+  // it's gone) while every other signed-in device stays logged in. Use
+  // logoutAllSessions for "log out everywhere".
   if (token) {
     try {
       const payload = verifyRefreshToken(token);
-      await User.updateOne({ _id: payload.sub }, { $inc: { tokenVersion: 1 } });
+      await Session.deleteOne({ _id: payload.jti, userId: payload.sub });
     } catch (error) {
       // Token was already invalid or expired - nothing to revoke.
     }
@@ -372,7 +384,26 @@ export const refresh = async (req, res) => {
       return fail(res, 401, 'Please sign in again.');
     }
 
-    startSession(res, user);
+    // The Session row is the source of truth for whether this specific
+    // device is still allowed in - if it was deleted (this device logged
+    // out, or revoked from the devices list on another device), refresh
+    // fails even though the token itself hasn't expired yet.
+    const session = await Session.findOne({ _id: payload.jti, userId: user._id });
+    if (!session) {
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      return fail(res, 401, 'Please sign in again.');
+    }
+
+    session.lastUsedAt = new Date();
+    session.ip = req.ip;
+    if (req.headers['user-agent']) session.userAgent = req.headers['user-agent'];
+    session.expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+    await session.save();
+
+    const accessToken = signAccessToken(user);
+    const refreshToken = signRefreshToken(user, session._id);
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
+    res.json({ success: true, accessToken, user: publicUser(user) });
   } catch (error) {
     res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
     fail(res, 401, 'Please sign in again.');
@@ -462,7 +493,7 @@ export const googleAuth = async (req, res, next) => {
       return fail(res, 400, 'Could not read your Google account details.');
     }
 
-    startSession(res, user);
+    await startSession(req, res, user);
   } catch (error) {
     next(error);
   }
@@ -492,7 +523,8 @@ export const googleCallback = async (req, res) => {
       return res.redirect(failureUrl);
     }
 
-    const refreshToken = signRefreshToken(user);
+    const session = await createSession(req, user);
+    const refreshToken = signRefreshToken(user, session._id);
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.redirect(successUrl);
   } catch (error) {
