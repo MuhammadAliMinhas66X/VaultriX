@@ -77,6 +77,15 @@ export const verifyDeviceLogin = async ({ email, code }) => {
   }
 };
 
+export const verifyMfaLogin = async ({ mfaToken, code }) => {
+  try {
+    const { data } = await api.post('/auth/verify-mfa', { mfaToken, code });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
 export const validateEmail = async (email) => {
   const { data } = await api.post('/auth/validate-email', { email });
   return data;

@@ -95,3 +95,30 @@ export const confirmAccountDeletion = async (code) => {
     throw toApiError(error);
   }
 };
+
+export const beginMfaSetup = async () => {
+  try {
+    const { data } = await api.post('/users/me/mfa/setup');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const confirmMfaSetup = async ({ setupToken, code }) => {
+  try {
+    const { data } = await api.post('/users/me/mfa/confirm', { setupToken, code });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const disableMfa = async (password) => {
+  try {
+    const { data } = await api.post('/users/me/mfa/disable', { password });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};

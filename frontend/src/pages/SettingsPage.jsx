@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Laptop, Loader2, Mail, AlertTriangle } from 'lucide-react';
+import { Camera, Laptop, Loader2, Mail, AlertTriangle, ShieldCheck, Copy, Check } from 'lucide-react';
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
@@ -18,6 +18,9 @@ import {
   verifyEmailChange,
   requestAccountDeletion,
   confirmAccountDeletion,
+  beginMfaSetup,
+  confirmMfaSetup,
+  disableMfa,
 } from '../services/userService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
@@ -437,6 +440,244 @@ function EmailSection() {
             <Button type="submit" loading={saving} loadingLabel={t('common.saving')}>
               {t('settings.sendEmailCode')}
             </Button>
+          </div>
+        </form>
+      )}
+    </SettingsCard>
+  );
+}
+
+function MfaSection() {
+  const { user, updateUser } = useAuth();
+  const { t, tServer } = useTranslation();
+
+  // idle -> setup (QR + confirm code) -> backup-codes (shown once) | idle -> disable (password)
+  const [stage, setStage] = useState('idle');
+  const [setupToken, setSetupToken] = useState('');
+  const [qrCode, setQrCode] = useState('');
+  const [secret, setSecret] = useState('');
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [errorStamp, setErrorStamp] = useState(0);
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [copied, setCopied] = useState(false);
+  const [password, setPassword] = useState('');
+  const [disableError, setDisableError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  if (user?.authProvider === 'google') {
+    return (
+      <SettingsCard title={t('settings.mfaTitle')} subtitle={t('settings.mfaSubtitle')}>
+        <p className="text-sm text-muted">{t('settings.mfaGoogleManaged')}</p>
+      </SettingsCard>
+    );
+  }
+
+  const reset = () => {
+    setStage('idle');
+    setSetupToken('');
+    setQrCode('');
+    setSecret('');
+    setCode('');
+    setCodeError('');
+    setBackupCodes([]);
+    setCopied(false);
+    setPassword('');
+    setDisableError('');
+  };
+
+  const startSetup = async () => {
+    setLoading(true);
+    try {
+      const data = await beginMfaSetup();
+      setSetupToken(data.setupToken);
+      setQrCode(data.qrCode);
+      setSecret(data.secret);
+      setStage('setup');
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitSetupCode = async (value) => {
+    if (value.length < EMAIL_CODE_LENGTH) {
+      setCodeError(t('auth.deviceCodeIncomplete'));
+      setErrorStamp((stamp) => stamp + 1);
+      return;
+    }
+    setLoading(true);
+    setCodeError('');
+    try {
+      const data = await confirmMfaSetup({ setupToken, code: value });
+      setBackupCodes(data.backupCodes || []);
+      updateUser({ mfaEnabled: true });
+      setStage('backup-codes');
+    } catch (error) {
+      setCodeError(tServer(error));
+      setCode('');
+      setErrorStamp((stamp) => stamp + 1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyBackupCodes = async () => {
+    try {
+      await navigator.clipboard.writeText(backupCodes.join('\n'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      // Clipboard access can be blocked by the browser; the codes are still
+      // visible on screen to copy by hand.
+    }
+  };
+
+  const handleDisable = async (event) => {
+    event.preventDefault();
+    setDisableError('');
+    if (!password) {
+      setDisableError(t('settings.currentPasswordRequired'));
+      return;
+    }
+    setLoading(true);
+    try {
+      await disableMfa(password);
+      updateUser({ mfaEnabled: false });
+      notify.success(t('status.mfaDisabled'));
+      reset();
+    } catch (error) {
+      setDisableError(tServer(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SettingsCard title={t('settings.mfaTitle')} subtitle={t('settings.mfaSubtitle')}>
+      {stage === 'idle' && (
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                user?.mfaEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-surface text-muted'
+              }`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <p className="text-sm text-ink">{user?.mfaEnabled ? t('settings.mfaOn') : t('settings.mfaOff')}</p>
+          </div>
+          {user?.mfaEnabled ? (
+            <button
+              type="button"
+              onClick={() => setStage('disable')}
+              className="shrink-0 rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-ink transition hover:bg-black/[0.03]"
+            >
+              {t('settings.mfaTurnOff')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startSetup}
+              disabled={loading}
+              aria-busy={loading ? 'true' : undefined}
+              className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+            >
+              {loading ? t('common.saving') : t('settings.mfaTurnOn')}
+            </button>
+          )}
+        </div>
+      )}
+
+      {stage === 'setup' && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted">{t('settings.mfaScanHint')}</p>
+          {qrCode && (
+            <img src={qrCode} alt={t('settings.mfaQrAlt')} className="h-40 w-40 rounded-lg border border-border" />
+          )}
+          <div className="rounded-lg border border-border bg-surface px-3.5 py-2.5 font-mono text-sm text-ink break-all">
+            {secret}
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-ink">{t('settings.mfaEnterCode')}</span>
+            <OtpInput
+              length={EMAIL_CODE_LENGTH}
+              value={code}
+              onChange={(value) => {
+                setCode(value);
+                if (codeError) setCodeError('');
+              }}
+              onComplete={submitSetupCode}
+              disabled={loading}
+              hasError={Boolean(codeError)}
+              errorStamp={errorStamp}
+              label={t('settings.mfaEnterCode')}
+            />
+            {codeError && (
+              <p role="alert" className="text-xs font-medium text-red-600">
+                {codeError}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <Button type="button" loading={loading} loadingLabel={t('common.saving')} onClick={() => submitSetupCode(code)}>
+              {t('settings.mfaConfirmEnable')}
+            </Button>
+            <button type="button" onClick={reset} disabled={loading} className="text-sm text-muted hover:text-ink">
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stage === 'backup-codes' && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-ink">{t('settings.mfaBackupHint')}</p>
+          <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-surface p-4 font-mono text-sm text-ink">
+            {backupCodes.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={copyBackupCodes}
+              className="flex items-center gap-1.5 text-sm font-medium text-ink hover:underline"
+            >
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? t('settings.mfaCopied') : t('settings.mfaCopyCodes')}
+            </button>
+          </div>
+          <div>
+            <Button type="button" onClick={reset}>
+              {t('settings.mfaBackupDone')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {stage === 'disable' && (
+        <form onSubmit={handleDisable} noValidate className="flex flex-col gap-4">
+          <p className="text-sm text-muted">{t('settings.mfaTurnOffHint')}</p>
+          <FormField
+            label={t('settings.currentPassword')}
+            type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setDisableError('');
+            }}
+            autoComplete="current-password"
+            error={disableError}
+          />
+          <div className="flex items-center gap-3">
+            <Button type="submit" loading={loading} loadingLabel={t('common.saving')}>
+              {t('settings.mfaConfirmDisable')}
+            </Button>
+            <button type="button" onClick={reset} disabled={loading} className="text-sm text-muted hover:text-ink">
+              {t('common.cancel')}
+            </button>
           </div>
         </form>
       )}
@@ -875,6 +1116,7 @@ function SettingsPage() {
         <ProfileSection />
         <EmailSection />
         <PasswordSection />
+        <MfaSection />
         <DevicesSection />
         <PreferencesSection />
         <DangerZoneSection />

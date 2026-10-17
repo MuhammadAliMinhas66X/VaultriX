@@ -11,7 +11,7 @@ import PageLoader from '../components/PageLoader.jsx';
 import LockScreen from '../components/LockScreen.jsx';
 import LockTimerBadge from '../components/LockTimerBadge.jsx';
 import OtpInput from '../components/OtpInput.jsx';
-import { login, getLoginStatus, verifyDeviceLogin } from '../services/authService.js';
+import { login, getLoginStatus, verifyDeviceLogin, verifyMfaLogin } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
@@ -57,6 +57,18 @@ function LoginPage() {
   const [deviceLoading, setDeviceLoading] = useState(false);
   const [deviceCooldown, setDeviceCooldown] = useState(0);
   const deviceVerifyingRef = useRef(false);
+
+  // Shown instead of the credentials form when the account has 2-step
+  // verification turned on. Can submit either a 6-digit authenticator code
+  // or one of the printed backup codes.
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaToken, setMfaToken] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaCodeError, setMfaCodeError] = useState('');
+  const [mfaErrorStamp, setMfaErrorStamp] = useState(0);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const mfaVerifyingRef = useRef(false);
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get('google_error')) {
@@ -133,6 +145,15 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await login({ email: email.trim(), password, captchaToken });
+      if (data?.requiresMfa) {
+        setMfaToken(data.mfaToken || '');
+        setMfaCode('');
+        setMfaCodeError('');
+        setUseBackupCode(false);
+        setMfaStep(true);
+        setLoading(false);
+        return;
+      }
       if (data?.requiresDeviceVerification) {
         setMaskedEmail(data.maskedEmail || '');
         setDeviceCooldown(data.cooldownSeconds || 60);
@@ -215,12 +236,132 @@ function LoginPage() {
     setDeviceCooldown(0);
   };
 
+  const submitMfaCode = async (value) => {
+    if (mfaVerifyingRef.current) return;
+
+    if (!value || (!useBackupCode && value.length < DEVICE_CODE_LENGTH)) {
+      setMfaCodeError(t(useBackupCode ? 'auth.mfaBackupCodeRequired' : 'auth.deviceCodeIncomplete'));
+      setMfaErrorStamp((stamp) => stamp + 1);
+      return;
+    }
+
+    mfaVerifyingRef.current = true;
+    setMfaLoading(true);
+    setMfaCodeError('');
+
+    try {
+      const data = await verifyMfaLogin({ mfaToken, code: value });
+      // MFA cleared, but this may still be a 3rd device - hand off to the
+      // same device-verification step used from the plain login form.
+      if (data?.requiresDeviceVerification) {
+        setMaskedEmail(data.maskedEmail || '');
+        setDeviceCooldown(data.cooldownSeconds || 60);
+        setDeviceCode('');
+        setDeviceCodeError('');
+        setMfaStep(false);
+        setDeviceStep(true);
+        return;
+      }
+      proceedAfterAuth(data);
+    } catch (error) {
+      setMfaCodeError(tServer(error));
+      setMfaCode('');
+      setMfaErrorStamp((stamp) => stamp + 1);
+    } finally {
+      mfaVerifyingRef.current = false;
+      setMfaLoading(false);
+    }
+  };
+
+  const handleMfaCodeSubmit = (event) => {
+    event.preventDefault();
+    submitMfaCode(mfaCode);
+  };
+
+  const backToCredentialsFromMfa = () => {
+    setMfaStep(false);
+    setMfaCode('');
+    setMfaCodeError('');
+    setMfaToken('');
+    setUseBackupCode(false);
+  };
+
   if (redirecting) {
     return <PageLoader label={t('auth.settingUp')} />;
   }
 
   if (isLocked && lockTier >= 2) {
     return <LockScreen display={formatCountdown(secondsRemaining)} />;
+  }
+
+  if (mfaStep) {
+    return (
+      <AuthLayout title={t('auth.mfaTitle')} subtitle={t('auth.mfaSubtitle')}>
+        <form onSubmit={handleMfaCodeSubmit} noValidate className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            {useBackupCode ? (
+              <FormField
+                label={t('auth.mfaBackupCodeLabel')}
+                value={mfaCode}
+                onChange={(event) => {
+                  setMfaCode(event.target.value);
+                  if (mfaCodeError) setMfaCodeError('');
+                }}
+                placeholder="XXXXX-XXXXX"
+                error={mfaCodeError}
+              />
+            ) : (
+              <>
+                <span className="text-sm font-medium text-ink">{t('auth.deviceCodeLabel')}</span>
+                <OtpInput
+                  length={DEVICE_CODE_LENGTH}
+                  value={mfaCode}
+                  onChange={(value) => {
+                    setMfaCode(value);
+                    if (mfaCodeError) setMfaCodeError('');
+                  }}
+                  onComplete={submitMfaCode}
+                  disabled={mfaLoading}
+                  hasError={Boolean(mfaCodeError)}
+                  errorStamp={mfaErrorStamp}
+                  label={t('auth.deviceCodeLabel')}
+                />
+                {mfaCodeError && (
+                  <p role="alert" className="text-xs font-medium text-red-600">
+                    {mfaCodeError}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <Button type="submit" loading={mfaLoading} loadingLabel={t('auth.verifying')}>
+            {t('auth.deviceVerifyButton')}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setUseBackupCode((prev) => !prev);
+              setMfaCode('');
+              setMfaCodeError('');
+            }}
+            className="text-sm text-muted transition hover:text-ink"
+          >
+            {useBackupCode ? t('auth.mfaUseAppCode') : t('auth.mfaUseBackupCode')}
+          </button>
+
+          <button
+            type="button"
+            onClick={backToCredentialsFromMfa}
+            className="flex items-center justify-center gap-2 text-sm text-muted transition hover:text-ink"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t('forgot.backToSignIn')}
+          </button>
+        </form>
+      </AuthLayout>
+    );
   }
 
   if (deviceStep) {
