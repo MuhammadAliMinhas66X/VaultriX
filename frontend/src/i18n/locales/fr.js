@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'Zone de danger',
   'settings.dangerZoneSubtitle': 'Supprimez définitivement votre compte et toutes ses données.',
   'settings.deleteAccount': 'Supprimer le compte',
+  'settings.sendDeleteCode': 'Envoyer le code de suppression',
+  'settings.deleteCodeSentTo': 'Action irréversible. Saisissez le code envoyé à {email} pour supprimer définitivement votre compte.',
   'settings.deleteAccountWarning': 'Cela supprime définitivement votre compte, votre espace de travail et toutes ses données. Action irréversible.',
   'settings.typeDeleteLabel': 'Tapez DELETE pour confirmer',
   'settings.typeDeleteToConfirm': 'Tapez DELETE pour confirmer.',

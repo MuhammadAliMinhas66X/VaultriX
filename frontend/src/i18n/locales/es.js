@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'Zona de peligro',
   'settings.dangerZoneSubtitle': 'Elimina permanentemente tu cuenta y todos sus datos.',
   'settings.deleteAccount': 'Eliminar cuenta',
+  'settings.sendDeleteCode': 'Enviar código de eliminación',
+  'settings.deleteCodeSentTo': 'Esto no se puede deshacer. Introduce el código que enviamos a {email} para eliminar tu cuenta permanentemente.',
   'settings.deleteAccountWarning': 'Esto elimina permanentemente tu cuenta, tu espacio de trabajo y todos sus datos. No se puede deshacer.',
   'settings.typeDeleteLabel': 'Escribe DELETE para confirmar',
   'settings.typeDeleteToConfirm': 'Escribe DELETE para confirmar.',

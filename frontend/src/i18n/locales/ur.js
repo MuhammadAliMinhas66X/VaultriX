@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'خطرے کا زون',
   'settings.dangerZoneSubtitle': 'اپنا اکاؤنٹ اور اس کا سارا ڈیٹا مستقل طور پر حذف کریں۔',
   'settings.deleteAccount': 'اکاؤنٹ حذف کریں',
+  'settings.sendDeleteCode': 'حذف کرنے کا کوڈ بھیجیں',
+  'settings.deleteCodeSentTo': 'اسے واپس نہیں کیا جا سکتا۔ اپنا اکاؤنٹ مستقل طور پر حذف کرنے کے لیے {email} پر بھیجا گیا کوڈ درج کریں۔',
   'settings.deleteAccountWarning': 'یہ آپ کا اکاؤنٹ، ورک اسپیس اور اس کا سارا ڈیٹا مستقل طور پر حذف کر دے گا۔ اسے واپس نہیں کیا جا سکتا۔',
   'settings.typeDeleteLabel': 'تصدیق کے لیے DELETE لکھیں',
   'settings.typeDeleteToConfirm': 'تصدیق کے لیے DELETE لکھیں۔',

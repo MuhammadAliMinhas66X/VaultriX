@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'Danger zone',
   'settings.dangerZoneSubtitle': 'Permanently delete your account and all of its data.',
   'settings.deleteAccount': 'Delete account',
+  'settings.sendDeleteCode': 'Send deletion code',
+  'settings.deleteCodeSentTo': 'This cannot be undone. Enter the code we sent to {email} to permanently delete your account.',
   'settings.deleteAccountWarning': 'This permanently deletes your account, your workspace and all of its data. This cannot be undone.',
   'settings.typeDeleteLabel': 'Type DELETE to confirm',
   'settings.typeDeleteToConfirm': 'Type DELETE to confirm.',

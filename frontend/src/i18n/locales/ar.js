@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'منطقة الخطر',
   'settings.dangerZoneSubtitle': 'احذف حسابك وجميع بياناته نهائيًا.',
   'settings.deleteAccount': 'حذف الحساب',
+  'settings.sendDeleteCode': 'إرسال رمز الحذف',
+  'settings.deleteCodeSentTo': 'لا يمكن التراجع عن هذا. أدخل الرمز الذي أرسلناه إلى {email} لحذف حسابك نهائيًا.',
   'settings.deleteAccountWarning': 'سيؤدي هذا إلى حذف حسابك ومساحة عملك وجميع بياناتها نهائيًا. لا يمكن التراجع عن هذا.',
   'settings.typeDeleteLabel': 'اكتب DELETE للتأكيد',
   'settings.typeDeleteToConfirm': 'اكتب DELETE للتأكيد.',

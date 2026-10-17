@@ -16,7 +16,8 @@ import {
   logoutAllSessions,
   requestEmailChange,
   verifyEmailChange,
-  deleteAccount,
+  requestAccountDeletion,
+  confirmAccountDeletion,
 } from '../services/userService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
@@ -640,15 +641,46 @@ function PreferencesSection() {
 function DangerZoneSection() {
   const { user, markIntentionalLogout, clearSession } = useAuth();
   const { t, tServer } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const sectionRef = useRef(null);
+
+  // idle -> confirm (password / typed DELETE) -> code (emailed OTP)
+  const [stage, setStage] = useState('idle');
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [errorStamp, setErrorStamp] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
 
   const isGoogle = user?.authProvider === 'google';
 
-  const handleDelete = async (event) => {
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const timer = setInterval(() => setCooldown((prev) => Math.max(0, prev - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const openConfirm = () => {
+    setStage('confirm');
+    // The button that reveals this panel sits at the bottom of a long
+    // Settings page, so bring the panel into view rather than leaving the
+    // person to scroll down and find it themselves.
+    requestAnimationFrame(() => {
+      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
+
+  const sendDeletionCode = async () => {
+    const data = await requestAccountDeletion(isGoogle ? { confirm: confirmText.trim() } : { password });
+    setCooldown(data?.cooldownSeconds || 60);
+    setCode('');
+    setCodeError('');
+    setStage('code');
+  };
+
+  const handleConfirmSubmit = async (event) => {
     event.preventDefault();
     setError('');
 
@@ -663,75 +695,151 @@ function DangerZoneSection() {
 
     setDeleting(true);
     try {
-      markIntentionalLogout();
-      await deleteAccount(isGoogle ? { confirm: confirmText.trim() } : { password });
-      notify.success(t('status.accountDeleted'));
-      clearSession();
+      await sendDeletionCode();
     } catch (err) {
       setError(tServer(err));
+    } finally {
       setDeleting(false);
     }
   };
 
+  const submitCode = async (value) => {
+    if (value.length < EMAIL_CODE_LENGTH) {
+      setCodeError(t('auth.deviceCodeIncomplete'));
+      setErrorStamp((stamp) => stamp + 1);
+      return;
+    }
+
+    setDeleting(true);
+    setCodeError('');
+    try {
+      markIntentionalLogout();
+      await confirmAccountDeletion(value);
+      notify.success(t('status.accountDeleted'));
+      clearSession();
+    } catch (err) {
+      setCodeError(tServer(err));
+      setCode('');
+      setErrorStamp((stamp) => stamp + 1);
+      setDeleting(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (cooldown > 0 || deleting) return;
+    setDeleting(true);
+    try {
+      await sendDeletionCode();
+      notify.success(t('auth.deviceCodeResent'));
+    } catch (err) {
+      notify.error(tServer(err));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const reset = () => {
+    setStage('idle');
+    setPassword('');
+    setConfirmText('');
+    setError('');
+    setCode('');
+    setCodeError('');
+  };
+
   return (
     <SettingsCard title={t('settings.dangerZoneTitle')} subtitle={t('settings.dangerZoneSubtitle')}>
-      {!open ? (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
-        >
-          <AlertTriangle className="h-4 w-4" />
-          {t('settings.deleteAccount')}
-        </button>
-      ) : (
-        <form onSubmit={handleDelete} noValidate className="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4">
-          <p className="text-sm text-red-700">{t('settings.deleteAccountWarning')}</p>
+      <div ref={sectionRef}>
+        {stage === 'idle' && (
+          <button
+            type="button"
+            onClick={openConfirm}
+            className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            {t('settings.deleteAccount')}
+          </button>
+        )}
 
-          {isGoogle ? (
-            <FormField
-              label={t('settings.typeDeleteLabel')}
-              value={confirmText}
-              onChange={(event) => {
-                setConfirmText(event.target.value);
-                setError('');
-              }}
-              error={error}
-            />
-          ) : (
-            <FormField
-              label={t('settings.currentPassword')}
-              type="password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                setError('');
-              }}
-              autoComplete="current-password"
-              error={error}
-            />
-          )}
+        {stage === 'confirm' && (
+          <form onSubmit={handleConfirmSubmit} noValidate className="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4">
+            <p className="text-sm text-red-700">{t('settings.deleteAccountWarning')}</p>
 
-          <div className="flex items-center gap-3">
-            <Button type="submit" loading={deleting} loadingLabel={t('common.deleting')}>
-              {t('settings.confirmDeleteAccount')}
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setPassword('');
-                setConfirmText('');
-                setError('');
+            {isGoogle ? (
+              <FormField
+                label={t('settings.typeDeleteLabel')}
+                value={confirmText}
+                onChange={(event) => {
+                  setConfirmText(event.target.value);
+                  setError('');
+                }}
+                error={error}
+              />
+            ) : (
+              <FormField
+                label={t('settings.currentPassword')}
+                type="password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError('');
+                }}
+                autoComplete="current-password"
+                error={error}
+              />
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button type="submit" loading={deleting} loadingLabel={t('common.saving')}>
+                {t('settings.sendDeleteCode')}
+              </Button>
+              <button type="button" onClick={reset} disabled={deleting} className="text-sm text-muted hover:text-ink">
+                {t('common.cancel')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {stage === 'code' && (
+          <div className="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4">
+            <p className="text-sm text-red-700">{t('settings.deleteCodeSentTo', { email: user?.email || '' })}</p>
+            <OtpInput
+              length={EMAIL_CODE_LENGTH}
+              value={code}
+              onChange={(value) => {
+                setCode(value);
+                if (codeError) setCodeError('');
               }}
+              onComplete={submitCode}
               disabled={deleting}
-              className="text-sm text-muted hover:text-ink"
-            >
-              {t('common.cancel')}
-            </button>
+              hasError={Boolean(codeError)}
+              errorStamp={errorStamp}
+              label={t('auth.deviceCodeLabel')}
+            />
+            {codeError && (
+              <p role="alert" className="text-xs font-medium text-red-600">
+                {codeError}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-4">
+              <Button type="button" loading={deleting} loadingLabel={t('common.deleting')} onClick={() => submitCode(code)}>
+                {t('settings.confirmDeleteAccount')}
+              </Button>
+              <button
+                type="button"
+                onClick={resendCode}
+                disabled={cooldown > 0 || deleting}
+                className="text-sm text-red-700/80 hover:text-red-700 disabled:cursor-default disabled:opacity-60"
+              >
+                {cooldown > 0 ? t('auth.deviceResendIn', { seconds: cooldown }) : t('auth.deviceResend')}
+              </button>
+              <button type="button" onClick={reset} disabled={deleting} className="text-sm text-muted hover:text-ink">
+                {t('common.cancel')}
+              </button>
+            </div>
           </div>
-        </form>
-      )}
+        )}
+      </div>
     </SettingsCard>
   );
 }

@@ -78,9 +78,18 @@ export const verifyEmailChange = async (code) => {
   }
 };
 
-export const deleteAccount = async (payload) => {
+export const requestAccountDeletion = async (payload) => {
   try {
-    const { data } = await api.delete('/users/me', { data: payload });
+    const { data } = await api.post('/users/me/delete/request', payload);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const confirmAccountDeletion = async (code) => {
+  try {
+    const { data } = await api.post('/users/me/delete/confirm', { code });
     return data;
   } catch (error) {
     throw toApiError(error);

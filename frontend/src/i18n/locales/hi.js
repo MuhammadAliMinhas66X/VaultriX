@@ -119,6 +119,8 @@ export default {
   'settings.dangerZoneTitle': 'खतरे का क्षेत्र',
   'settings.dangerZoneSubtitle': 'अपना खाता और उसका सारा डेटा स्थायी रूप से हटाएं।',
   'settings.deleteAccount': 'खाता हटाएं',
+  'settings.sendDeleteCode': 'डिलीट कोड भेजें',
+  'settings.deleteCodeSentTo': 'इसे पूर्ववत नहीं किया जा सकता। अपना खाता स्थायी रूप से हटाने के लिए {email} पर भेजा गया कोड दर्ज करें।',
   'settings.deleteAccountWarning': 'यह आपके खाते, वर्कस्पेस और उसके सारे डेटा को स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।',
   'settings.typeDeleteLabel': 'पुष्टि के लिए DELETE लिखें',
   'settings.typeDeleteToConfirm': 'पुष्टि के लिए DELETE लिखें।',
