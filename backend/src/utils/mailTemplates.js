@@ -85,6 +85,18 @@ export const emailChangeOtpEmail = ({ name, code, minutes }) => ({
   ),
 });
 
+export const accountDeletionOtpEmail = ({ name, code, minutes }) => ({
+  subject: `${code} is your Vaultrix account deletion code`,
+  text: `Hi ${name || 'there'},\n\nUse this code to permanently delete your Vaultrix account: ${code}.\nIt expires in ${minutes} minutes. This cannot be undone.\n\nIf you did not ask to delete your account, you can ignore this and nothing will change.\n`,
+  html: shell(
+    'Confirm account deletion',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, use this code to permanently delete your Vaultrix account. This cannot be undone.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">The code expires in ${minutes} minutes and can only be used once.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you did not ask to delete your account, you can ignore this and nothing will change.</p>`
+  ),
+});
+
 export const accountDeletedEmail = ({ name }) => ({
   subject: 'Your Vaultrix account has been deleted',
   text: `Hi ${name || 'there'},\n\nYour Vaultrix account and all of its data have been permanently deleted, as requested.\n\nIf this was not you, contact support right away.\n`,

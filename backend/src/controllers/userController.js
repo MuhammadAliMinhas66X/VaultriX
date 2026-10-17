@@ -7,6 +7,7 @@ import Session from '../models/Session.js';
 import Organization from '../models/Organization.js';
 import PendingEmailChange from '../models/PendingEmailChange.js';
 import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
+import PendingAccountDeletion from '../models/PendingAccountDeletion.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
 import { describeDevice } from '../utils/deviceLabel.js';
 import { AVATAR_DIR } from '../middleware/upload.js';
@@ -15,7 +16,7 @@ import { parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
 import { securityLog } from '../utils/securityLog.js';
 import { sendMail } from '../utils/mailer.js';
-import { emailChangedEmail, accountDeletedEmail, emailChangeOtpEmail } from '../utils/mailTemplates.js';
+import { emailChangedEmail, accountDeletedEmail, emailChangeOtpEmail, accountDeletionOtpEmail } from '../utils/mailTemplates.js';
 
 // Must match the dictionaries shipped in frontend/src/i18n/locales.
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
@@ -415,8 +416,13 @@ export const verifyEmailChange = async (req, res, next) => {
 };
 
 // --- Account deletion ---------------------------------------------------
+// Two steps: confirm you are you (password, or a typed DELETE for a Google
+// account) and get emailed a code; then enter that code to actually, and
+// permanently, delete the account. The code step is what makes this safe
+// even if someone is at an unlocked, already-signed-in browser - they'd
+// still need access to the inbox.
 
-export const deleteAccount = async (req, res, next) => {
+export const requestAccountDeletion = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
@@ -439,6 +445,80 @@ export const deleteAccount = async (req, res, next) => {
       }
     }
 
+    const now = Date.now();
+    const existing = await PendingAccountDeletion.findOne({ userId: user._id });
+    const inWindow = Boolean(existing) && now - existing.windowStartedAt.getTime() < HOUR_MS;
+
+    if (existing && now - existing.lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
+      return res.status(429).json({ success: false, message: 'Please wait a moment before requesting another code.' });
+    }
+    if (inWindow && existing.sendCount >= MAX_SENDS_PER_HOUR) {
+      return res.status(429).json({ success: false, message: 'Too many code requests. Please try again in an hour.' });
+    }
+
+    const code = generateCode();
+    const otpHash = await bcrypt.hash(code, 10);
+
+    await PendingAccountDeletion.findOneAndUpdate(
+      { userId: user._id },
+      {
+        $set: {
+          otpHash,
+          otpExpiresAt: new Date(now + OTP_TTL_MS),
+          attempts: 0,
+          lastSentAt: new Date(now),
+          windowStartedAt: inWindow ? existing.windowStartedAt : new Date(now),
+          sendCount: inWindow ? existing.sendCount + 1 : 1,
+          expiresAt: new Date(now + HOUR_MS),
+        },
+      },
+      { upsert: true }
+    );
+
+    sendInBackground(accountDeletionOtpEmail({ name: user.name, code, minutes: OTP_TTL_MINUTES }), user.email);
+    securityLog('account_deletion_requested', req, { userId: String(user._id) });
+
+    res.json({ success: true, cooldownSeconds: RESEND_COOLDOWN_SECONDS, expiresInMinutes: OTP_TTL_MINUTES });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const confirmAccountDeletion = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
+
+    const code = String(req.body?.code ?? '').trim();
+    if (!new RegExp(`^\\d{${OTP_LENGTH}}$`).test(code)) {
+      return res.status(400).json({ success: false, message: 'That code is not right. Check it and try again.' });
+    }
+
+    const now = new Date();
+    const record = await PendingAccountDeletion.findOneAndUpdate(
+      { userId: user._id, attempts: { $lt: MAX_ATTEMPTS }, otpExpiresAt: { $gt: now } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+
+    if (!record) {
+      const stale = await PendingAccountDeletion.findOne({ userId: user._id });
+      if (!stale) return res.status(400).json({ success: false, message: 'Start the account deletion again.' });
+      if (stale.otpExpiresAt <= now) {
+        return res.status(400).json({ success: false, message: 'That code has expired. Request a new one.' });
+      }
+      return res.status(400).json({ success: false, message: 'Too many wrong codes. Request a new one.' });
+    }
+
+    const matches = await bcrypt.compare(code, record.otpHash);
+    if (!matches) {
+      securityLog('account_deletion_wrong_code', req, { userId: String(user._id) });
+      return res.status(400).json({
+        success: false,
+        message: record.attempts >= MAX_ATTEMPTS ? 'Too many wrong codes. Request a new one.' : 'That code is not right. Check it and try again.',
+      });
+    }
+
     const userId = user._id;
     const orgId = user.orgId;
 
@@ -451,6 +531,7 @@ export const deleteAccount = async (req, res, next) => {
       Session.deleteMany({ userId }),
       PendingEmailChange.deleteMany({ userId }),
       PendingDeviceLogin.deleteMany({ userId }),
+      PendingAccountDeletion.deleteOne({ _id: record._id }),
     ]);
 
     await User.deleteOne({ _id: userId });
