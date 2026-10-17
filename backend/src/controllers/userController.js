@@ -1,12 +1,21 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
+import Organization from '../models/Organization.js';
+import PendingEmailChange from '../models/PendingEmailChange.js';
+import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
 import { describeDevice } from '../utils/deviceLabel.js';
 import { AVATAR_DIR } from '../middleware/upload.js';
 import { validatePassword, cleanName, NAME_MESSAGE, isCountryCode, isCurrencyCode } from '../utils/validators.js';
+import { parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
+import { isDisposableDomain } from '../utils/disposableDomains.js';
+import { securityLog } from '../utils/securityLog.js';
+import { sendMail } from '../utils/mailer.js';
+import { emailChangedEmail, accountDeletedEmail, emailChangeOtpEmail } from '../utils/mailTemplates.js';
 
 // Must match the dictionaries shipped in frontend/src/i18n/locales.
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
@@ -28,6 +37,23 @@ const createSession = (req, user) =>
     ip: req.ip,
     expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
   });
+
+const OTP_LENGTH = 6;
+const OTP_TTL_MINUTES = 10;
+const OTP_TTL_MS = OTP_TTL_MINUTES * 60 * 1000;
+const RESEND_COOLDOWN_SECONDS = 60;
+const RESEND_COOLDOWN_MS = RESEND_COOLDOWN_SECONDS * 1000;
+const MAX_SENDS_PER_HOUR = 5;
+const MAX_ATTEMPTS = 5;
+const HOUR_MS = 60 * 60 * 1000;
+
+const generateCode = () => String(crypto.randomInt(0, 10 ** OTP_LENGTH)).padStart(OTP_LENGTH, '0');
+
+const sendInBackground = (message, to) => {
+  sendMail({ to, ...message }).catch((error) => {
+    console.error('Could not send email:', error.message);
+  });
+};
 
 const publicUser = (user) => ({
   id: user._id,
@@ -142,7 +168,7 @@ export const changePassword = async (req, res, next) => {
     await Session.deleteMany({ userId: user._id });
     const session = await createSession(req, user);
 
-    const accessToken = signAccessToken(user);
+    const accessToken = signAccessToken(user, session._id);
     const refreshToken = signRefreshToken(user, session._id);
 
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
@@ -236,6 +262,210 @@ export const logoutAllSessions = async (req, res, next) => {
   try {
     await Session.deleteMany({ userId: req.user.id });
     await User.updateOne({ _id: req.user.id }, { $inc: { tokenVersion: 1 } });
+
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- Email change -----------------------------------------------------
+// Two-step, same shape as every other OTP flow in this app: request a code
+// (sent to the NEW address, to prove the user owns it), then confirm it.
+// Google-auth accounts are blocked here - their email is tied to how they
+// sign in, and juggling googleId vs. email matching on every future Google
+// sign-in is a can of worms better avoided for a feature almost nobody with
+// a Google account will reach for anyway.
+
+export const requestEmailChange = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
+
+    if (!user.passwordHash) {
+      return res.status(400).json({
+        success: false,
+        message: 'Your email is managed by Google sign-in and cannot be changed here.',
+      });
+    }
+
+    const { newEmail, password } = req.body || {};
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, message: 'Enter your password to continue.' });
+    }
+
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) {
+      return res.status(400).json({ success: false, message: 'Your password is not right.' });
+    }
+
+    const parsed = parseEmail(newEmail);
+    if (!parsed) return res.status(400).json({ success: false, message: EMAIL_MESSAGES.format });
+
+    if (isDisposableDomain(parsed.domain)) {
+      return res.status(400).json({ success: false, message: EMAIL_MESSAGES.disposable });
+    }
+
+    if (parsed.email === user.email) {
+      return res.status(400).json({ success: false, message: 'That is already your email address.' });
+    }
+
+    const taken = await User.findOne({ email: parsed.email });
+    if (taken) {
+      return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+    }
+
+    const now = Date.now();
+    const existing = await PendingEmailChange.findOne({ userId: user._id });
+    const inWindow = Boolean(existing) && now - existing.windowStartedAt.getTime() < HOUR_MS;
+
+    if (existing && now - existing.lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
+      return res.status(429).json({ success: false, message: 'Please wait a moment before requesting another code.' });
+    }
+    if (inWindow && existing.sendCount >= MAX_SENDS_PER_HOUR) {
+      return res.status(429).json({ success: false, message: 'Too many code requests. Please try again in an hour.' });
+    }
+
+    const code = generateCode();
+    const otpHash = await bcrypt.hash(code, 10);
+
+    await PendingEmailChange.findOneAndUpdate(
+      { userId: user._id },
+      {
+        $set: {
+          newEmail: parsed.email,
+          otpHash,
+          otpExpiresAt: new Date(now + OTP_TTL_MS),
+          attempts: 0,
+          lastSentAt: new Date(now),
+          windowStartedAt: inWindow ? existing.windowStartedAt : new Date(now),
+          sendCount: inWindow ? existing.sendCount + 1 : 1,
+          expiresAt: new Date(now + HOUR_MS),
+        },
+      },
+      { upsert: true }
+    );
+
+    sendInBackground(emailChangeOtpEmail({ name: user.name, code, minutes: OTP_TTL_MINUTES }), parsed.email);
+    securityLog('email_change_requested', req, { userId: String(user._id) });
+
+    res.json({ success: true, cooldownSeconds: RESEND_COOLDOWN_SECONDS, expiresInMinutes: OTP_TTL_MINUTES });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyEmailChange = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
+
+    const code = String(req.body?.code ?? '').trim();
+    if (!new RegExp(`^\\d{${OTP_LENGTH}}$`).test(code)) {
+      return res.status(400).json({ success: false, message: 'That code is not right. Check it and try again.' });
+    }
+
+    const now = new Date();
+    const record = await PendingEmailChange.findOneAndUpdate(
+      { userId: user._id, attempts: { $lt: MAX_ATTEMPTS }, otpExpiresAt: { $gt: now } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+
+    if (!record) {
+      const stale = await PendingEmailChange.findOne({ userId: user._id });
+      if (!stale) return res.status(400).json({ success: false, message: 'Start the email change again.' });
+      if (stale.otpExpiresAt <= now) {
+        return res.status(400).json({ success: false, message: 'That code has expired. Request a new one.' });
+      }
+      return res.status(400).json({ success: false, message: 'Too many wrong codes. Request a new one.' });
+    }
+
+    const matches = await bcrypt.compare(code, record.otpHash);
+    if (!matches) {
+      securityLog('email_change_wrong_code', req, { userId: String(user._id) });
+      return res.status(400).json({
+        success: false,
+        message: record.attempts >= MAX_ATTEMPTS ? 'Too many wrong codes. Request a new one.' : 'That code is not right. Check it and try again.',
+      });
+    }
+
+    // Someone else may have claimed the address while this code sat unused.
+    const stillFree = !(await User.findOne({ email: record.newEmail, _id: { $ne: user._id } }));
+    if (!stillFree) {
+      await PendingEmailChange.deleteOne({ _id: record._id });
+      return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+    }
+
+    const previousEmail = user.email;
+    user.email = record.newEmail;
+    await user.save();
+
+    await PendingEmailChange.deleteOne({ _id: record._id });
+    securityLog('email_changed', req, { userId: String(user._id) });
+
+    sendInBackground(emailChangedEmail({ name: user.name, newEmail: user.email }), previousEmail);
+
+    res.json({ success: true, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- Account deletion ---------------------------------------------------
+
+export const deleteAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
+
+    if (user.passwordHash) {
+      const { password } = req.body || {};
+      if (!password || typeof password !== 'string') {
+        return res.status(400).json({ success: false, message: 'Enter your password to continue.' });
+      }
+      const matches = await bcrypt.compare(password, user.passwordHash);
+      if (!matches) {
+        return res.status(400).json({ success: false, message: 'Your password is not right.' });
+      }
+    } else {
+      // Google-auth accounts have no password to confirm with, so a typed
+      // confirmation phrase stands in for it.
+      const confirm = String(req.body?.confirm ?? '').trim().toUpperCase();
+      if (confirm !== 'DELETE') {
+        return res.status(400).json({ success: false, message: 'Type DELETE to confirm.' });
+      }
+    }
+
+    const userId = user._id;
+    const orgId = user.orgId;
+
+    if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
+      const avatarPath = path.join(AVATAR_DIR, path.basename(user.avatarUrl));
+      fs.unlink(avatarPath, () => {});
+    }
+
+    await Promise.all([
+      Session.deleteMany({ userId }),
+      PendingEmailChange.deleteMany({ userId }),
+      PendingDeviceLogin.deleteMany({ userId }),
+    ]);
+
+    await User.deleteOne({ _id: userId });
+
+    // Every org is still exactly one user today (the multi-member side of
+    // Organization isn't built yet), so deleting the org alongside its only
+    // user never orphans anyone else's data - but the "no one else left"
+    // check is kept anyway so this stays correct once that changes.
+    const remainingMembers = await User.countDocuments({ orgId });
+    if (remainingMembers === 0) {
+      await Organization.deleteOne({ _id: orgId });
+    }
+
+    securityLog('account_deleted', req, { userId: String(userId) });
+    sendInBackground(accountDeletedEmail({ name: user.name }), user.email);
 
     res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
     res.json({ success: true });
