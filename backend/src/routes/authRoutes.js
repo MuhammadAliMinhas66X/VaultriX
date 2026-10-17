@@ -9,6 +9,7 @@ import {
   googleCallback,
   refresh,
   me,
+  verifyDeviceLogin,
 } from '../controllers/authController.js';
 import {
   validateEmailAddress,
@@ -35,6 +36,7 @@ const router = Router();
 router.post('/signup', signupLimiter, signup);
 router.post('/signup/verify', verifyCodeLimiter, verifySignupOtp);
 router.post('/login', loginLimiter, verifyCaptcha, login);
+router.post('/verify-device', verifyCodeLimiter, verifyDeviceLogin);
 router.post('/login-status', loginStatusLimiter, loginStatus);
 router.post('/logout', logout);
 router.post('/google', googleLimiter, googleAuth);

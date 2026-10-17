@@ -4,6 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import PendingSignup from '../models/PendingSignup.js';
+import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
 import Session from '../models/Session.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
 import { checkEmail, parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
@@ -12,7 +13,7 @@ import { validatePassword, cleanName, isNonEmptyString, NAME_MESSAGE } from '../
 import { securityLog } from '../utils/securityLog.js';
 import { checkCaptcha } from '../middleware/captcha.js';
 import { sendMail } from '../utils/mailer.js';
-import { signupOtpEmail } from '../utils/mailTemplates.js';
+import { signupOtpEmail, deviceLoginEmail } from '../utils/mailTemplates.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -47,6 +48,18 @@ const MESSAGES = {
   otpExpired: 'That code has expired. Request a new one.',
   otpTooMany: 'Too many wrong codes. Request a new one.',
   signupSessionExpired: 'Your signup session has expired. Please start again.',
+};
+
+// A single account can be signed in on this many devices at once. Signing in
+// on one more prompts an email code to confirm it's really the owner, then
+// signs the least-recently-used device out to make room.
+const DEVICE_SESSION_LIMIT = 2;
+
+const maskEmail = (email) => {
+  const [local, domain] = String(email).split('@');
+  if (!domain) return email;
+  const visible = local.slice(0, 2) || local;
+  return `${visible}${'*'.repeat(Math.max(local.length - visible.length, 3))}@${domain}`;
 };
 
 const generateOtp = () => String(crypto.randomInt(0, 10 ** SIGNUP_OTP_LENGTH)).padStart(SIGNUP_OTP_LENGTH, '0');
@@ -95,13 +108,125 @@ const createSession = (req, user) =>
     expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
   });
 
+// Sends (or resends, respecting the same cooldown/hourly-cap pattern as
+// every other OTP flow in this file) the device-confirmation code, and
+// reports what to tell the client.
+const sendDeviceOtp = async (req, user) => {
+  const now = Date.now();
+  const existing = await PendingDeviceLogin.findOne({ userId: user._id });
+  const inWindow = Boolean(existing) && now - existing.windowStartedAt.getTime() < HOUR_MS;
+
+  if (existing && now - existing.lastSentAt.getTime() < SIGNUP_RESEND_COOLDOWN_MS) {
+    return { blocked: MESSAGES.otpWait };
+  }
+  if (inWindow && existing.sendCount >= SIGNUP_MAX_SENDS_PER_HOUR) {
+    return { blocked: MESSAGES.otpHourly };
+  }
+
+  const code = generateOtp();
+  const otpHash = await bcrypt.hash(code, 10);
+
+  await PendingDeviceLogin.findOneAndUpdate(
+    { userId: user._id },
+    {
+      $set: {
+        otpHash,
+        otpExpiresAt: new Date(now + SIGNUP_OTP_TTL_MS),
+        attempts: 0,
+        userAgent: req.headers['user-agent'] || '',
+        ip: req.ip,
+        lastSentAt: new Date(now),
+        windowStartedAt: inWindow ? existing.windowStartedAt : new Date(now),
+        sendCount: inWindow ? existing.sendCount + 1 : 1,
+        expiresAt: new Date(now + HOUR_MS),
+      },
+    },
+    { upsert: true }
+  );
+
+  sendOtpInBackground(deviceLoginEmail({ name: user.name, code, minutes: SIGNUP_OTP_TTL_MINUTES }), user.email);
+  return { ok: true };
+};
+
 const startSession = async (req, res, user, status = 200) => {
+  const activeDevices = await Session.countDocuments({ userId: user._id });
+
+  if (activeDevices >= DEVICE_SESSION_LIMIT) {
+    const outcome = await sendDeviceOtp(req, user);
+    if (outcome.blocked) return fail(res, 429, outcome.blocked);
+
+    securityLog('device_limit_challenge', req, { userId: String(user._id) });
+    return res.status(200).json({
+      success: true,
+      requiresDeviceVerification: true,
+      maskedEmail: maskEmail(user.email),
+      cooldownSeconds: SIGNUP_RESEND_COOLDOWN_SECONDS,
+      expiresInMinutes: SIGNUP_OTP_TTL_MINUTES,
+    });
+  }
+
   const session = await createSession(req, user);
-  const accessToken = signAccessToken(user);
+  const accessToken = signAccessToken(user, session._id);
   const refreshToken = signRefreshToken(user, session._id);
 
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
   res.status(status).json({ success: true, accessToken, user: publicUser(user) });
+};
+
+// Completes a login that was paused for device verification: confirms the
+// emailed code, signs the least-recently-used device out to make room, and
+// signs this new device in.
+export const verifyDeviceLogin = async (req, res, next) => {
+  try {
+    const parsed = parseEmail(req.body?.email);
+    const code = String(req.body?.code ?? '').trim();
+
+    if (!parsed || !new RegExp(`^\\d{${SIGNUP_OTP_LENGTH}}$`).test(code)) {
+      return fail(res, 400, MESSAGES.otpWrong);
+    }
+
+    const user = await User.findOne({ email: parsed.email });
+    if (!user) return fail(res, 400, MESSAGES.otpWrong);
+
+    const now = new Date();
+    const record = await PendingDeviceLogin.findOneAndUpdate(
+      { userId: user._id, attempts: { $lt: SIGNUP_MAX_ATTEMPTS }, otpExpiresAt: { $gt: now } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+
+    if (!record) {
+      const stale = await PendingDeviceLogin.findOne({ userId: user._id });
+      if (!stale) return fail(res, 400, MESSAGES.otpWrong);
+      if (stale.otpExpiresAt <= now) return fail(res, 400, MESSAGES.otpExpired);
+      return fail(res, 400, MESSAGES.otpTooMany);
+    }
+
+    const matches = await bcrypt.compare(code, record.otpHash);
+    if (!matches) {
+      securityLog('device_login_wrong_code', req, { userId: String(user._id) });
+      return fail(res, 400, record.attempts >= SIGNUP_MAX_ATTEMPTS ? MESSAGES.otpTooMany : MESSAGES.otpWrong);
+    }
+
+    // Verified - make room for this device by signing the
+    // least-recently-used one out, then let this one in.
+    const oldest = await Session.findOne({ userId: user._id }).sort({ lastUsedAt: 1 });
+    if (oldest) {
+      await Session.deleteOne({ _id: oldest._id });
+      securityLog('device_limit_bumped', req, { userId: String(user._id), bumpedSessionId: String(oldest._id) });
+    }
+
+    await PendingDeviceLogin.deleteOne({ _id: record._id });
+
+    const session = await createSession(req, user);
+    const accessToken = signAccessToken(user, session._id);
+    const refreshToken = signRefreshToken(user, session._id);
+
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
+    res.json({ success: true, accessToken, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const signup = async (req, res, next) => {
@@ -400,7 +525,7 @@ export const refresh = async (req, res) => {
     session.expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
     await session.save();
 
-    const accessToken = signAccessToken(user);
+    const accessToken = signAccessToken(user, session._id);
     const refreshToken = signRefreshToken(user, session._id);
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.json({ success: true, accessToken, user: publicUser(user) });

@@ -60,3 +60,47 @@ export const passwordChangedEmail = ({ name }) => ({
      <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, reset your password again right away.</p>`
   ),
 });
+
+export const deviceLoginEmail = ({ name, code, minutes }) => ({
+  subject: `${code} is your Vaultrix sign-in code`,
+  text: `Hi ${name || 'there'},\n\nYou're already signed in to Vaultrix on 2 devices, so we need to confirm it's really you before adding a 3rd. Use this code to continue: ${code}.\nIt expires in ${minutes} minutes. Your oldest signed-in device will be signed out to make room.\n\nIf this was not you, change your password right away.\n`,
+  html: shell(
+    'Confirm this new device',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, you're already signed in to Vaultrix on 2 devices. Use this code to confirm it's you signing in on a new one - your oldest signed-in device will be signed out to make room.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">The code expires in ${minutes} minutes and can only be used once.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, change your password right away.</p>`
+  ),
+});
+
+export const emailChangeOtpEmail = ({ name, code, minutes }) => ({
+  subject: `${code} is your Vaultrix verification code`,
+  text: `Hi ${name || 'there'},\n\nUse this code to confirm this is your new email address for Vaultrix: ${code}.\nIt expires in ${minutes} minutes.\n\nIf you did not ask to change your Vaultrix email, you can ignore this and nothing will change.\n`,
+  html: shell(
+    'Confirm your new email address',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, use this code to confirm this is your new email address for Vaultrix.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">The code expires in ${minutes} minutes and can only be used once.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you did not ask to change your Vaultrix email, you can ignore this and nothing will change.</p>`
+  ),
+});
+
+export const accountDeletedEmail = ({ name }) => ({
+  subject: 'Your Vaultrix account has been deleted',
+  text: `Hi ${name || 'there'},\n\nYour Vaultrix account and all of its data have been permanently deleted, as requested.\n\nIf this was not you, contact support right away.\n`,
+  html: shell(
+    'Your account has been deleted',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, your Vaultrix account and all of its data have been permanently deleted, as requested.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, contact support right away.</p>`
+  ),
+});
+
+export const emailChangedEmail = ({ name, newEmail }) => ({
+  subject: 'Your Vaultrix email address was changed',
+  text: `Hi ${name || 'there'},\n\nThe email address on your Vaultrix account was just changed to ${newEmail}.\n\nIf this was not you, contact support right away.\n`,
+  html: shell(
+    'Your email address was changed',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, the email address on your Vaultrix account was just changed to <strong>${escapeHtml(newEmail)}</strong>.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, contact support right away.</p>`
+  ),
+});

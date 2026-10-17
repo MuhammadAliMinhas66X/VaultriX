@@ -1,8 +1,19 @@
 import jwt from 'jsonwebtoken';
 
-export const signAccessToken = (user) =>
+// sessionId is optional only for backward compatibility with any
+// already-issued access tokens still in the wild right after a deploy - new
+// tokens always carry it so a revoked device can be rejected on its very
+// next request instead of waiting for its access token to expire.
+export const signAccessToken = (user, sessionId) =>
   jwt.sign(
-    { sub: user._id, orgId: user.orgId, role: user.role, plan: user.plan || 'standard', tv: user.tokenVersion || 0 },
+    {
+      sub: user._id,
+      orgId: user.orgId,
+      role: user.role,
+      plan: user.plan || 'standard',
+      tv: user.tokenVersion || 0,
+      ...(sessionId ? { jti: String(sessionId) } : {}),
+    },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: '15m', algorithm: 'HS256' }
   );

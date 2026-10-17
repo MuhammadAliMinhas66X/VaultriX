@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Session from '../models/Session.js';
 import { verifyAccessToken } from '../utils/tokens.js';
 
 export const authenticate = async (req, res, next) => {
@@ -17,9 +18,18 @@ export const authenticate = async (req, res, next) => {
   }
 
   try {
-    const user = await User.findById(payload.sub).select('orgId role plan tokenVersion');
+    // Run together: the user lookup for tokenVersion (the account-wide kill
+    // switch) and, when this token carries one, a check that its device's
+    // Session row still exists (the per-device kill switch). Either one
+    // being gone rejects the request immediately - revoking one device, or
+    // logging out everywhere, takes effect on that device's very next
+    // request rather than waiting for its access token to expire.
+    const [user, sessionAlive] = await Promise.all([
+      User.findById(payload.sub).select('orgId role plan tokenVersion'),
+      payload.jti ? Session.exists({ _id: payload.jti }) : Promise.resolve(true),
+    ]);
 
-    if (!user || (payload.tv ?? 0) !== (user.tokenVersion || 0)) {
+    if (!user || (payload.tv ?? 0) !== (user.tokenVersion || 0) || !sessionAlive) {
       return res.status(401).json({ success: false, message: 'Your session has expired. Please sign in again.' });
     }
 
