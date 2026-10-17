@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { refresh as refreshSession, logout as logoutRequest } from '../services/authService.js';
+import { refresh as refreshSession, logout as logoutRequest, me as fetchMe } from '../services/authService.js';
 import { setAuthToken, setUnauthorizedHandler } from '../services/api.js';
 import {
   getGuestLanguage,
@@ -113,6 +113,25 @@ export function AuthProvider({ children }) {
       cancelled = true;
     };
   }, []);
+
+  // Being signed out on another device (revoked, bumped by the 2-device
+  // limit, "log out everywhere") is only visible to this tab the next time
+  // it actually talks to the server. A tab just sitting there otherwise
+  // wouldn't notice until someone refreshes it, so poll a cheap endpoint
+  // every so often - the 401 this throws once the session is gone is
+  // caught by the same handler a normal request's 401 would hit.
+  useEffect(() => {
+    if (!accessToken) return undefined;
+
+    const interval = setInterval(() => {
+      fetchMe().catch(() => {
+        // onUnauthorized (registered above) already handles a 401 here;
+        // any other failure (e.g. briefly offline) is not worth surfacing.
+      });
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, [accessToken]);
 
   const value = {
     user,
