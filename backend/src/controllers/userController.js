@@ -68,6 +68,7 @@ const publicUser = (user) => ({
   country: user.country,
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
+  mfaEnabled: Boolean(user.mfaEnabled),
 });
 
 export const updateProfile = async (req, res, next) => {

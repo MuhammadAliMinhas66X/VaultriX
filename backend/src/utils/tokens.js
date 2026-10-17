@@ -45,3 +45,36 @@ export const verifyResetToken = (token) => {
   }
   return payload;
 };
+
+// Carries a freshly-generated TOTP secret from "begin setup" to "confirm
+// setup" without having to persist it (and without trusting the client to
+// echo it back honestly) - it's only ever written to the User record once
+// the matching 6-digit code proves the app was actually scanned correctly.
+const mfaSetupSecret = () => `${process.env.JWT_ACCESS_SECRET}:mfa-setup`;
+
+export const signMfaSetupToken = ({ sub, secret }) =>
+  jwt.sign({ sub, secret, purpose: 'mfa-setup' }, mfaSetupSecret(), { expiresIn: '10m', algorithm: 'HS256' });
+
+export const verifyMfaSetupToken = (token) => {
+  const payload = jwt.verify(token, mfaSetupSecret(), { algorithms: ['HS256'] });
+  if (payload.purpose !== 'mfa-setup') {
+    throw new Error('Wrong token purpose');
+  }
+  return payload;
+};
+
+// Issued once a password has already checked out for an MFA-enabled
+// account, standing in for "this login still needs its 6-digit code"
+// without yet creating a session or handing out real tokens.
+const mfaLoginSecret = () => `${process.env.JWT_ACCESS_SECRET}:mfa-login`;
+
+export const signMfaLoginToken = ({ sub }) =>
+  jwt.sign({ sub, purpose: 'mfa-login' }, mfaLoginSecret(), { expiresIn: '10m', algorithm: 'HS256' });
+
+export const verifyMfaLoginToken = (token) => {
+  const payload = jwt.verify(token, mfaLoginSecret(), { algorithms: ['HS256'] });
+  if (payload.purpose !== 'mfa-login') {
+    throw new Error('Wrong token purpose');
+  }
+  return payload;
+};

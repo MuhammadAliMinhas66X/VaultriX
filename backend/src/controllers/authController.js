@@ -1,12 +1,19 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { authenticator } from 'otplib';
 import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import PendingSignup from '../models/PendingSignup.js';
 import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
 import Session from '../models/Session.js';
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+  signMfaLoginToken,
+  verifyMfaLoginToken,
+} from '../utils/tokens.js';
 import { checkEmail, parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
 import { validatePassword, cleanName, isNonEmptyString, NAME_MESSAGE } from '../utils/validators.js';
@@ -14,6 +21,7 @@ import { securityLog } from '../utils/securityLog.js';
 import { checkCaptcha } from '../middleware/captcha.js';
 import { sendMail } from '../utils/mailer.js';
 import { signupOtpEmail, deviceLoginEmail } from '../utils/mailTemplates.js';
+import { decryptSecret } from '../utils/mfaCrypto.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -91,6 +99,7 @@ const publicUser = (user) => ({
   country: user.country,
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
+  mfaEnabled: Boolean(user.mfaEnabled),
 });
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
@@ -449,6 +458,65 @@ export const login = async (req, res, next) => {
       { _id: user._id },
       { $set: { failedLoginAttempts: 0, lockUntil: null, lockTier: 0, lastLoginAt: new Date() } }
     );
+
+    if (user.mfaEnabled) {
+      const mfaToken = signMfaLoginToken({ sub: String(user._id) });
+      securityLog('mfa_challenge', req, { userId: String(user._id) });
+      return res.json({ success: true, requiresMfa: true, mfaToken });
+    }
+
+    await startSession(req, res, user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Completes a login that was paused for its 2-step verification code - the
+// password already checked out in login(); this just confirms the account
+// owner also has the authenticator app (or a backup code), then runs the
+// exact same session/device-limit logic a normal login would.
+export const verifyMfaLogin = async (req, res, next) => {
+  try {
+    const { mfaToken, code } = req.body || {};
+    if (!mfaToken || !code) return fail(res, 400, MESSAGES.otpWrong);
+
+    let payload;
+    try {
+      payload = verifyMfaLoginToken(mfaToken);
+    } catch (error) {
+      return fail(res, 400, 'Your sign-in session has expired. Please sign in again.');
+    }
+
+    const user = await User.findById(payload.sub);
+    if (!user || !user.mfaEnabled) {
+      return fail(res, 400, 'Your sign-in session has expired. Please sign in again.');
+    }
+
+    const input = String(code).trim();
+    let ok = false;
+
+    if (/^\d{6}$/.test(input)) {
+      ok = authenticator.verify({ token: input, secret: decryptSecret(user.mfaSecret) });
+    }
+
+    if (!ok) {
+      const normalized = input.toUpperCase();
+      for (const entry of user.mfaBackupCodes) {
+        if (entry.usedAt) continue;
+        // eslint-disable-next-line no-await-in-loop
+        if (await bcrypt.compare(normalized, entry.codeHash)) {
+          entry.usedAt = new Date();
+          ok = true;
+          break;
+        }
+      }
+      if (ok) await user.save();
+    }
+
+    if (!ok) {
+      securityLog('mfa_wrong_code', req, { userId: String(user._id) });
+      return fail(res, 400, 'That code is not right. Check it and try again.');
+    }
 
     await startSession(req, res, user);
   } catch (error) {

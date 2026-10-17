@@ -23,3 +23,4 @@ export const loginStatusLimiter = build(5 * 60 * 1000, 60);
 export const sessionsLimiter = build(15 * 60 * 1000, 60);
 export const emailChangeLimiter = build(15 * 60 * 1000, 20);
 export const accountDeleteLimiter = build(60 * 60 * 1000, 10);
+export const mfaLimiter = build(15 * 60 * 1000, 20);

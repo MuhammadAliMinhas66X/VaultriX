@@ -11,6 +11,7 @@ import {
   requestAccountDeletion,
   confirmAccountDeletion,
 } from '../controllers/userController.js';
+import { beginMfaSetup, confirmMfaSetup, disableMfa } from '../controllers/mfaController.js';
 import { authenticate } from '../middleware/auth.js';
 import { uploadAvatar } from '../middleware/upload.js';
 import {
@@ -18,6 +19,7 @@ import {
   sessionsLimiter,
   emailChangeLimiter,
   accountDeleteLimiter,
+  mfaLimiter,
 } from '../middleware/rateLimiters.js';
 
 const router = Router();
@@ -32,5 +34,8 @@ router.post('/me/email/request-change', authenticate, emailChangeLimiter, reques
 router.post('/me/email/verify-change', authenticate, emailChangeLimiter, verifyEmailChange);
 router.post('/me/delete/request', authenticate, accountDeleteLimiter, requestAccountDeletion);
 router.post('/me/delete/confirm', authenticate, accountDeleteLimiter, confirmAccountDeletion);
+router.post('/me/mfa/setup', authenticate, mfaLimiter, beginMfaSetup);
+router.post('/me/mfa/confirm', authenticate, mfaLimiter, confirmMfaSetup);
+router.post('/me/mfa/disable', authenticate, mfaLimiter, disableMfa);
 
 export default router;

@@ -10,6 +10,7 @@ import {
   refresh,
   me,
   verifyDeviceLogin,
+  verifyMfaLogin,
 } from '../controllers/authController.js';
 import {
   validateEmailAddress,
@@ -37,6 +38,7 @@ router.post('/signup', signupLimiter, signup);
 router.post('/signup/verify', verifyCodeLimiter, verifySignupOtp);
 router.post('/login', loginLimiter, verifyCaptcha, login);
 router.post('/verify-device', verifyCodeLimiter, verifyDeviceLogin);
+router.post('/verify-mfa', verifyCodeLimiter, verifyMfaLogin);
 router.post('/login-status', loginStatusLimiter, loginStatus);
 router.post('/logout', logout);
 router.post('/google', googleLimiter, googleAuth);

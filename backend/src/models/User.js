@@ -16,7 +16,11 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: '' },
     onboardingCompleted: { type: Boolean, default: false },
     mfaEnabled: { type: Boolean, default: false },
-    mfaSecret: { type: String },
+    mfaSecret: { type: String }, // encrypted at rest, see utils/mfaCrypto.js
+    mfaBackupCodes: {
+      type: [{ codeHash: String, usedAt: { type: Date, default: null } }],
+      default: [],
+    },
     tokenVersion: { type: Number, default: 0 },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
