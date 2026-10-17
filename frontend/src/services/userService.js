@@ -59,3 +59,30 @@ export const logoutAllSessions = async () => {
     throw toApiError(error);
   }
 };
+
+export const requestEmailChange = async ({ newEmail, password }) => {
+  try {
+    const { data } = await api.post('/users/me/email/request-change', { newEmail, password });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const verifyEmailChange = async (code) => {
+  try {
+    const { data } = await api.post('/users/me/email/verify-change', { code });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const deleteAccount = async (payload) => {
+  try {
+    const { data } = await api.delete('/users/me', { data: payload });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};

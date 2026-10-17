@@ -68,6 +68,15 @@ export const googleAuth = async (idToken) => {
   }
 };
 
+export const verifyDeviceLogin = async ({ email, code }) => {
+  try {
+    const { data } = await api.post('/auth/verify-device', { email, code });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
 export const validateEmail = async (email) => {
   const { data } = await api.post('/auth/validate-email', { email });
   return data;

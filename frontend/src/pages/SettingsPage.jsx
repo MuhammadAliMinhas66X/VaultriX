@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Laptop, Loader2 } from 'lucide-react';
+import { Camera, Laptop, Loader2, Mail, AlertTriangle } from 'lucide-react';
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
 import Combobox from '../components/Combobox.jsx';
+import OtpInput from '../components/OtpInput.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   updateProfile,
@@ -13,6 +14,9 @@ import {
   listSessions,
   revokeSession,
   logoutAllSessions,
+  requestEmailChange,
+  verifyEmailChange,
+  deleteAccount,
 } from '../services/userService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
@@ -21,6 +25,8 @@ import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { notify } from '../i18n/notifications.js';
 import { serverMessageKey, translate } from '../i18n/translate.js';
+
+const EMAIL_CODE_LENGTH = 6;
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
@@ -49,6 +55,7 @@ function ProfileSection() {
   const [nameError, setNameError] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const avatarSrc = resolveAvatarUrl(user?.avatarUrl);
 
@@ -70,6 +77,7 @@ function ProfileSection() {
     try {
       const data = await uploadAvatar(file);
       updateUser(data.user);
+      setAvatarFailed(false);
       notify.success(t('status.photoUpdated'));
     } catch (error) {
       notify.error(tServer(error));
@@ -123,8 +131,14 @@ function ProfileSection() {
         >
           {uploadingPhoto ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted" />
-          ) : avatarSrc ? (
-            <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+          ) : avatarSrc && !avatarFailed ? (
+            <img
+              src={avatarSrc}
+              alt=""
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarFailed(true)}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <span className="text-sm font-medium text-muted">{initialsFromName(user?.name)}</span>
           )}
@@ -264,8 +278,173 @@ function PasswordSection() {
   );
 }
 
+function EmailSection() {
+  const { user, updateUser } = useAuth();
+  const { t, tServer } = useTranslation();
+
+  const [step, setStep] = useState('idle'); // idle | requesting | code
+  const [newEmail, setNewEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [errorStamp, setErrorStamp] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const timer = setInterval(() => setCooldown((prev) => Math.max(0, prev - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  if (user?.authProvider === 'google') {
+    return (
+      <SettingsCard title={t('settings.emailTitle')} subtitle={t('settings.emailSubtitle')}>
+        <p className="text-sm text-muted">{t('settings.emailGoogleManaged')}</p>
+      </SettingsCard>
+    );
+  }
+
+  const handleRequest = async (event) => {
+    event.preventDefault();
+    const next = {};
+    if (!newEmail.trim()) next.newEmail = 'auth.emailRequired';
+    if (!password) next.password = 'settings.currentPasswordRequired';
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
+
+    setSaving(true);
+    try {
+      const data = await requestEmailChange({ newEmail: newEmail.trim(), password });
+      setCooldown(data?.cooldownSeconds || 60);
+      setCode('');
+      setCodeError('');
+      setStep('code');
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitCode = async (value) => {
+    if (value.length < EMAIL_CODE_LENGTH) {
+      setCodeError(t('auth.deviceCodeIncomplete'));
+      setErrorStamp((stamp) => stamp + 1);
+      return;
+    }
+    setSaving(true);
+    setCodeError('');
+    try {
+      const data = await verifyEmailChange(value);
+      updateUser(data.user);
+      notify.success(t('status.emailUpdated'));
+      setStep('idle');
+      setNewEmail('');
+      setPassword('');
+      setCode('');
+    } catch (error) {
+      setCodeError(tServer(error));
+      setCode('');
+      setErrorStamp((stamp) => stamp + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resend = async () => {
+    if (cooldown > 0 || saving) return;
+    setSaving(true);
+    try {
+      const data = await requestEmailChange({ newEmail: newEmail.trim(), password });
+      setCooldown(data?.cooldownSeconds || 60);
+      notify.success(t('auth.deviceCodeResent'));
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <SettingsCard title={t('settings.emailTitle')} subtitle={t('settings.emailSubtitle')}>
+      <p className="mb-4 text-sm text-ink">{user?.email}</p>
+
+      {step === 'code' ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted">{t('settings.emailCodeSentTo', { email: newEmail.trim() })}</p>
+          <OtpInput
+            length={EMAIL_CODE_LENGTH}
+            value={code}
+            onChange={(value) => {
+              setCode(value);
+              if (codeError) setCodeError('');
+            }}
+            onComplete={submitCode}
+            disabled={saving}
+            hasError={Boolean(codeError)}
+            errorStamp={errorStamp}
+            label={t('auth.deviceCodeLabel')}
+          />
+          {codeError && (
+            <p role="alert" className="text-xs font-medium text-red-600">
+              {codeError}
+            </p>
+          )}
+          <div className="flex items-center gap-4">
+            <Button type="button" loading={saving} loadingLabel={t('common.saving')} onClick={() => submitCode(code)}>
+              {t('settings.confirmEmail')}
+            </Button>
+            <button
+              type="button"
+              onClick={resend}
+              disabled={cooldown > 0 || saving}
+              className="text-sm text-muted hover:text-ink disabled:cursor-default disabled:opacity-60"
+            >
+              {cooldown > 0 ? t('auth.deviceResendIn', { seconds: cooldown }) : t('auth.deviceResend')}
+            </button>
+          </div>
+          <button type="button" onClick={() => setStep('idle')} className="self-start text-sm text-muted hover:text-ink">
+            {t('common.cancel')}
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleRequest} noValidate className="flex flex-col gap-4">
+          <FormField
+            label={t('settings.newEmail')}
+            type="email"
+            value={newEmail}
+            onChange={(event) => {
+              setNewEmail(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, newEmail: undefined }));
+            }}
+            error={fieldErrors.newEmail && t(fieldErrors.newEmail)}
+          />
+          <FormField
+            label={t('settings.currentPassword')}
+            type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, password: undefined }));
+            }}
+            autoComplete="current-password"
+            error={fieldErrors.password && t(fieldErrors.password)}
+          />
+          <div>
+            <Button type="submit" loading={saving} loadingLabel={t('common.saving')}>
+              {t('settings.sendEmailCode')}
+            </Button>
+          </div>
+        </form>
+      )}
+    </SettingsCard>
+  );
+}
+
 function DevicesSection() {
-  const { clearSession } = useAuth();
+  const { clearSession, markIntentionalLogout } = useAuth();
   const { t, tServer } = useTranslation();
   const { formatDate } = useFormat();
 
@@ -308,6 +487,7 @@ function DevicesSection() {
 
   const handleLogoutAll = async () => {
     setLoggingOutAll(true);
+    markIntentionalLogout();
     try {
       await logoutAllSessions();
       notify.success(t('status.loggedOutEverywhere'));
@@ -457,6 +637,105 @@ function PreferencesSection() {
   );
 }
 
+function DangerZoneSection() {
+  const { user, markIntentionalLogout, clearSession } = useAuth();
+  const { t, tServer } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const isGoogle = user?.authProvider === 'google';
+
+  const handleDelete = async (event) => {
+    event.preventDefault();
+    setError('');
+
+    if (isGoogle && confirmText.trim().toUpperCase() !== 'DELETE') {
+      setError(t('settings.typeDeleteToConfirm'));
+      return;
+    }
+    if (!isGoogle && !password) {
+      setError(t('settings.currentPasswordRequired'));
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      markIntentionalLogout();
+      await deleteAccount(isGoogle ? { confirm: confirmText.trim() } : { password });
+      notify.success(t('status.accountDeleted'));
+      clearSession();
+    } catch (err) {
+      setError(tServer(err));
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <SettingsCard title={t('settings.dangerZoneTitle')} subtitle={t('settings.dangerZoneSubtitle')}>
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
+        >
+          <AlertTriangle className="h-4 w-4" />
+          {t('settings.deleteAccount')}
+        </button>
+      ) : (
+        <form onSubmit={handleDelete} noValidate className="flex flex-col gap-4 rounded-lg border border-red-200 bg-red-50/60 p-4">
+          <p className="text-sm text-red-700">{t('settings.deleteAccountWarning')}</p>
+
+          {isGoogle ? (
+            <FormField
+              label={t('settings.typeDeleteLabel')}
+              value={confirmText}
+              onChange={(event) => {
+                setConfirmText(event.target.value);
+                setError('');
+              }}
+              error={error}
+            />
+          ) : (
+            <FormField
+              label={t('settings.currentPassword')}
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setError('');
+              }}
+              autoComplete="current-password"
+              error={error}
+            />
+          )}
+
+          <div className="flex items-center gap-3">
+            <Button type="submit" loading={deleting} loadingLabel={t('common.deleting')}>
+              {t('settings.confirmDeleteAccount')}
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setPassword('');
+                setConfirmText('');
+                setError('');
+              }}
+              disabled={deleting}
+              className="text-sm text-muted hover:text-ink"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </form>
+      )}
+    </SettingsCard>
+  );
+}
+
 function SettingsPage() {
   const { signOut } = useAuth();
   const { t } = useTranslation();
@@ -486,9 +765,11 @@ function SettingsPage() {
         </div>
 
         <ProfileSection />
+        <EmailSection />
         <PasswordSection />
         <DevicesSection />
         <PreferencesSection />
+        <DangerZoneSection />
       </div>
     </div>
   );

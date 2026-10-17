@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout.jsx';
 import FormField from '../components/FormField.jsx';
 import EmailField from '../components/EmailField.jsx';
@@ -10,10 +10,13 @@ import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import PageLoader from '../components/PageLoader.jsx';
 import LockScreen from '../components/LockScreen.jsx';
 import LockTimerBadge from '../components/LockTimerBadge.jsx';
-import { login, getLoginStatus } from '../services/authService.js';
+import OtpInput from '../components/OtpInput.jsx';
+import { login, getLoginStatus, verifyDeviceLogin } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
+
+const DEVICE_CODE_LENGTH = 6;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,6 +45,18 @@ function LoginPage() {
   const [lockUntil, setLockUntil] = useState(null);
   const [lockTier, setLockTier] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+
+  // Shown instead of the credentials form when the account is already
+  // signed in on 2 devices and this 3rd one needs an emailed code before
+  // it's let in (and the oldest device is signed out to make room).
+  const [deviceStep, setDeviceStep] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState('');
+  const [deviceCode, setDeviceCode] = useState('');
+  const [deviceCodeError, setDeviceCodeError] = useState('');
+  const [deviceErrorStamp, setDeviceErrorStamp] = useState(0);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [deviceCooldown, setDeviceCooldown] = useState(0);
+  const deviceVerifyingRef = useRef(false);
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get('google_error')) {
@@ -86,6 +101,12 @@ function LoginPage() {
     }
   }, [now, lockUntil]);
 
+  useEffect(() => {
+    if (deviceCooldown <= 0) return undefined;
+    const timer = setInterval(() => setDeviceCooldown((prev) => Math.max(0, prev - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [deviceCooldown]);
+
   const proceedAfterAuth = (data) => {
     setSession(data);
     setRedirecting(true);
@@ -112,6 +133,15 @@ function LoginPage() {
     setLoading(true);
     try {
       const data = await login({ email: email.trim(), password, captchaToken });
+      if (data?.requiresDeviceVerification) {
+        setMaskedEmail(data.maskedEmail || '');
+        setDeviceCooldown(data.cooldownSeconds || 60);
+        setDeviceCode('');
+        setDeviceCodeError('');
+        setDeviceStep(true);
+        setLoading(false);
+        return;
+      }
       proceedAfterAuth(data);
     } catch (error) {
       notify.error(tServer(error));
@@ -128,12 +158,121 @@ function LoginPage() {
     setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const submitDeviceCode = async (value) => {
+    if (deviceVerifyingRef.current) return;
+
+    if (value.length < DEVICE_CODE_LENGTH) {
+      setDeviceCodeError(t('auth.deviceCodeIncomplete'));
+      setDeviceErrorStamp((stamp) => stamp + 1);
+      return;
+    }
+
+    deviceVerifyingRef.current = true;
+    setDeviceLoading(true);
+    setDeviceCodeError('');
+
+    try {
+      const data = await verifyDeviceLogin({ email: email.trim(), code: value });
+      proceedAfterAuth(data);
+    } catch (error) {
+      setDeviceCodeError(tServer(error));
+      setDeviceCode('');
+      setDeviceErrorStamp((stamp) => stamp + 1);
+    } finally {
+      deviceVerifyingRef.current = false;
+      setDeviceLoading(false);
+    }
+  };
+
+  const handleDeviceCodeSubmit = (event) => {
+    event.preventDefault();
+    submitDeviceCode(deviceCode);
+  };
+
+  const resendDeviceCode = async () => {
+    if (deviceCooldown > 0 || deviceLoading) return;
+    setDeviceLoading(true);
+    try {
+      const data = await login({ email: email.trim(), password, captchaToken });
+      if (data?.requiresDeviceVerification) {
+        setMaskedEmail(data.maskedEmail || maskedEmail);
+        setDeviceCooldown(data.cooldownSeconds || 60);
+        setDeviceCode('');
+        setDeviceCodeError('');
+        notify.success(t('auth.deviceCodeResent'));
+      }
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setDeviceLoading(false);
+    }
+  };
+
+  const backToCredentials = () => {
+    setDeviceStep(false);
+    setDeviceCode('');
+    setDeviceCodeError('');
+    setDeviceCooldown(0);
+  };
+
   if (redirecting) {
     return <PageLoader label={t('auth.settingUp')} />;
   }
 
   if (isLocked && lockTier >= 2) {
     return <LockScreen display={formatCountdown(secondsRemaining)} />;
+  }
+
+  if (deviceStep) {
+    return (
+      <AuthLayout title={t('auth.deviceVerifyTitle')} subtitle={t('auth.deviceVerifySubtitle', { email: maskedEmail })}>
+        <form onSubmit={handleDeviceCodeSubmit} noValidate className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-ink">{t('auth.deviceCodeLabel')}</span>
+            <OtpInput
+              length={DEVICE_CODE_LENGTH}
+              value={deviceCode}
+              onChange={(value) => {
+                setDeviceCode(value);
+                if (deviceCodeError) setDeviceCodeError('');
+              }}
+              onComplete={submitDeviceCode}
+              disabled={deviceLoading}
+              hasError={Boolean(deviceCodeError)}
+              errorStamp={deviceErrorStamp}
+              label={t('auth.deviceCodeLabel')}
+            />
+            {deviceCodeError && (
+              <p role="alert" className="text-xs font-medium text-red-600">
+                {deviceCodeError}
+              </p>
+            )}
+          </div>
+
+          <Button type="submit" loading={deviceLoading} loadingLabel={t('auth.verifying')}>
+            {t('auth.deviceVerifyButton')}
+          </Button>
+
+          <button
+            type="button"
+            onClick={resendDeviceCode}
+            disabled={deviceCooldown > 0 || deviceLoading}
+            className="text-sm text-muted transition hover:text-ink disabled:cursor-default disabled:opacity-60"
+          >
+            {deviceCooldown > 0 ? t('auth.deviceResendIn', { seconds: deviceCooldown }) : t('auth.deviceResend')}
+          </button>
+
+          <button
+            type="button"
+            onClick={backToCredentials}
+            className="flex items-center justify-center gap-2 text-sm text-muted transition hover:text-ink"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t('forgot.backToSignIn')}
+          </button>
+        </form>
+      </AuthLayout>
+    );
   }
 
   return (
