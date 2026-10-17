@@ -32,6 +32,12 @@ export function AuthProvider({ children }) {
 
   const languageRef = useRef(language);
   const hadSessionRef = useRef(false);
+  // Set right before a logout the app itself initiated (sign out, log out
+  // everywhere, a device being revoked) so the generic "session expired"
+  // toast from the response interceptor doesn't also fire for the 401s that
+  // naturally follow - without this, a self-initiated logout could show two
+  // toasts (its own message, plus the automatic expiry one).
+  const intentionalLogoutRef = useRef(false);
 
   const setSession = (data) => {
     setUser(data.user);
@@ -47,6 +53,18 @@ export function AuthProvider({ children }) {
     setAuthToken(null);
   };
 
+  // Call right before an action that intentionally ends the session (sign
+  // out, log out everywhere) so any 401s that follow from requests already
+  // in flight don't also pop the automatic "session expired" toast. Resets
+  // on its own after a few seconds as a safety net in case clearSession()
+  // never gets called (e.g. the request failed outright).
+  const markIntentionalLogout = () => {
+    intentionalLogoutRef.current = true;
+    setTimeout(() => {
+      intentionalLogoutRef.current = false;
+    }, 5000);
+  };
+
   const updateUser = (partialUser) => {
     setUser((prev) => (prev ? { ...prev, ...partialUser } : prev));
   };
@@ -58,6 +76,7 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
+    markIntentionalLogout();
     await logoutRequest();
     notify.info(translate(languageRef.current, 'info.signedOut'));
     clearSession();
@@ -71,6 +90,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       if (!hadSessionRef.current) return;
+      if (intentionalLogoutRef.current) {
+        clearSession();
+        return;
+      }
       notify.warning(translate(languageRef.current, 'errors.sessionExpired'));
       clearSession();
     });
@@ -101,6 +124,7 @@ export function AuthProvider({ children }) {
     setGuestLanguage,
     setSession,
     clearSession,
+    markIntentionalLogout,
     updateUser,
     signOut,
   };
