@@ -60,7 +60,7 @@ function ProfilePreview({ name, email, avatarSrc, country, language, currency, a
         <div className="flex items-center gap-4">
           <span className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-lg font-semibold text-white ring-2 ring-white/20">
             {avatarSrc ? (
-              <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+              <img src={avatarSrc} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               initialsFromName(name) || '?'
             )}

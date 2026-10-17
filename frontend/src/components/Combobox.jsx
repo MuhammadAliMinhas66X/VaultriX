@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Loader2, Search } from 'lucide-react';
+import { Check, ChevronDown, Loader2, Search } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 
 const normalize = (text) =>
@@ -138,25 +138,29 @@ function Combobox({
             {filtered.length === 0 && (
               <p className="px-3.5 py-2.5 text-sm text-muted">{t('common.noMatches')}</p>
             )}
-            {filtered.map((item, index) => (
-              <button
-                key={item.value}
-                type="button"
-                role="option"
-                aria-selected={item.value === value}
-                onClick={() => selectItem(item)}
-                onMouseEnter={() => setHighlighted(index)}
-                className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm ${
-                  index === highlighted ? 'bg-surface' : ''
-                } ${item.value === value ? 'font-medium text-ink' : 'text-ink'}`}
-              >
-                {item.flag && <span className="text-base leading-none">{item.flag}</span>}
-                {item.symbol && (
-                  <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>
-                )}
-                <span className="truncate">{item.label}</span>
-              </button>
-            ))}
+            {filtered.map((item, index) => {
+              const isSelected = item.value === value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => selectItem(item)}
+                  onMouseEnter={() => setHighlighted(index)}
+                  className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition-colors ${
+                    isSelected ? 'bg-accent/10 font-semibold text-ink' : index === highlighted ? 'bg-surface text-ink' : 'text-ink'
+                  }`}
+                >
+                  {item.flag && <span className="text-base leading-none">{item.flag}</span>}
+                  {item.symbol && (
+                    <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>
+                  )}
+                  <span className="truncate">{item.label}</span>
+                  {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

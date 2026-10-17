@@ -48,7 +48,7 @@ function PhotoPicker({ name, displaySrc, file, error, uploading, onSelect, onCle
         className="group relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-surface ring-4 ring-white outline outline-1 outline-border transition hover:outline-ink/40"
       >
         {hasImage ? (
-          <img src={displaySrc} alt="" className="h-full w-full object-cover" />
+          <img src={displaySrc} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
         ) : (
           <span className="flex flex-col items-center gap-1.5 text-muted">
             <span className="text-2xl font-semibold text-ink/70">{initialsFromName(name) || '?'}</span>
