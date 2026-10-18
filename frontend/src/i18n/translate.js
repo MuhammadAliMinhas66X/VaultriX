@@ -68,6 +68,13 @@ const SERVER_MESSAGE_KEYS = {
   'No account is registered with this email.': 'errors.noAccountFound',
   'This account signs in with Google. Use the Continue with Google button instead.': 'errors.useGoogleReset',
   'Google sign-in could not be verified.': 'auth.googleFailed',
+  'An account with this email already exists. Sign in with your password, then link Google from Settings if you want to use it too.':
+    'errors.googleLinkRequired',
+  'Your account is already linked to Google.': 'errors.googleAccountAlreadyLinked',
+  'Sign in to Google with the same email as your Vaultrix account to link it.': 'errors.googleEmailMismatch',
+  'That Google account is already linked to a different account.': 'errors.googleTakenByOther',
+  'You can change your name again once the cooldown ends.': 'errors.usernameCooldown',
+  'You can change your email again once the cooldown ends.': 'errors.emailCooldown',
 };
 
 export const serverMessageKey = (error) =>

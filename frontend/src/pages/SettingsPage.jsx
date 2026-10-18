@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Laptop, Loader2, Mail, AlertTriangle, ShieldCheck, Copy, Check } from 'lucide-react';
+import { Camera, Laptop, Loader2, Mail, AlertTriangle, ShieldCheck, Copy, Check, Lock, MapPin } from 'lucide-react';
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
 import Combobox from '../components/Combobox.jsx';
 import OtpInput from '../components/OtpInput.jsx';
+import GoogleLinkButton from '../components/GoogleLinkButton.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   updateProfile,
@@ -22,6 +23,7 @@ import {
   confirmMfaSetup,
   disableMfa,
 } from '../services/userService.js';
+import { linkGoogleAccount } from '../services/authService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -32,10 +34,17 @@ import { serverMessageKey, translate } from '../i18n/translate.js';
 
 const EMAIL_CODE_LENGTH = 6;
 
+// Rounds up so "locked until tomorrow 2am" reads as "1 day left", not "0".
+const daysUntil = (iso) => {
+  if (!iso) return 0;
+  const diff = new Date(iso).getTime() - Date.now();
+  return Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+};
+
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
 
-function SettingsCard({ title, subtitle, children }) {
+function SettingsCard({ title, subtitle, locked, children }) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -43,7 +52,14 @@ function SettingsCard({ title, subtitle, children }) {
       transition={{ duration: 0.3 }}
       className="rounded-xl border border-border bg-white p-6"
     >
-      <h2 className="text-base font-semibold text-ink">{title}</h2>
+      <div className="flex items-center gap-2">
+        {locked && (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink/5 text-muted">
+            <Lock className="h-3 w-3" />
+          </span>
+        )}
+        <h2 className="text-base font-semibold text-ink">{title}</h2>
+      </div>
       {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
       <div className="mt-5">{children}</div>
     </motion.section>
@@ -53,6 +69,7 @@ function SettingsCard({ title, subtitle, children }) {
 function ProfileSection() {
   const { user, updateUser } = useAuth();
   const { t, tServer } = useTranslation();
+  const { formatDate } = useFormat();
   const inputRef = useRef(null);
 
   const [name, setName] = useState(user?.name || '');
@@ -60,6 +77,8 @@ function ProfileSection() {
   const [savingName, setSavingName] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
+
+  const nameLocked = Boolean(user?.usernameLockedUntil);
 
   const avatarSrc = resolveAvatarUrl(user?.avatarUrl);
 
@@ -172,12 +191,23 @@ function ProfileSection() {
             setNameError('');
           }}
           error={nameError && t(nameError)}
+          disabled={nameLocked}
         />
-        <div>
-          <Button type="submit" loading={savingName} loadingLabel={t('common.saving')}>
-            {t('settings.saveName')}
-          </Button>
-        </div>
+        {nameLocked ? (
+          <p className="flex items-center gap-1.5 text-sm text-muted">
+            <Lock className="h-3.5 w-3.5 shrink-0" />
+            {t('settings.cooldownLocked', {
+              days: daysUntil(user.usernameLockedUntil),
+              date: formatDate(new Date(user.usernameLockedUntil), { day: 'numeric', month: 'short' }),
+            })}
+          </p>
+        ) : (
+          <div>
+            <Button type="submit" loading={savingName} loadingLabel={t('common.saving')}>
+              {t('settings.saveName')}
+            </Button>
+          </div>
+        )}
       </form>
     </SettingsCard>
   );
@@ -192,9 +222,9 @@ function PasswordSection() {
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  if (user?.authProvider === 'google') {
+  if (!user?.hasPassword) {
     return (
-      <SettingsCard title={t('settings.passwordTitle')} subtitle={t('settings.passwordSubtitle')}>
+      <SettingsCard title={t('settings.passwordTitle')} locked>
         <p className="text-sm text-muted">{t('settings.googleNoPassword')}</p>
       </SettingsCard>
     );
@@ -285,6 +315,7 @@ function PasswordSection() {
 function EmailSection() {
   const { user, updateUser } = useAuth();
   const { t, tServer } = useTranslation();
+  const { formatDate } = useFormat();
 
   const [step, setStep] = useState('idle'); // idle | requesting | code
   const [newEmail, setNewEmail] = useState('');
@@ -295,6 +326,7 @@ function EmailSection() {
   const [errorStamp, setErrorStamp] = useState(0);
   const [saving, setSaving] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
@@ -302,10 +334,37 @@ function EmailSection() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  if (user?.authProvider === 'google') {
+  if (!user?.hasPassword) {
     return (
-      <SettingsCard title={t('settings.emailTitle')} subtitle={t('settings.emailSubtitle')}>
+      <SettingsCard title={t('settings.emailTitle')} locked>
         <p className="text-sm text-muted">{t('settings.emailGoogleManaged')}</p>
+      </SettingsCard>
+    );
+  }
+
+  const handleLinkGoogleToken = async (idToken) => {
+    setLinkingGoogle(true);
+    try {
+      const data = await linkGoogleAccount(idToken);
+      updateUser(data.user);
+      notify.success(t('settings.googleLinked'));
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setLinkingGoogle(false);
+    }
+  };
+
+  if (user?.emailLockedUntil) {
+    return (
+      <SettingsCard title={t('settings.emailTitle')} locked>
+        <p className="text-sm text-ink">{user?.email}</p>
+        <p className="mt-2 text-sm text-muted">
+          {t('settings.cooldownLocked', {
+            days: daysUntil(user.emailLockedUntil),
+            date: formatDate(new Date(user.emailLockedUntil), { day: 'numeric', month: 'short' }),
+          })}
+        </p>
       </SettingsCard>
     );
   }
@@ -373,7 +432,22 @@ function EmailSection() {
 
   return (
     <SettingsCard title={t('settings.emailTitle')} subtitle={t('settings.emailSubtitle')}>
-      <p className="mb-4 text-sm text-ink">{user?.email}</p>
+      <p className="mb-1 text-sm text-ink">{user?.email}</p>
+
+      <div className="mb-4">
+        {user?.googleLinked ? (
+          <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+            <Check className="h-3.5 w-3.5" /> {t('settings.googleAlreadyLinked')}
+          </p>
+        ) : linkingGoogle ? (
+          <p className="text-xs text-muted">{t('common.saving')}</p>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs text-muted">{t('settings.googleLinkHint')}</p>
+            <GoogleLinkButton onToken={handleLinkGoogleToken} onError={(message) => notify.error(message)} />
+          </div>
+        )}
+      </div>
 
       {step === 'code' ? (
         <div className="flex flex-col gap-4">
@@ -465,9 +539,9 @@ function MfaSection() {
   const [disableError, setDisableError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (user?.authProvider === 'google') {
+  if (!user?.hasPassword) {
     return (
-      <SettingsCard title={t('settings.mfaTitle')} subtitle={t('settings.mfaSubtitle')}>
+      <SettingsCard title={t('settings.mfaTitle')} locked>
         <p className="text-sm text-muted">{t('settings.mfaGoogleManaged')}</p>
       </SettingsCard>
     );
@@ -765,6 +839,11 @@ function DevicesSection() {
                     )}
                   </p>
                   <p className="truncate text-xs text-muted">{lastActiveLabel(session.lastUsedAt)}</p>
+                  {session.ip && (
+                    <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted/80">
+                      <MapPin className="h-3 w-3 shrink-0" /> {session.ip}
+                    </p>
+                  )}
                 </div>
               </div>
 

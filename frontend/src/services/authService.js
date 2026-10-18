@@ -68,6 +68,15 @@ export const googleAuth = async (idToken) => {
   }
 };
 
+export const linkGoogleAccount = async (idToken) => {
+  try {
+    const { data } = await api.post('/auth/link-google', { idToken });
+    return data;
+  } catch (error) {
+    throw toApiError(error, 'auth.googleFailed');
+  }
+};
+
 export const verifyDeviceLogin = async ({ email, code }) => {
   try {
     const { data } = await api.post('/auth/verify-device', { email, code });
