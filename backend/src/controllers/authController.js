@@ -22,6 +22,7 @@ import { checkCaptcha } from '../middleware/captcha.js';
 import { sendMail } from '../utils/mailer.js';
 import { signupOtpEmail, deviceLoginEmail } from '../utils/mailTemplates.js';
 import { decryptSecret } from '../utils/mfaCrypto.js';
+import { cooldownLockedUntilIso } from '../utils/cooldown.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -50,6 +51,10 @@ const MESSAGES = {
   locked: 'Too many failed sign-in attempts. Please try again later.',
   googleAccount: 'This account was created with Google. Use the Google sign-in button instead.',
   googleUnverified: 'Google sign-in could not be verified.',
+  googleLinkRequired: 'An account with this email already exists. Sign in with your password, then link Google from Settings if you want to use it too.',
+  googleAlreadyLinked: 'Your account is already linked to Google.',
+  googleEmailMismatch: 'Sign in to Google with the same email as your Vaultrix account to link it.',
+  googleTakenByOther: 'That Google account is already linked to a different account.',
   otpWait: 'Please wait a moment before requesting another code.',
   otpHourly: 'Too many code requests. Please try again in an hour.',
   otpWrong: 'That code is not right. Check it and try again.',
@@ -100,6 +105,10 @@ const publicUser = (user) => ({
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
   mfaEnabled: Boolean(user.mfaEnabled),
+  hasPassword: Boolean(user.passwordHash),
+  googleLinked: Boolean(user.googleId),
+  usernameLockedUntil: cooldownLockedUntilIso(user.usernameChangedAt),
+  emailLockedUntil: cooldownLockedUntilIso(user.emailChangedAt),
 });
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
@@ -617,6 +626,61 @@ export const me = async (req, res, next) => {
   }
 };
 
+// Explicitly links a Google identity onto the signed-in account, so both
+// a password AND "Continue with Google" work for it going forward. The
+// person must already be signed in (proves account ownership) and the
+// Google account's verified email must match their Vaultrix email - this
+// never happens automatically, unlike the old silent-link behavior.
+export const linkGoogleAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return fail(res, 401, 'Please sign in again.');
+
+    if (user.googleId) {
+      return fail(res, 400, MESSAGES.googleAlreadyLinked);
+    }
+
+    const { idToken } = req.body || {};
+    if (typeof idToken !== 'string' || !idToken) {
+      return fail(res, 400, 'Google sign-in did not send back a token.');
+    }
+
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
+      payload = ticket.getPayload();
+    } catch (error) {
+      securityLog('google_link_token_rejected', req, { error: error.message });
+      return fail(res, 401, MESSAGES.googleUnverified);
+    }
+
+    if (!payload?.email || payload.email_verified !== true) {
+      return fail(res, 401, MESSAGES.googleUnverified);
+    }
+
+    const parsed = parseEmail(payload.email);
+    if (!parsed || parsed.email !== user.email) {
+      return fail(res, 400, MESSAGES.googleEmailMismatch);
+    }
+
+    const takenBy = await User.findOne({ googleId: payload.sub, _id: { $ne: user._id } });
+    if (takenBy) {
+      return fail(res, 400, MESSAGES.googleTakenByOther);
+    }
+
+    user.googleId = payload.sub;
+    if (!user.avatarUrl && payload.picture) {
+      user.avatarUrl = payload.picture;
+    }
+    await user.save();
+
+    securityLog('google_linked', req, { userId: String(user._id) });
+    res.json({ success: true, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const resolveGoogleUser = async (idToken) => {
   const ticket = await googleClient.verifyIdToken({
     idToken,
@@ -653,7 +717,18 @@ const resolveGoogleUser = async (idToken) => {
 
     organization.ownerId = user._id;
     await organization.save();
-  } else if (user.authProvider !== 'google') {
+  } else if (!user.googleId) {
+    // This email already has an account that has never linked Google before.
+    if (user.passwordHash) {
+      // Don't silently take the account over just because someone verified
+      // the same email with Google - that would quietly rewrite what
+      // Settings thinks this account is (password vs. Google-managed)
+      // without the person ever agreeing to it. Require them to sign in
+      // with their password first and link Google explicitly from Settings.
+      throw Object.assign(new Error(MESSAGES.googleLinkRequired), { status: 409 });
+    }
+    // No password on file, so there's nothing to protect - safe to treat as
+    // a Google account (covers edge cases like a password that was cleared).
     user.authProvider = 'google';
     user.googleId = payload.sub;
     if (!user.avatarUrl && payload.picture) {
@@ -661,6 +736,8 @@ const resolveGoogleUser = async (idToken) => {
     }
     await user.save();
   }
+  // else: user.googleId is already set - this account is already linked,
+  // this is just an ordinary Google sign-in.
 
   return user;
 };

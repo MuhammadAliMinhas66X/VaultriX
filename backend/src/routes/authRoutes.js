@@ -7,6 +7,7 @@ import {
   logout,
   googleAuth,
   googleCallback,
+  linkGoogleAccount,
   refresh,
   me,
   verifyDeviceLogin,
@@ -42,6 +43,7 @@ router.post('/verify-mfa', verifyCodeLimiter, verifyMfaLogin);
 router.post('/login-status', loginStatusLimiter, loginStatus);
 router.post('/logout', logout);
 router.post('/google', googleLimiter, googleAuth);
+router.post('/link-google', authenticate, googleLimiter, linkGoogleAccount);
 router.post('/google/callback', googleLimiter, googleCallback);
 router.post('/refresh', refreshLimiter, refresh);
 router.get('/me', authenticate, me);
