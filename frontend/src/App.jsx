@@ -9,6 +9,7 @@ import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import DashboardHeader from './components/DashboardHeader.jsx';
 import ToastViewport from './components/ToastViewport.jsx';
+import OfflineBanner from './components/OfflineBanner.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTranslation } from './i18n/useTranslation.js';
 import { useFormat } from './i18n/useFormat.js';
@@ -70,6 +71,7 @@ function DashboardPlaceholder() {
 function App() {
   return (
     <>
+      <OfflineBanner />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
 
