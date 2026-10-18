@@ -16,8 +16,14 @@ import { parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
 import { securityLog } from '../utils/securityLog.js';
 import { sendMail } from '../utils/mailer.js';
-import { emailChangedEmail, accountDeletedEmail, emailChangeOtpEmail, accountDeletionOtpEmail } from '../utils/mailTemplates.js';
-import { cooldownLockedUntil, cooldownLockedUntilIso } from '../utils/cooldown.js';
+import {
+  emailChangedEmail,
+  accountDeletedEmail,
+  emailChangeOtpEmail,
+  emailChangeOldVerifyEmail,
+  accountDeletionOtpEmail,
+} from '../utils/mailTemplates.js';
+import { cooldownLockedUntil, cooldownLockedUntilIso, googleLinkLockedUntilIso } from '../utils/cooldown.js';
 
 // Must match the dictionaries shipped in frontend/src/i18n/locales.
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
@@ -74,6 +80,9 @@ const publicUser = (user) => ({
   googleLinked: Boolean(user.googleId),
   usernameLockedUntil: cooldownLockedUntilIso(user.usernameChangedAt),
   emailLockedUntil: cooldownLockedUntilIso(user.emailChangedAt),
+  googleLinkLockedUntil: googleLinkLockedUntilIso(user.googleUnlinkedAt),
+  nameHistory: (user.nameHistory || []).slice(-5).reverse(),
+  emailHistory: (user.emailHistory || []).slice(-5).reverse(),
 });
 
 export const updateProfile = async (req, res, next) => {
@@ -104,6 +113,7 @@ export const updateProfile = async (req, res, next) => {
           });
         }
         user.usernameChangedAt = new Date();
+        user.nameHistory = [...(user.nameHistory || []), { value: user.name, changedAt: new Date() }].slice(-20);
       }
 
       user.name = cleaned;
@@ -357,15 +367,18 @@ export const requestEmailChange = async (req, res, next) => {
       return res.status(429).json({ success: false, message: 'Too many code requests. Please try again in an hour.' });
     }
 
-    const code = generateCode();
-    const otpHash = await bcrypt.hash(code, 10);
+    const oldCode = generateCode();
+    const newCode = generateCode();
+    const oldEmailOtpHash = await bcrypt.hash(oldCode, 10);
+    const newEmailOtpHash = await bcrypt.hash(newCode, 10);
 
     await PendingEmailChange.findOneAndUpdate(
       { userId: user._id },
       {
         $set: {
           newEmail: parsed.email,
-          otpHash,
+          oldEmailOtpHash,
+          newEmailOtpHash,
           otpExpiresAt: new Date(now + OTP_TTL_MS),
           attempts: 0,
           lastSentAt: new Date(now),
@@ -377,7 +390,13 @@ export const requestEmailChange = async (req, res, next) => {
       { upsert: true }
     );
 
-    sendInBackground(emailChangeOtpEmail({ name: user.name, code, minutes: OTP_TTL_MINUTES }), parsed.email);
+    // Two codes, two inboxes: the new address proves ownership of where the
+    // account is moving to, and the old address proves whoever is doing this
+    // still controls the inbox that's about to stop being the sign-in email -
+    // the second check is what stops a stolen password alone from quietly
+    // handing an attacker the account's email.
+    sendInBackground(emailChangeOtpEmail({ name: user.name, code: newCode, minutes: OTP_TTL_MINUTES }), parsed.email);
+    sendInBackground(emailChangeOldVerifyEmail({ name: user.name, code: oldCode, minutes: OTP_TTL_MINUTES }), user.email);
     securityLog('email_change_requested', req, { userId: String(user._id) });
 
     res.json({ success: true, cooldownSeconds: RESEND_COOLDOWN_SECONDS, expiresInMinutes: OTP_TTL_MINUTES });
@@ -391,8 +410,10 @@ export const verifyEmailChange = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ success: false, message: 'Please sign in again.' });
 
-    const code = String(req.body?.code ?? '').trim();
-    if (!new RegExp(`^\\d{${OTP_LENGTH}}$`).test(code)) {
+    const oldCode = String(req.body?.oldCode ?? '').trim();
+    const newCode = String(req.body?.newCode ?? '').trim();
+    const codePattern = new RegExp(`^\\d{${OTP_LENGTH}}$`);
+    if (!codePattern.test(oldCode) || !codePattern.test(newCode)) {
       return res.status(400).json({ success: false, message: 'That code is not right. Check it and try again.' });
     }
 
@@ -412,12 +433,17 @@ export const verifyEmailChange = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Too many wrong codes. Request a new one.' });
     }
 
-    const matches = await bcrypt.compare(code, record.otpHash);
-    if (!matches) {
+    const [oldMatches, newMatches] = await Promise.all([
+      bcrypt.compare(oldCode, record.oldEmailOtpHash),
+      bcrypt.compare(newCode, record.newEmailOtpHash),
+    ]);
+
+    if (!oldMatches || !newMatches) {
       securityLog('email_change_wrong_code', req, { userId: String(user._id) });
       return res.status(400).json({
         success: false,
         message: record.attempts >= MAX_ATTEMPTS ? 'Too many wrong codes. Request a new one.' : 'That code is not right. Check it and try again.',
+        invalidField: !oldMatches && !newMatches ? 'both' : !oldMatches ? 'old' : 'new',
       });
     }
 
@@ -431,6 +457,7 @@ export const verifyEmailChange = async (req, res, next) => {
     const previousEmail = user.email;
     user.email = record.newEmail;
     user.emailChangedAt = new Date();
+    user.emailHistory = [...(user.emailHistory || []), { value: previousEmail, changedAt: new Date() }].slice(-20);
     await user.save();
 
     await PendingEmailChange.deleteOne({ _id: record._id });

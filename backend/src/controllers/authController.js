@@ -20,9 +20,9 @@ import { validatePassword, cleanName, isNonEmptyString, NAME_MESSAGE } from '../
 import { securityLog } from '../utils/securityLog.js';
 import { checkCaptcha } from '../middleware/captcha.js';
 import { sendMail } from '../utils/mailer.js';
-import { signupOtpEmail, deviceLoginEmail } from '../utils/mailTemplates.js';
+import { signupOtpEmail, deviceLoginEmail, googleUnlinkedEmail } from '../utils/mailTemplates.js';
 import { decryptSecret } from '../utils/mfaCrypto.js';
-import { cooldownLockedUntilIso } from '../utils/cooldown.js';
+import { cooldownLockedUntilIso, googleLinkLockedUntilIso, googleLinkLockedUntil } from '../utils/cooldown.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -55,6 +55,9 @@ const MESSAGES = {
   googleAlreadyLinked: 'Your account is already linked to Google.',
   googleEmailMismatch: 'Sign in to Google with the same email as your Vaultrix account to link it.',
   googleTakenByOther: 'That Google account is already linked to a different account.',
+  googleRelinkLocked: 'You recently unlinked Google. You can link a Google account again once the cooldown ends.',
+  googleNotLinked: 'Your account is not linked to Google.',
+  googleUnlinkNeedsPassword: 'Set a password first - your account needs at least one way to sign in besides Google.',
   otpWait: 'Please wait a moment before requesting another code.',
   otpHourly: 'Too many code requests. Please try again in an hour.',
   otpWrong: 'That code is not right. Check it and try again.',
@@ -109,6 +112,9 @@ const publicUser = (user) => ({
   googleLinked: Boolean(user.googleId),
   usernameLockedUntil: cooldownLockedUntilIso(user.usernameChangedAt),
   emailLockedUntil: cooldownLockedUntilIso(user.emailChangedAt),
+  googleLinkLockedUntil: googleLinkLockedUntilIso(user.googleUnlinkedAt),
+  nameHistory: (user.nameHistory || []).slice(-5).reverse(),
+  emailHistory: (user.emailHistory || []).slice(-5).reverse(),
 });
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
@@ -640,6 +646,15 @@ export const linkGoogleAccount = async (req, res, next) => {
       return fail(res, 400, MESSAGES.googleAlreadyLinked);
     }
 
+    const relinkLockedUntil = googleLinkLockedUntil(user.googleUnlinkedAt);
+    if (relinkLockedUntil) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.googleRelinkLocked,
+        googleLinkLockedUntil: relinkLockedUntil.toISOString(),
+      });
+    }
+
     const { idToken } = req.body || {};
     if (typeof idToken !== 'string' || !idToken) {
       return fail(res, 400, 'Google sign-in did not send back a token.');
@@ -675,6 +690,49 @@ export const linkGoogleAccount = async (req, res, next) => {
     await user.save();
 
     securityLog('google_linked', req, { userId: String(user._id) });
+    res.json({ success: true, user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Removes the Google identity from the account. Requires the account's
+// password (proves it's really the owner, not someone at an unlocked
+// browser) and requires a password to already exist - unlinking the only
+// sign-in method a Google-only account has would lock the person out.
+// Relinking (the same or a different Google account) is then locked for
+// GOOGLE_RELINK_COOLDOWN_DAYS, so a compromised session can't be used to
+// bounce the account between Google identities.
+export const unlinkGoogleAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return fail(res, 401, 'Please sign in again.');
+
+    if (!user.googleId) {
+      return fail(res, 400, MESSAGES.googleNotLinked);
+    }
+
+    if (!user.passwordHash) {
+      return fail(res, 400, MESSAGES.googleUnlinkNeedsPassword);
+    }
+
+    const { password } = req.body || {};
+    if (!password || typeof password !== 'string') {
+      return fail(res, 400, 'Enter your password to continue.');
+    }
+
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) {
+      return fail(res, 400, 'Your password is not right.');
+    }
+
+    user.googleId = undefined;
+    user.googleUnlinkedAt = new Date();
+    await user.save();
+
+    securityLog('google_unlinked', req, { userId: String(user._id) });
+    sendOtpInBackground(googleUnlinkedEmail({ name: user.name }), user.email);
+
     res.json({ success: true, user: publicUser(user) });
   } catch (error) {
     next(error);

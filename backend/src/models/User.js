@@ -23,6 +23,15 @@ const userSchema = new mongoose.Schema(
     },
     usernameChangedAt: { type: Date, default: null },
     emailChangedAt: { type: Date, default: null },
+    nameHistory: {
+      type: [{ value: String, changedAt: Date }],
+      default: [],
+    },
+    emailHistory: {
+      type: [{ value: String, changedAt: Date }],
+      default: [],
+    },
+    googleUnlinkedAt: { type: Date, default: null },
     tokenVersion: { type: Number, default: 0 },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },

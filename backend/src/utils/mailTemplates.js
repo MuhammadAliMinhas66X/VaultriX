@@ -85,6 +85,18 @@ export const emailChangeOtpEmail = ({ name, code, minutes }) => ({
   ),
 });
 
+export const emailChangeOldVerifyEmail = ({ name, code, minutes }) => ({
+  subject: `${code} is your Vaultrix verification code`,
+  text: `Hi ${name || 'there'},\n\nSomeone (hopefully you) asked to change the email address on your Vaultrix account. Use this code to confirm it's really you: ${code}.\nIt expires in ${minutes} minutes.\n\nIf you did not ask to change your Vaultrix email, do not share this code with anyone and change your password right away.\n`,
+  html: shell(
+    'Confirm it’s really you',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, someone (hopefully you) asked to change the email address on your Vaultrix account. Use this code to confirm it's really you.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:10px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">The code expires in ${minutes} minutes and can only be used once.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#b42318;font-weight:600;">If you did not ask for this, do not share this code with anyone and change your password right away.</p>`
+  ),
+});
+
 export const accountDeletionOtpEmail = ({ name, code, minutes }) => ({
   subject: `${code} is your Vaultrix account deletion code`,
   text: `Hi ${name || 'there'},\n\nUse this code to permanently delete your Vaultrix account: ${code}.\nIt expires in ${minutes} minutes. This cannot be undone.\n\nIf you did not ask to delete your account, you can ignore this and nothing will change.\n`,
@@ -113,6 +125,16 @@ export const emailChangedEmail = ({ name, newEmail }) => ({
   html: shell(
     'Your email address was changed',
     `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, the email address on your Vaultrix account was just changed to <strong>${escapeHtml(newEmail)}</strong>.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, contact support right away.</p>`
+  ),
+});
+
+export const googleUnlinkedEmail = ({ name }) => ({
+  subject: 'Google sign-in was unlinked from your Vaultrix account',
+  text: `Hi ${name || 'there'},\n\nGoogle sign-in was just unlinked from your Vaultrix account. You can still sign in with your password. Relinking a Google account will be available again in 20 days.\n\nIf this was not you, contact support right away.\n`,
+  html: shell(
+    'Google sign-in unlinked',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, Google sign-in was just unlinked from your Vaultrix account. You can still sign in with your password. Relinking a Google account will be available again in 20 days.</p>
      <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, contact support right away.</p>`
   ),
 });

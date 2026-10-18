@@ -1,19 +1,28 @@
-// Shared 7-day cooldown helper for username/email changes. Both authController
-// and userController expose the same locked-until info on publicUser(), so it
-// lives in one place to avoid drift between the two.
+// Shared cooldown helpers for anything that locks for N days after a change
+// (username/email edits, relinking Google after an unlink). Both
+// authController and userController expose the same locked-until info on
+// publicUser(), so the math lives in one place to avoid drift.
 
 export const COOLDOWN_DAYS = 7;
-const COOLDOWN_MS = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+export const GOOGLE_RELINK_COOLDOWN_DAYS = 20;
+
+const daysToMs = (days) => days * 24 * 60 * 60 * 1000;
 
 // Returns the Date the field unlocks at, or null if it's not currently locked
 // (either never changed, or the cooldown window has already passed).
-export const cooldownLockedUntil = (changedAt) => {
+export const lockedUntil = (changedAt, days) => {
   if (!changedAt) return null;
-  const unlocksAt = new Date(new Date(changedAt).getTime() + COOLDOWN_MS);
+  const unlocksAt = new Date(new Date(changedAt).getTime() + daysToMs(days));
   return unlocksAt > new Date() ? unlocksAt : null;
 };
 
-export const cooldownLockedUntilIso = (changedAt) => {
-  const unlocksAt = cooldownLockedUntil(changedAt);
+export const lockedUntilIso = (changedAt, days) => {
+  const unlocksAt = lockedUntil(changedAt, days);
   return unlocksAt ? unlocksAt.toISOString() : null;
 };
+
+export const cooldownLockedUntil = (changedAt) => lockedUntil(changedAt, COOLDOWN_DAYS);
+export const cooldownLockedUntilIso = (changedAt) => lockedUntilIso(changedAt, COOLDOWN_DAYS);
+
+export const googleLinkLockedUntil = (unlinkedAt) => lockedUntil(unlinkedAt, GOOGLE_RELINK_COOLDOWN_DAYS);
+export const googleLinkLockedUntilIso = (unlinkedAt) => lockedUntilIso(unlinkedAt, GOOGLE_RELINK_COOLDOWN_DAYS);
