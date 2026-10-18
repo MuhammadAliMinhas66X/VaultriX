@@ -17,6 +17,7 @@ import { isDisposableDomain } from '../utils/disposableDomains.js';
 import { securityLog } from '../utils/securityLog.js';
 import { sendMail } from '../utils/mailer.js';
 import { emailChangedEmail, accountDeletedEmail, emailChangeOtpEmail, accountDeletionOtpEmail } from '../utils/mailTemplates.js';
+import { cooldownLockedUntil, cooldownLockedUntilIso } from '../utils/cooldown.js';
 
 // Must match the dictionaries shipped in frontend/src/i18n/locales.
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
@@ -69,6 +70,10 @@ const publicUser = (user) => ({
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
   mfaEnabled: Boolean(user.mfaEnabled),
+  hasPassword: Boolean(user.passwordHash),
+  googleLinked: Boolean(user.googleId),
+  usernameLockedUntil: cooldownLockedUntilIso(user.usernameChangedAt),
+  emailLockedUntil: cooldownLockedUntilIso(user.emailChangedAt),
 });
 
 export const updateProfile = async (req, res, next) => {
@@ -88,6 +93,19 @@ export const updateProfile = async (req, res, next) => {
       if (!cleaned) {
         return res.status(400).json({ success: false, message: NAME_MESSAGE });
       }
+
+      if (cleaned !== user.name) {
+        const lockedUntil = cooldownLockedUntil(user.usernameChangedAt);
+        if (lockedUntil) {
+          return res.status(400).json({
+            success: false,
+            message: 'You can change your name again once the cooldown ends.',
+            usernameLockedUntil: lockedUntil.toISOString(),
+          });
+        }
+        user.usernameChangedAt = new Date();
+      }
+
       user.name = cleaned;
     }
 
@@ -292,6 +310,15 @@ export const requestEmailChange = async (req, res, next) => {
       });
     }
 
+    const emailLockedUntil = cooldownLockedUntil(user.emailChangedAt);
+    if (emailLockedUntil) {
+      return res.status(400).json({
+        success: false,
+        message: 'You can change your email again once the cooldown ends.',
+        emailLockedUntil: emailLockedUntil.toISOString(),
+      });
+    }
+
     const { newEmail, password } = req.body || {};
 
     if (!password || typeof password !== 'string') {
@@ -403,6 +430,7 @@ export const verifyEmailChange = async (req, res, next) => {
 
     const previousEmail = user.email;
     user.email = record.newEmail;
+    user.emailChangedAt = new Date();
     await user.save();
 
     await PendingEmailChange.deleteOne({ _id: record._id });

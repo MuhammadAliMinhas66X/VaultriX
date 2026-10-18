@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema(
       type: [{ codeHash: String, usedAt: { type: Date, default: null } }],
       default: [],
     },
+    usernameChangedAt: { type: Date, default: null },
+    emailChangedAt: { type: Date, default: null },
     tokenVersion: { type: Number, default: 0 },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
