@@ -69,9 +69,9 @@ export const requestEmailChange = async ({ newEmail, password }) => {
   }
 };
 
-export const verifyEmailChange = async (code) => {
+export const verifyEmailChange = async ({ oldCode, newCode }) => {
   try {
-    const { data } = await api.post('/users/me/email/verify-change', { code });
+    const { data } = await api.post('/users/me/email/verify-change', { oldCode, newCode });
     return data;
   } catch (error) {
     throw toApiError(error);

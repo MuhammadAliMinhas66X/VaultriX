@@ -1,6 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Camera, Laptop, Loader2, Mail, AlertTriangle, ShieldCheck, Copy, Check, Lock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Camera,
+  Laptop,
+  Loader2,
+  Mail,
+  AlertTriangle,
+  ShieldCheck,
+  Copy,
+  Check,
+  Lock,
+  MapPin,
+  User,
+  SlidersHorizontal,
+  ArrowLeft,
+  Link2,
+  Link2Off,
+  History,
+} from 'lucide-react';
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
@@ -23,7 +41,7 @@ import {
   confirmMfaSetup,
   disableMfa,
 } from '../services/userService.js';
-import { linkGoogleAccount } from '../services/authService.js';
+import { linkGoogleAccount, unlinkGoogleAccount } from '../services/authService.js';
 import { resolveAvatarUrl, initialsFromName } from '../utils/avatar.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -77,6 +95,7 @@ function ProfileSection() {
   const [savingName, setSavingName] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const nameLocked = Boolean(user?.usernameLockedUntil);
 
@@ -209,6 +228,30 @@ function ProfileSection() {
           </div>
         )}
       </form>
+
+      {user?.nameHistory?.length > 0 && (
+        <div className="mt-4 border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowHistory((prev) => !prev)}
+            className="flex items-center gap-1 text-xs text-muted hover:text-ink"
+          >
+            <History className="h-3 w-3" /> {t('settings.viewHistory')}
+          </button>
+          {showHistory && (
+            <ul className="mt-1.5 flex flex-col gap-1">
+              {user.nameHistory.map((entry, index) => (
+                <li key={index} className="text-xs text-muted">
+                  {t('settings.previouslyWas', {
+                    value: entry.value,
+                    date: formatDate(new Date(entry.changedAt), { day: 'numeric', month: 'short', year: 'numeric' }),
+                  })}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </SettingsCard>
   );
 }
@@ -312,21 +355,140 @@ function PasswordSection() {
   );
 }
 
+function GoogleLinkStatus({ user, updateUser }) {
+  const { t, tServer } = useTranslation();
+  const { formatDate } = useFormat();
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
+  const [unlinkPassword, setUnlinkPassword] = useState('');
+  const [unlinkError, setUnlinkError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleLinkGoogleToken = async (idToken) => {
+    setLinkingGoogle(true);
+    try {
+      const data = await linkGoogleAccount(idToken);
+      updateUser(data.user);
+      notify.success(t('settings.googleLinked'));
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setLinkingGoogle(false);
+    }
+  };
+
+  const handleUnlink = async (event) => {
+    event.preventDefault();
+    if (!unlinkPassword) {
+      setUnlinkError('settings.currentPasswordRequired');
+      return;
+    }
+    setSaving(true);
+    try {
+      const data = await unlinkGoogleAccount(unlinkPassword);
+      updateUser(data.user);
+      notify.success(t('settings.googleUnlinked'));
+      setUnlinking(false);
+      setUnlinkPassword('');
+      setUnlinkError('');
+    } catch (error) {
+      setUnlinkError(tServer(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (user?.googleLinkLockedUntil) {
+    return (
+      <p className="flex items-center gap-1.5 text-xs text-muted">
+        <Lock className="h-3.5 w-3.5 shrink-0" />
+        {t('settings.googleRelinkLocked', {
+          days: daysUntil(user.googleLinkLockedUntil),
+          date: formatDate(new Date(user.googleLinkLockedUntil), { day: 'numeric', month: 'short' }),
+        })}
+      </p>
+    );
+  }
+
+  if (user?.googleLinked) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+          <Link2 className="h-3.5 w-3.5" /> {t('settings.googleAlreadyLinked')}
+        </p>
+        {unlinking ? (
+          <form onSubmit={handleUnlink} className="flex flex-col gap-2">
+            <FormField
+              label={t('settings.currentPassword')}
+              type="password"
+              value={unlinkPassword}
+              onChange={(event) => {
+                setUnlinkPassword(event.target.value);
+                setUnlinkError('');
+              }}
+              autoComplete="current-password"
+              error={unlinkError && t(unlinkError)}
+            />
+            <div className="flex items-center gap-3">
+              <Button type="submit" loading={saving} loadingLabel={t('common.saving')}>
+                {t('settings.confirmGoogleUnlink')}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUnlinking(false);
+                  setUnlinkPassword('');
+                  setUnlinkError('');
+                }}
+                className="text-sm text-muted hover:text-ink"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setUnlinking(true)}
+            className="flex w-fit items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700"
+          >
+            <Link2Off className="h-3.5 w-3.5" /> {t('settings.googleUnlink')}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs text-muted">{t('settings.googleLinkHint')}</p>
+      {linkingGoogle ? (
+        <p className="text-xs text-muted">{t('common.saving')}</p>
+      ) : (
+        <GoogleLinkButton onToken={handleLinkGoogleToken} onError={(message) => notify.error(message)} />
+      )}
+    </div>
+  );
+}
+
 function EmailSection() {
   const { user, updateUser } = useAuth();
   const { t, tServer } = useTranslation();
   const { formatDate } = useFormat();
 
-  const [step, setStep] = useState('idle'); // idle | requesting | code
+  const [step, setStep] = useState('idle'); // idle | code
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
-  const [code, setCode] = useState('');
-  const [codeError, setCodeError] = useState('');
+  const [oldCode, setOldCode] = useState('');
+  const [newCode, setNewCode] = useState('');
+  const [oldCodeError, setOldCodeError] = useState(false);
+  const [newCodeError, setNewCodeError] = useState(false);
+  const [codeMessage, setCodeMessage] = useState('');
   const [errorStamp, setErrorStamp] = useState(0);
   const [saving, setSaving] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [linkingGoogle, setLinkingGoogle] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
@@ -342,19 +504,6 @@ function EmailSection() {
     );
   }
 
-  const handleLinkGoogleToken = async (idToken) => {
-    setLinkingGoogle(true);
-    try {
-      const data = await linkGoogleAccount(idToken);
-      updateUser(data.user);
-      notify.success(t('settings.googleLinked'));
-    } catch (error) {
-      notify.error(tServer(error));
-    } finally {
-      setLinkingGoogle(false);
-    }
-  };
-
   if (user?.emailLockedUntil) {
     return (
       <SettingsCard title={t('settings.emailTitle')} locked>
@@ -365,6 +514,9 @@ function EmailSection() {
             date: formatDate(new Date(user.emailLockedUntil), { day: 'numeric', month: 'short' }),
           })}
         </p>
+        <div className="mt-4 border-t border-border pt-4">
+          <GoogleLinkStatus user={user} updateUser={updateUser} />
+        </div>
       </SettingsCard>
     );
   }
@@ -381,8 +533,11 @@ function EmailSection() {
     try {
       const data = await requestEmailChange({ newEmail: newEmail.trim(), password });
       setCooldown(data?.cooldownSeconds || 60);
-      setCode('');
-      setCodeError('');
+      setOldCode('');
+      setNewCode('');
+      setOldCodeError(false);
+      setNewCodeError(false);
+      setCodeMessage('');
       setStep('code');
     } catch (error) {
       notify.error(tServer(error));
@@ -391,25 +546,32 @@ function EmailSection() {
     }
   };
 
-  const submitCode = async (value) => {
-    if (value.length < EMAIL_CODE_LENGTH) {
-      setCodeError(t('auth.deviceCodeIncomplete'));
+  const submitCodes = async () => {
+    if (oldCode.length < EMAIL_CODE_LENGTH || newCode.length < EMAIL_CODE_LENGTH) {
+      setCodeMessage(t('auth.deviceCodeIncomplete'));
       setErrorStamp((stamp) => stamp + 1);
       return;
     }
     setSaving(true);
-    setCodeError('');
+    setCodeMessage('');
+    setOldCodeError(false);
+    setNewCodeError(false);
     try {
-      const data = await verifyEmailChange(value);
+      const data = await verifyEmailChange({ oldCode, newCode });
       updateUser(data.user);
       notify.success(t('status.emailUpdated'));
       setStep('idle');
       setNewEmail('');
       setPassword('');
-      setCode('');
+      setOldCode('');
+      setNewCode('');
     } catch (error) {
-      setCodeError(tServer(error));
-      setCode('');
+      setCodeMessage(tServer(error));
+      const field = error?.data?.invalidField;
+      setOldCodeError(field === 'old' || field === 'both');
+      setNewCodeError(field === 'new' || field === 'both');
+      setOldCode('');
+      setNewCode('');
       setErrorStamp((stamp) => stamp + 1);
     } finally {
       setSaving(false);
@@ -434,44 +596,74 @@ function EmailSection() {
     <SettingsCard title={t('settings.emailTitle')} subtitle={t('settings.emailSubtitle')}>
       <p className="mb-1 text-sm text-ink">{user?.email}</p>
 
+      {user?.emailHistory?.length > 0 && (
+        <div className="mb-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory((prev) => !prev)}
+            className="flex items-center gap-1 text-xs text-muted hover:text-ink"
+          >
+            <History className="h-3 w-3" /> {t('settings.viewHistory')}
+          </button>
+          {showHistory && (
+            <ul className="mt-1.5 flex flex-col gap-1">
+              {user.emailHistory.map((entry, index) => (
+                <li key={index} className="text-xs text-muted">
+                  {t('settings.previouslyWas', {
+                    value: entry.value,
+                    date: formatDate(new Date(entry.changedAt), { day: 'numeric', month: 'short', year: 'numeric' }),
+                  })}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="mb-4">
-        {user?.googleLinked ? (
-          <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-            <Check className="h-3.5 w-3.5" /> {t('settings.googleAlreadyLinked')}
-          </p>
-        ) : linkingGoogle ? (
-          <p className="text-xs text-muted">{t('common.saving')}</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs text-muted">{t('settings.googleLinkHint')}</p>
-            <GoogleLinkButton onToken={handleLinkGoogleToken} onError={(message) => notify.error(message)} />
-          </div>
-        )}
+        <GoogleLinkStatus user={user} updateUser={updateUser} />
       </div>
 
       {step === 'code' ? (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-muted">{t('settings.emailCodeSentTo', { email: newEmail.trim() })}</p>
-          <OtpInput
-            length={EMAIL_CODE_LENGTH}
-            value={code}
-            onChange={(value) => {
-              setCode(value);
-              if (codeError) setCodeError('');
-            }}
-            onComplete={submitCode}
-            disabled={saving}
-            hasError={Boolean(codeError)}
-            errorStamp={errorStamp}
-            label={t('auth.deviceCodeLabel')}
-          />
-          {codeError && (
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted">{t('settings.emailCodeSentToOld')}</p>
+            <OtpInput
+              length={EMAIL_CODE_LENGTH}
+              value={oldCode}
+              onChange={(value) => {
+                setOldCode(value);
+                if (codeMessage) setCodeMessage('');
+              }}
+              disabled={saving}
+              hasError={oldCodeError}
+              errorStamp={errorStamp}
+              label={t('settings.emailOldCodeLabel')}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted">{t('settings.emailCodeSentTo', { email: newEmail.trim() })}</p>
+            <OtpInput
+              length={EMAIL_CODE_LENGTH}
+              value={newCode}
+              onChange={(value) => {
+                setNewCode(value);
+                if (codeMessage) setCodeMessage('');
+              }}
+              onComplete={() => submitCodes()}
+              disabled={saving}
+              hasError={newCodeError}
+              errorStamp={errorStamp}
+              label={t('settings.emailNewCodeLabel')}
+            />
+          </div>
+          {codeMessage && (
             <p role="alert" className="text-xs font-medium text-red-600">
-              {codeError}
+              {codeMessage}
             </p>
           )}
           <div className="flex items-center gap-4">
-            <Button type="button" loading={saving} loadingLabel={t('common.saving')} onClick={() => submitCode(code)}>
+            <Button type="button" loading={saving} loadingLabel={t('common.saving')} onClick={submitCodes}>
               {t('settings.confirmEmail')}
             </Button>
             <button
@@ -817,6 +1009,9 @@ function DevicesSection() {
   const lastActiveLabel = (value) =>
     t('settings.lastActive', { time: formatDate(new Date(value), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) });
 
+  const LOOPBACK_IPS = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
+  const ipLabel = (ip) => (LOOPBACK_IPS.has(ip) ? t('settings.localDevice') : ip);
+
   return (
     <SettingsCard title={t('settings.devicesTitle')} subtitle={t('settings.devicesSubtitle')}>
       {loading ? (
@@ -841,7 +1036,7 @@ function DevicesSection() {
                   <p className="truncate text-xs text-muted">{lastActiveLabel(session.lastUsedAt)}</p>
                   {session.ip && (
                     <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted/80">
-                      <MapPin className="h-3 w-3 shrink-0" /> {session.ip}
+                      <MapPin className="h-3 w-3 shrink-0" /> {ipLabel(session.ip)}
                     </p>
                   )}
                 </div>
@@ -1164,23 +1359,98 @@ function DangerZoneSection() {
   );
 }
 
+function SecuritySection() {
+  return (
+    <div className="flex flex-col gap-6">
+      <EmailSection />
+      <PasswordSection />
+      <MfaSection />
+    </div>
+  );
+}
+
+const useSettingsSections = () => {
+  const { t } = useTranslation();
+  return [
+    { id: 'profile', label: t('settings.sectionProfile'), icon: User, Component: ProfileSection },
+    { id: 'security', label: t('settings.sectionSecurity'), icon: ShieldCheck, Component: SecuritySection },
+    { id: 'devices', label: t('settings.sectionDevices'), icon: Laptop, Component: DevicesSection },
+    { id: 'preferences', label: t('settings.sectionPreferences'), icon: SlidersHorizontal, Component: PreferencesSection },
+    { id: 'danger', label: t('settings.sectionDanger'), icon: AlertTriangle, Component: DangerZoneSection, danger: true },
+  ];
+};
+
+function SettingsNav({ sections, active, onChange }) {
+  return (
+    <nav
+      aria-label="Settings sections"
+      className="flex flex-row gap-1 overflow-x-auto pb-1 sm:flex-col sm:gap-1 sm:overflow-visible sm:pb-0"
+    >
+      {sections.map((section) => {
+        const Icon = section.icon;
+        const isActive = section.id === active;
+        return (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => onChange(section.id)}
+            aria-current={isActive ? 'page' : undefined}
+            className={`relative flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors ${
+              isActive
+                ? section.danger
+                  ? 'text-red-700'
+                  : 'text-ink'
+                : 'text-muted hover:text-ink'
+            }`}
+          >
+            {isActive && (
+              <motion.span
+                layoutId="settingsActiveTab"
+                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                className={`absolute inset-0 rounded-lg ${section.danger ? 'bg-red-50' : 'bg-black/[0.04]'}`}
+              />
+            )}
+            <Icon className="relative z-10 h-4 w-4 shrink-0" />
+            <span className="relative z-10">{section.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function SettingsPage() {
   const { signOut } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const [activeSection, setActiveSection] = useState('profile');
+  const sections = useSettingsSections();
 
   const handleSignOut = async () => {
     setSigningOut(true);
     await signOut();
   };
 
+  const ActiveComponent = sections.find((section) => section.id === activeSection)?.Component || ProfileSection;
+
   return (
     <div className="min-h-screen bg-surface">
       <DashboardHeader />
 
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-10">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-ink">{t('settings.title')}</h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label={t('settings.back')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink hover:bg-black/[0.03]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <h1 className="text-2xl font-semibold text-ink">{t('settings.title')}</h1>
+          </div>
           <button
             onClick={handleSignOut}
             disabled={signingOut}
@@ -1192,13 +1462,23 @@ function SettingsPage() {
           </button>
         </div>
 
-        <ProfileSection />
-        <EmailSection />
-        <PasswordSection />
-        <MfaSection />
-        <DevicesSection />
-        <PreferencesSection />
-        <DangerZoneSection />
+        <div className="flex flex-col gap-6 sm:grid sm:grid-cols-[200px_1fr] sm:items-start sm:gap-8">
+          <div className="sm:sticky sm:top-6">
+            <SettingsNav sections={sections} active={activeSection} onChange={setActiveSection} />
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ActiveComponent />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

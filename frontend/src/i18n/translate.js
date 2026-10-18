@@ -75,6 +75,9 @@ const SERVER_MESSAGE_KEYS = {
   'That Google account is already linked to a different account.': 'errors.googleTakenByOther',
   'You can change your name again once the cooldown ends.': 'errors.usernameCooldown',
   'You can change your email again once the cooldown ends.': 'errors.emailCooldown',
+  'You recently unlinked Google. You can link a Google account again once the cooldown ends.': 'errors.googleRelinkLocked',
+  'Your account is not linked to Google.': 'errors.googleNotLinked',
+  'Set a password first - your account needs at least one way to sign in besides Google.': 'errors.googleUnlinkNeedsPassword',
 };
 
 export const serverMessageKey = (error) =>

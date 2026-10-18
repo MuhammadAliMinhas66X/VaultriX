@@ -77,6 +77,15 @@ export const linkGoogleAccount = async (idToken) => {
   }
 };
 
+export const unlinkGoogleAccount = async (password) => {
+  try {
+    const { data } = await api.post('/auth/unlink-google', { password });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
 export const verifyDeviceLogin = async ({ email, code }) => {
   try {
     const { data } = await api.post('/auth/verify-device', { email, code });
