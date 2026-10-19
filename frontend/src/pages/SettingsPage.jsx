@@ -1463,7 +1463,7 @@ function SettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6 sm:grid sm:grid-cols-[200px_1fr] sm:items-start sm:gap-8">
-          <div className="sm:sticky sm:top-6">
+          <div className="min-w-0 sm:sticky sm:top-6">
             <SettingsNav sections={sections} active={activeSection} onChange={setActiveSection} />
           </div>
 
@@ -1474,6 +1474,7 @@ function SettingsPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.2 }}
+              className="min-w-0"
             >
               <ActiveComponent />
             </motion.div>
