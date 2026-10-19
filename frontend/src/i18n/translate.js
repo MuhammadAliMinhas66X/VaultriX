@@ -78,6 +78,18 @@ const SERVER_MESSAGE_KEYS = {
   'You recently unlinked Google. You can link a Google account again once the cooldown ends.': 'errors.googleRelinkLocked',
   'Your account is not linked to Google.': 'errors.googleNotLinked',
   'Set a password first - your account needs at least one way to sign in besides Google.': 'errors.googleUnlinkNeedsPassword',
+  'Enter the 6-digit code from your app.': 'errors.mfaCodeRequired',
+  'Enter your password to continue.': 'errors.passwordRequired',
+  'Start the account deletion again.': 'errors.deleteAccountRestart',
+  'Start the email change again.': 'errors.emailChangeRestart',
+  'That is already your email address.': 'errors.emailUnchanged',
+  'That device is already signed out.': 'errors.deviceAlreadySignedOut',
+  'Type DELETE to confirm.': 'settings.typeDeleteToConfirm',
+  'Your account signs in with Google, which already has its own 2-step verification.': 'settings.mfaGoogleManaged',
+  'Your email is managed by Google sign-in and cannot be changed here.': 'settings.emailGoogleManaged',
+  'Your password is not right.': 'errors.passwordWrong',
+  'Your 2-step verification setup has expired. Please start again.': 'errors.mfaSetupExpired',
+  'That took too long. Please sign in again.': 'errors.loginTimedOut',
 };
 
 export const serverMessageKey = (error) =>
