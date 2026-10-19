@@ -4,7 +4,7 @@
 // publicUser(), so the math lives in one place to avoid drift.
 
 export const COOLDOWN_DAYS = 7;
-export const GOOGLE_RELINK_COOLDOWN_DAYS = 20;
+export const GOOGLE_RELINK_COOLDOWN_DAYS = 30;
 
 const daysToMs = (days) => days * 24 * 60 * 60 * 1000;
 
