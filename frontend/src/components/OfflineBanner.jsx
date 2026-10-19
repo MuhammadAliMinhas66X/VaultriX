@@ -48,10 +48,12 @@ function OfflineBanner() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -64, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            className="pointer-events-auto flex w-full items-center justify-center gap-2.5 bg-amber-500 px-4 py-3 text-center text-sm font-medium text-white shadow-md"
-            style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            className="pointer-events-auto mx-4 mt-3 flex w-full max-w-md items-center justify-center gap-2.5 rounded-xl border border-border bg-white/80 px-4 py-2.5 text-center text-sm font-medium text-ink shadow-lg backdrop-blur-md"
+            style={{ marginTop: 'max(0.75rem, env(safe-area-inset-top))' }}
           >
-            <WifiOff className="h-4 w-4 shrink-0" />
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600">
+              <WifiOff className="h-3.5 w-3.5" />
+            </span>
             <span>{t('offline.lost')}</span>
           </motion.div>
         )}
@@ -62,10 +64,12 @@ function OfflineBanner() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -64, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            className="pointer-events-auto flex w-full items-center justify-center gap-2.5 bg-emerald-600 px-4 py-3 text-center text-sm font-medium text-white shadow-md"
-            style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            className="pointer-events-auto mx-4 mt-3 flex w-full max-w-md items-center justify-center gap-2.5 rounded-xl border border-border bg-white/80 px-4 py-2.5 text-center text-sm font-medium text-ink shadow-lg backdrop-blur-md"
+            style={{ marginTop: 'max(0.75rem, env(safe-area-inset-top))' }}
           >
-            <Wifi className="h-4 w-4 shrink-0" />
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+              <Wifi className="h-3.5 w-3.5" />
+            </span>
             <span>{t('offline.restored')}</span>
           </motion.div>
         )}
