@@ -274,7 +274,7 @@ export const revokeSession = async (req, res, next) => {
     const result = await Session.deleteOne({ _id: id, userId: req.user.id });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ success: false, message: 'That session is already signed out.' });
+      return res.status(404).json({ success: false, message: 'That device is already signed out.' });
     }
 
     res.json({ success: true });
@@ -282,7 +282,7 @@ export const revokeSession = async (req, res, next) => {
     // An invalid id shape (not a valid ObjectId) throws a CastError here -
     // treat it the same as "not found" rather than a 500.
     if (error?.name === 'CastError') {
-      return res.status(404).json({ success: false, message: 'That session is already signed out.' });
+      return res.status(404).json({ success: false, message: 'That device is already signed out.' });
     }
     next(error);
   }

@@ -43,11 +43,11 @@ export const confirmMfaSetup = async (req, res, next) => {
     try {
       payload = verifyMfaSetupToken(setupToken);
     } catch (error) {
-      return fail(res, 400, 'Your setup session has expired. Start again.');
+      return fail(res, 400, 'Your 2-step verification setup has expired. Please start again.');
     }
 
     if (payload.sub !== String(user._id)) {
-      return fail(res, 400, 'Your setup session has expired. Start again.');
+      return fail(res, 400, 'Your 2-step verification setup has expired. Please start again.');
     }
 
     const valid = authenticator.verify({ token: String(code).trim(), secret: payload.secret });

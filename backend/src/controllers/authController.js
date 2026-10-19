@@ -499,12 +499,12 @@ export const verifyMfaLogin = async (req, res, next) => {
     try {
       payload = verifyMfaLoginToken(mfaToken);
     } catch (error) {
-      return fail(res, 400, 'Your sign-in session has expired. Please sign in again.');
+      return fail(res, 400, 'That took too long. Please sign in again.');
     }
 
     const user = await User.findById(payload.sub);
     if (!user || !user.mfaEnabled) {
-      return fail(res, 400, 'Your sign-in session has expired. Please sign in again.');
+      return fail(res, 400, 'That took too long. Please sign in again.');
     }
 
     const input = String(code).trim();
