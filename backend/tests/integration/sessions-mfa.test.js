@@ -10,17 +10,30 @@ const { default: app } = await import('../../src/app.js');
 
 describe('DELETE /api/users/me/sessions/:id', () => {
   it('revoking a device twice says the second time it is already signed out', async () => {
-    const { authorization, sessionId } = await createAuthedUser({ email: 'devices@vaultrix.test' });
+    const { user, authorization } = await createAuthedUser({ email: 'devices@vaultrix.test' });
+
+    // Revoke a DIFFERENT device's session, not the one this request is
+    // itself authenticated with - deleting your own current session would
+    // invalidate this very bearer token (that's the per-device kill switch
+    // working correctly, see the "Logging out signs a device out
+    // immediately" test below), which would turn the second call's 401
+    // into a false failure here instead of testing "already signed out".
+    const otherDevice = await Session.create({
+      userId: user._id,
+      userAgent: 'vitest-other-device',
+      ip: '127.0.0.1',
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
 
     const first = await request(app)
-      .delete(`/api/users/me/sessions/${sessionId}`)
+      .delete(`/api/users/me/sessions/${otherDevice._id}`)
       .set('Authorization', authorization);
 
     expect(first.status).toBe(200);
     expect(first.body.success).toBe(true);
 
     const second = await request(app)
-      .delete(`/api/users/me/sessions/${sessionId}`)
+      .delete(`/api/users/me/sessions/${otherDevice._id}`)
       .set('Authorization', authorization);
 
     // This is a regression test for the exact wording fixed in v1_43: the

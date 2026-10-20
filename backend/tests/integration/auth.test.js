@@ -8,9 +8,18 @@ const { default: app } = await import('../../src/app.js');
 
 const VALID_PASSWORD = 'Sup3r!Secret';
 
+// signup() is the one endpoint that does a REAL DNS MX lookup on the
+// email's domain (see src/utils/emailValidation.js -> checkEmail), on top
+// of the usual format/disposable checks every other endpoint does. ".test"
+// is a reserved, deliberately non-resolvable TLD (RFC 2606) - perfect for
+// most of this suite, but it makes signup() correctly reject it as
+// "That email domain cannot receive mail." Only the tests that actually
+// call POST /api/auth/signup need a real, resolvable domain instead.
+const REAL_DOMAIN = 'gmail.com';
+
 describe('POST /api/auth/signup -> /api/auth/signup/verify', () => {
   it('creates an account end-to-end once the emailed code is confirmed', async () => {
-    const email = 'new.user@vaultrix.test';
+    const email = `new.user.${Date.now()}@${REAL_DOMAIN}`;
 
     const signupRes = await request(app)
       .post('/api/auth/signup')
@@ -37,7 +46,7 @@ describe('POST /api/auth/signup -> /api/auth/signup/verify', () => {
   it('rejects a weak password before ever sending a code', async () => {
     const res = await request(app)
       .post('/api/auth/signup')
-      .send({ name: 'Weak Pw', email: 'weak@vaultrix.test', password: 'short' });
+      .send({ name: 'Weak Pw', email: `weak.pw.${Date.now()}@${REAL_DOMAIN}`, password: 'short' });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -45,19 +54,21 @@ describe('POST /api/auth/signup -> /api/auth/signup/verify', () => {
   });
 
   it('rejects signup for an email that already has an account', async () => {
-    await createUser({ email: 'existing@vaultrix.test' });
+    const email = `existing.${Date.now()}@${REAL_DOMAIN}`;
+    await createUser({ email });
 
     const res = await request(app)
       .post('/api/auth/signup')
-      .send({ name: 'Someone Else', email: 'existing@vaultrix.test', password: VALID_PASSWORD });
+      .send({ name: 'Someone Else', email, password: VALID_PASSWORD });
 
     expect(res.status).toBe(409);
     expect(res.body.success).toBe(false);
   });
 
   it('rejects the wrong verification code without creating an account', async () => {
-    const email = 'wrong.code@vaultrix.test';
-    await request(app).post('/api/auth/signup').send({ name: 'Wrong Code', email, password: VALID_PASSWORD });
+    const email = `wrong.code.${Date.now()}@${REAL_DOMAIN}`;
+    const signupRes = await request(app).post('/api/auth/signup').send({ name: 'Wrong Code', email, password: VALID_PASSWORD });
+    expect(signupRes.status).toBe(200);
 
     const res = await request(app).post('/api/auth/signup/verify').send({ email, code: '000000' });
 
