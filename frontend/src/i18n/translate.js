@@ -59,7 +59,7 @@ const SERVER_MESSAGE_KEYS = {
   'Enter a new password to continue.': 'errors.newPasswordRequired',
   'Password is too long. Use 64 characters or fewer.': 'errors.passwordTooLong',
   'Password must include at least one letter and one special character.': 'errors.passwordNeedsMix',
-  'Enter a valid name between 2 and 60 characters.': 'errors.nameInvalid',
+  'Enter a valid name using letters only.': 'errors.nameInvalid',
   'Too many failed sign-in attempts. Please try again later.': 'errors.accountLocked',
   'Please complete the security check and try again.': 'errors.captchaRequired',
   'The security check failed. Please refresh the page and try again.': 'errors.captchaFailed',
@@ -90,6 +90,8 @@ const SERVER_MESSAGE_KEYS = {
   'Your password is not right.': 'errors.passwordWrong',
   'Your 2-step verification setup has expired. Please start again.': 'errors.mfaSetupExpired',
   'That took too long. Please sign in again.': 'errors.loginTimedOut',
+  '2-step verification is already on.': 'errors.mfaAlreadyOn',
+  '2-step verification is already off.': 'errors.mfaAlreadyOff',
 };
 
 export const serverMessageKey = (error) =>
