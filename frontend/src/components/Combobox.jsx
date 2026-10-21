@@ -25,8 +25,18 @@ function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlighted, setHighlighted] = useState(0);
+  // When a field sits near the bottom of a long page (onboarding steps,
+  // the Settings preferences card), the menu normally opens downward and
+  // can run past the bottom of the viewport. Because it's absolutely
+  // positioned, nothing stops the page itself from growing to fit it,
+  // which left a block of empty space below the real content with its
+  // own scrollbar - not a new bug exactly, just confusing to look at. We
+  // measure the room below on open and flip the menu upward when there
+  // isn't enough of it, same as any native/select-style dropdown would.
+  const [openUpward, setOpenUpward] = useState(false);
   const rootRef = useRef(null);
   const inputRef = useRef(null);
+  const MENU_HEIGHT_ESTIMATE = 272; // search bar + max-h-56 list, in px
 
   const selected = items.find((item) => item.value === value) || null;
   const needle = normalize(query.trim());
@@ -80,7 +90,18 @@ function Combobox({
 
       <button
         type="button"
-        onClick={() => !loading && setOpen((prev) => !prev)}
+        onClick={() => {
+          if (loading) return;
+          setOpen((prev) => {
+            const next = !prev;
+            if (next && rootRef.current) {
+              const rect = rootRef.current.getBoundingClientRect();
+              const spaceBelow = window.innerHeight - rect.bottom;
+              setOpenUpward(spaceBelow < MENU_HEIGHT_ESTIMATE && rect.top > spaceBelow);
+            }
+            return next;
+          });
+        }}
         disabled={loading}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -120,7 +141,9 @@ function Combobox({
 
       {open && (
         <div
-          className={`absolute top-full z-30 mt-1.5 overflow-hidden rounded-lg border border-border bg-white shadow-xl ${menuClassName}`}
+          className={`absolute z-30 overflow-hidden rounded-lg border border-border bg-white shadow-xl ${
+            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          } ${menuClassName}`}
         >
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
