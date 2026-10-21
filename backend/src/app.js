@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import errorHandler from './middleware/errorHandler.js';
 import { sanitizeInput, noStore, allowedOrigins } from './middleware/security.js';
+import { attachDeviceId } from './middleware/deviceId.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
@@ -24,6 +25,16 @@ if (process.env.TRUST_PROXY) {
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    // Google's "Continue with Google" popup needs to postMessage its result
+    // back to the window that opened it. Helmet's own default COOP value
+    // ("same-origin") blocks exactly that - the browser isolates the popup
+    // from its opener and the postMessage call gets silently dropped, which
+    // is what shows up in the console as "Cross-Origin-Opener-Policy policy
+    // would block the window.postMessage call." "same-origin-allow-popups"
+    // is the policy Google's own docs recommend for pages that open an
+    // OAuth popup: it keeps the opener isolated from other origins while
+    // still allowing a popup IT opened to talk back to it.
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'none'"],
@@ -45,7 +56,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Fallback-Id'],
     maxAge: 600,
   })
 );
@@ -54,6 +65,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 app.use(cookieParser());
 app.use(sanitizeInput);
+app.use(attachDeviceId);
 
 app.use(
   '/uploads',

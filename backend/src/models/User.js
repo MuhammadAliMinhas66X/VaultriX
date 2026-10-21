@@ -37,8 +37,16 @@ const userSchema = new mongoose.Schema(
     lockUntil: { type: Date, default: null },
     lockTier: { type: Number, default: 0 },
     lastLoginAt: { type: Date, default: null },
+    // Device signals captured at account-creation time only, used purely to
+    // enforce the per-device account limit (see utils/deviceLimit.js) -
+    // never updated after signup, and never used for anything else.
+    signupDeviceId: { type: String, default: null },
+    signupDeviceFallbackId: { type: String, default: null },
   },
   { timestamps: true }
 );
+
+userSchema.index({ signupDeviceId: 1 });
+userSchema.index({ signupDeviceFallbackId: 1 });
 
 export default mongoose.model('User', userSchema);

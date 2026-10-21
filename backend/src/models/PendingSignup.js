@@ -12,6 +12,13 @@ const pendingSignupSchema = new mongoose.Schema(
     windowStartedAt: { type: Date, required: true },
     lastSentAt: { type: Date, required: true },
     expiresAt: { type: Date, required: true },
+    // Carried over onto the real User document once the code is confirmed
+    // (see verifySignupOtp) - captured here, at request time, rather than
+    // re-read from the verify request, so a device limit check can't be
+    // dodged by sending the OTP-send request from one device/cookie state
+    // and the verify request from another.
+    deviceId: { type: String, default: null },
+    deviceFallbackId: { type: String, default: null },
   },
   { timestamps: true }
 );
