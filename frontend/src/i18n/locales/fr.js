@@ -119,7 +119,7 @@ export default {
   'settings.sectionPreferences': 'Préférences',
   'settings.sectionDanger': 'Gestion du compte',
   'settings.localDevice': 'Connexion locale',
-  'settings.devicesLocalNote': "Vous testez sur un réseau local, donc les adresses s'affichent comme une connexion locale plutôt qu'une IP publique - une fois en ligne, les véritables adresses IP s'afficheront ici. Pour des raisons de confidentialité, aucun navigateur ne partage le nom de l'ordinateur avec un site web, donc cette information ne peut jamais être affichée - le navigateur et le système d'exploitation indiqués sont l'information la plus proche disponible.",
+  'settings.devicesLocalNote': "Vous testez sur un réseau local, donc l'adresse affichée (::1 ou 127.0.0.1) correspond à cet ordinateur qui se parle à lui-même, pas à une IP publique - une fois en ligne, les véritables adresses IP des visiteurs s'afficheront ici. Pour des raisons de confidentialité, aucun navigateur ne partage le nom de l'ordinateur avec un site web, donc cette information ne peut jamais être affichée - le navigateur et le système d'exploitation indiqués sont l'information la plus proche disponible.",
   'settings.viewHistory': 'Voir l’historique',
   'settings.previouslyWas': 'Auparavant : {value} — modifié le {date}',
   'settings.signOut': 'Déconnexion',

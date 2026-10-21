@@ -119,7 +119,7 @@ export default {
   'settings.sectionPreferences': 'Preferences',
   'settings.sectionDanger': 'Account Management',
   'settings.localDevice': 'Local connection',
-  'settings.devicesLocalNote': "You're testing on a local network, so addresses show as a local connection instead of a public IP - once this is live on the internet, real IP addresses will show here. Browsers never share a computer's device name with any website, for privacy reasons, so that part can't be shown no matter where this runs - the browser and OS name you see is the closest identifying info available.",
+  'settings.devicesLocalNote': "You're testing on a local network, so the address shown (::1 or 127.0.0.1) is this computer talking to itself, not a public IP - once this is live on the internet, real visitor IP addresses will show here instead. Browsers never share a computer's device name with any website, for privacy reasons, so that part can't be shown no matter where this runs - the browser and OS name you see is the closest identifying info available.",
   'settings.viewHistory': 'View history',
   'settings.previouslyWas': 'Previously: {value} — changed {date}',
   'settings.signOut': 'Sign out',
