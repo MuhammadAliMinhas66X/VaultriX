@@ -92,6 +92,8 @@ const SERVER_MESSAGE_KEYS = {
   'That took too long. Please sign in again.': 'errors.loginTimedOut',
   '2-step verification is already on.': 'errors.mfaAlreadyOn',
   '2-step verification is already off.': 'errors.mfaAlreadyOff',
+  'This device has already created the maximum number of Vaultrix accounts. If you need another account, please contact support.':
+    'errors.deviceAccountLimit',
 };
 
 export const serverMessageKey = (error) =>
