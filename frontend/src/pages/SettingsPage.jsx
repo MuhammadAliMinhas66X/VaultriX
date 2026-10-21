@@ -68,10 +68,17 @@ function SettingsCard({ title, subtitle, locked, children }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`overflow-hidden rounded-xl border bg-white ${locked ? 'border-amber-300/70' : 'border-border'}`}
+      className={`rounded-xl border bg-white ${locked ? 'border-ink' : 'border-border'}`}
     >
+      {/* overflow-hidden used to live on the whole card so the locked
+          banner's top corners stayed rounded, but that also clipped any
+          dropdown menu (Combobox) that opens below it - the Country
+          dropdown had enough room before the card's bottom edge to still
+          be visible, but Language/Currency further down did not, and
+          looked broken/unscrollable. Rounding is scoped to just the
+          banner itself instead, so menus can now overflow the card. */}
       {locked && (
-        <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-2.5 text-amber-700">
+        <div className="flex items-center gap-2 rounded-t-xl bg-ink px-6 py-2.5 text-white">
           <Lock className="h-3.5 w-3.5 shrink-0" />
           <span className="text-xs font-medium">{title}</span>
         </div>
@@ -1037,7 +1044,10 @@ function DevicesSection() {
     t('settings.lastActive', { time: formatDate(new Date(value), { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) });
 
   const LOOPBACK_IPS = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
-  const ipLabel = (ip) => (LOOPBACK_IPS.has(ip) ? t('settings.localDevice') : ip);
+  // Show the actual IP address value, always - no friendly relabeling. In
+  // local development that's genuinely ::1/127.0.0.1 (this computer talking
+  // to itself); once deployed, this same field shows real visitor IPs.
+  const ipLabel = (ip) => ip;
   const hasLocalSession = sessions.some((session) => LOOPBACK_IPS.has(session.ip));
 
   return (
@@ -1200,7 +1210,16 @@ function DangerZoneSection() {
   const [errorStamp, setErrorStamp] = useState(0);
   const [cooldown, setCooldown] = useState(0);
 
-  const isGoogle = user?.authProvider === 'google';
+  // What confirms "this is really you" depends on whether this account has
+  // a password at all - NOT on how it originally signed up. A Google
+  // signup that later set a password (Settings > Password) now has one,
+  // so it should confirm with that password just like any other account;
+  // only an account with no password yet falls back to typing DELETE.
+  // This must match requestAccountDeletion()'s own check (user.passwordHash)
+  // on the backend, or the form asks for one thing while the server expects
+  // another.
+  const hasPassword = Boolean(user?.hasPassword);
+  const isGoogle = !hasPassword;
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
