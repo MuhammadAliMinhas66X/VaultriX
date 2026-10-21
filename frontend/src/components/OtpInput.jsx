@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 function OtpInput({ length = 6, value, onChange, onComplete, disabled = false, hasError = false, errorStamp = 0, label }) {
   const refs = useRef([]);
+  const baseId = useId();
   const digits = Array.from({ length }, (_, index) => value[index] || '');
 
   useEffect(() => {
@@ -88,6 +89,8 @@ function OtpInput({ length = 6, value, onChange, onComplete, disabled = false, h
           ref={(node) => {
             refs.current[index] = node;
           }}
+          id={`${baseId}-${index}`}
+          name={`${baseId}-digit-${index}`}
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
