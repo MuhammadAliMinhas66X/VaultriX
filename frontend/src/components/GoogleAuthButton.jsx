@@ -2,12 +2,17 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from '../i18n/useTranslation.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const CALLBACK_URL = `${API_URL}/auth/google/callback`;
-
 const GOOGLE_LOCALES = { zh: 'zh-CN', tl: 'fil' };
 
-function GoogleAuthButton({ onError }) {
+// Popup mode (the library's default: no ux_mode/login_uri), the same pattern
+// GoogleLinkButton already uses. This used to run in ux_mode="redirect",
+// which sends the WHOLE page to accounts.google.com - so after picking an
+// account you'd land on Google's own full-page consent/description screen
+// before ever coming back to Vaultrix. Popup mode keeps everything in a
+// small popup window that closes itself the moment Google hands back a
+// credential, so the app never navigates away and there's no detour through
+// a Google-branded page in between.
+function GoogleAuthButton({ onToken, onError }) {
   const { t, language } = useTranslation();
   const wrapRef = useRef(null);
   const [width, setWidth] = useState(null);
@@ -24,11 +29,15 @@ function GoogleAuthButton({ onError }) {
       {width && (
         <GoogleLogin
           key={language}
-          onSuccess={() => {}}
+          onSuccess={(credentialResponse) => {
+            if (credentialResponse?.credential) {
+              onToken(credentialResponse.credential);
+            } else {
+              onError(t('auth.googleFailed'));
+            }
+          }}
           onError={() => onError(t('auth.googleFailed'))}
           useOneTap={false}
-          ux_mode="redirect"
-          login_uri={CALLBACK_URL}
           width={width}
           text="continue_with"
           shape="rectangular"

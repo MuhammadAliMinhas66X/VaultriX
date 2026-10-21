@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout.jsx';
 import FormField from '../components/FormField.jsx';
 import EmailField from '../components/EmailField.jsx';
@@ -13,7 +13,7 @@ import { passwordIssue } from '../utils/emailRules.js';
 import { sanitizeNameInput, isValidName } from '../utils/nameRules.js';
 import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import PageLoader from '../components/PageLoader.jsx';
-import { signup, verifySignupCode } from '../services/authService.js';
+import { signup, verifySignupCode, googleAuth } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
@@ -138,6 +138,26 @@ function SignupPage() {
     submitCode(code);
   };
 
+  const handleGoogleToken = async (idToken) => {
+    setLoading(true);
+    try {
+      const data = await googleAuth(idToken);
+      if (data?.requiresDeviceVerification) {
+        // Rare: this Google identity already has an account signed in on
+        // the maximum number of devices. Signup has no device-verification
+        // step of its own (that belongs to sign-in), so send them there
+        // instead of half-building it here.
+        notify.error(t('auth.tooManyDevicesUseLogin'));
+        setLoading(false);
+        return;
+      }
+      proceedAfterAuth(data);
+    } catch (error) {
+      notify.error(tServer(error));
+      setLoading(false);
+    }
+  };
+
   const editDetails = () => {
     setStep('details');
     setCode('');
@@ -161,7 +181,7 @@ function SignupPage() {
       <AnimatePresence mode="wait" initial={false}>
         {step === 'details' && (
           <motion.div key="details" {...stepMotion}>
-            <GoogleAuthButton onError={(message) => notify.error(message)} />
+            <GoogleAuthButton onToken={handleGoogleToken} onError={(message) => notify.error(message)} />
 
             <div className="my-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
@@ -288,7 +308,12 @@ function SignupPage() {
               >
                 {cooldown > 0 ? t('signupVerify.resendIn', { seconds: cooldown }) : t('signupVerify.resend')}
               </button>
-              <button type="button" onClick={editDetails} className="text-muted transition hover:text-ink">
+              <button
+                type="button"
+                onClick={editDetails}
+                className="flex items-center gap-1.5 text-muted transition hover:text-ink"
+              >
+                <ArrowLeft className="h-4 w-4" />
                 {t('signupVerify.editDetails')}
               </button>
             </div>

@@ -11,7 +11,7 @@ import PageLoader from '../components/PageLoader.jsx';
 import LockScreen from '../components/LockScreen.jsx';
 import LockTimerBadge from '../components/LockTimerBadge.jsx';
 import OtpInput from '../components/OtpInput.jsx';
-import { login, getLoginStatus, verifyDeviceLogin, verifyMfaLogin } from '../services/authService.js';
+import { login, googleAuth, getLoginStatus, verifyDeviceLogin, verifyMfaLogin } from '../services/authService.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
@@ -136,6 +136,26 @@ function LoginPage() {
     if (!password) next.password = 'auth.passwordRequired';
     setFieldErrors(next);
     return Object.keys(next).length === 0;
+  };
+
+  const handleGoogleToken = async (idToken) => {
+    setLoading(true);
+    try {
+      const data = await googleAuth(idToken);
+      if (data?.requiresDeviceVerification) {
+        setMaskedEmail(data.maskedEmail || '');
+        setDeviceCooldown(data.cooldownSeconds || 60);
+        setDeviceCode('');
+        setDeviceCodeError('');
+        setDeviceStep(true);
+        setLoading(false);
+        return;
+      }
+      proceedAfterAuth(data);
+    } catch (error) {
+      notify.error(tServer(error));
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -420,7 +440,7 @@ function LoginPage() {
     <AuthLayout title={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
       {isLocked && <LockTimerBadge display={formatCountdown(secondsRemaining)} />}
 
-      <GoogleAuthButton onError={(message) => notify.error(message)} />
+      <GoogleAuthButton onToken={handleGoogleToken} onError={(message) => notify.error(message)} />
 
       <div className="my-6 flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />

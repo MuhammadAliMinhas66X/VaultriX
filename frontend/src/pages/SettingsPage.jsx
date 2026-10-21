@@ -68,18 +68,23 @@ function SettingsCard({ title, subtitle, locked, children }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-xl border border-border bg-white p-6"
+      className={`overflow-hidden rounded-xl border bg-white ${locked ? 'border-amber-300/70' : 'border-border'}`}
     >
-      <div className="flex items-center gap-2">
-        {locked && (
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink/5 text-muted">
-            <Lock className="h-3 w-3" />
-          </span>
+      {locked && (
+        <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-2.5 text-amber-700">
+          <Lock className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-xs font-medium">{title}</span>
+        </div>
+      )}
+      <div className="p-6">
+        {!locked && (
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-ink">{title}</h2>
+          </div>
         )}
-        <h2 className="text-base font-semibold text-ink">{title}</h2>
+        {subtitle && <p className={`${locked ? '' : 'mt-0.5'} text-sm text-muted`}>{subtitle}</p>}
+        <div className={subtitle || !locked ? 'mt-5' : ''}>{children}</div>
       </div>
-      {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
-      <div className="mt-5">{children}</div>
     </motion.section>
   );
 }
@@ -257,27 +262,21 @@ function ProfileSection() {
 }
 
 function PasswordSection() {
-  const { user, setSession } = useAuth();
+  const { user, setSession, updateUser } = useAuth();
   const { t, tServer } = useTranslation();
+  const isGoogleOnly = !user?.hasPassword;
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  if (!user?.hasPassword) {
-    return (
-      <SettingsCard title={t('settings.passwordTitle')} locked>
-        <p className="text-sm text-muted">{t('settings.googleNoPassword')}</p>
-      </SettingsCard>
-    );
-  }
-
   const clearError = (field) => setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
 
   const validate = () => {
     const next = {};
-    if (!currentPassword) next.current = 'settings.currentPasswordRequired';
+    if (!isGoogleOnly && !currentPassword) next.current = 'settings.currentPasswordRequired';
     if (!newPassword) next.new = 'auth.passwordRequired';
     else if (newPassword.length < 8) next.new = 'auth.passwordTooShort';
     if (newPassword && confirmPassword !== newPassword) next.confirm = 'status.passwordMismatch';
@@ -291,12 +290,13 @@ function PasswordSection() {
 
     setSaving(true);
     try {
-      const data = await changePassword({ currentPassword, newPassword });
+      const data = await changePassword(isGoogleOnly ? { newPassword } : { currentPassword, newPassword });
       if (data?.accessToken) setSession(data);
+      else if (data?.user) updateUser(data.user);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      notify.success(t('status.passwordUpdated'));
+      notify.success(isGoogleOnly ? t('status.passwordSet') : t('status.passwordUpdated'));
     } catch (error) {
       if (serverMessageKey(error) === 'errors.currentPasswordWrong') {
         setFieldErrors({ current: 'errors.currentPasswordWrong' });
@@ -309,21 +309,27 @@ function PasswordSection() {
   };
 
   return (
-    <SettingsCard title={t('settings.passwordTitle')} subtitle={t('settings.passwordSubtitle')}>
+    <SettingsCard
+      title={t('settings.passwordTitle')}
+      subtitle={isGoogleOnly ? t('settings.passwordSetSubtitle') : t('settings.passwordSubtitle')}
+    >
+      {isGoogleOnly && <p className="mb-4 text-sm text-muted">{t('settings.googleNoPassword')}</p>}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        {!isGoogleOnly && (
+          <FormField
+            label={t('settings.currentPassword')}
+            type="password"
+            value={currentPassword}
+            onChange={(event) => {
+              setCurrentPassword(event.target.value);
+              clearError('current');
+            }}
+            autoComplete="current-password"
+            error={fieldErrors.current && t(fieldErrors.current)}
+          />
+        )}
         <FormField
-          label={t('settings.currentPassword')}
-          type="password"
-          value={currentPassword}
-          onChange={(event) => {
-            setCurrentPassword(event.target.value);
-            clearError('current');
-          }}
-          autoComplete="current-password"
-          error={fieldErrors.current && t(fieldErrors.current)}
-        />
-        <FormField
-          label={t('settings.newPassword')}
+          label={isGoogleOnly ? t('settings.newPasswordToSet') : t('settings.newPassword')}
           type="password"
           value={newPassword}
           onChange={(event) => {
@@ -347,7 +353,7 @@ function PasswordSection() {
         />
         <div>
           <Button type="submit" loading={saving} loadingLabel={t('common.updating')}>
-            {t('settings.updatePassword')}
+            {isGoogleOnly ? t('settings.setPassword') : t('settings.updatePassword')}
           </Button>
         </div>
       </form>
@@ -416,7 +422,13 @@ function GoogleLinkStatus({ user, updateUser }) {
         <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-600">
           <Link2 className="h-3.5 w-3.5" /> {t('settings.googleAlreadyLinked')}
         </p>
-        {unlinking ? (
+        {!user?.hasPassword ? (
+          // Unlinking needs a password to fall back on - this account
+          // doesn't have one yet, so there's nothing a password field here
+          // could ever confirm. Point to where one can actually be set
+          // instead of showing a form that can never succeed.
+          <p className="text-xs text-muted">{t('settings.googleUnlinkNeedsPasswordFirst')}</p>
+        ) : unlinking ? (
           <form onSubmit={handleUnlink} className="flex flex-col gap-2">
             <FormField
               label={t('settings.currentPassword')}
@@ -514,9 +526,6 @@ function EmailSection() {
             date: formatDate(new Date(user.emailLockedUntil), { day: 'numeric', month: 'short' }),
           })}
         </p>
-        <div className="mt-4 border-t border-border pt-4">
-          <GoogleLinkStatus user={user} updateUser={updateUser} />
-        </div>
       </SettingsCard>
     );
   }
@@ -546,8 +555,15 @@ function EmailSection() {
     }
   };
 
-  const submitCodes = async () => {
-    if (oldCode.length < EMAIL_CODE_LENGTH || newCode.length < EMAIL_CODE_LENGTH) {
+  const submitCodes = async (overrides = {}) => {
+    // OtpInput's onComplete fires in the same tick as its onChange, before
+    // React has committed the matching setOldCode/setNewCode state update -
+    // so reading oldCode/newCode straight from this closure can see a value
+    // that's one digit short of what was actually just typed. Accept the
+    // freshly-completed value directly instead of trusting the closure.
+    const effectiveOldCode = overrides.oldCode ?? oldCode;
+    const effectiveNewCode = overrides.newCode ?? newCode;
+    if (effectiveOldCode.length < EMAIL_CODE_LENGTH || effectiveNewCode.length < EMAIL_CODE_LENGTH) {
       setCodeMessage(t('auth.deviceCodeIncomplete'));
       setErrorStamp((stamp) => stamp + 1);
       return;
@@ -557,7 +573,7 @@ function EmailSection() {
     setOldCodeError(false);
     setNewCodeError(false);
     try {
-      const data = await verifyEmailChange({ oldCode, newCode });
+      const data = await verifyEmailChange({ oldCode: effectiveOldCode, newCode: effectiveNewCode });
       updateUser(data.user);
       notify.success(t('status.emailUpdated'));
       setStep('idle');
@@ -620,10 +636,6 @@ function EmailSection() {
         </div>
       )}
 
-      <div className="mb-4">
-        <GoogleLinkStatus user={user} updateUser={updateUser} />
-      </div>
-
       {step === 'code' ? (
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
@@ -635,6 +647,7 @@ function EmailSection() {
                 setOldCode(value);
                 if (codeMessage) setCodeMessage('');
               }}
+              onComplete={(value) => submitCodes({ oldCode: value })}
               disabled={saving}
               hasError={oldCodeError}
               errorStamp={errorStamp}
@@ -650,7 +663,7 @@ function EmailSection() {
                 setNewCode(value);
                 if (codeMessage) setCodeMessage('');
               }}
-              onComplete={() => submitCodes()}
+              onComplete={(value) => submitCodes({ newCode: value })}
               disabled={saving}
               hasError={newCodeError}
               errorStamp={errorStamp}
@@ -981,10 +994,24 @@ function DevicesSection() {
   }, []);
 
   const handleRevoke = async (id) => {
+    const target = sessions.find((session) => session.id === id);
     setRevokingId(id);
     try {
       await revokeSession(id);
       setSessions((prev) => prev.filter((session) => session.id !== id));
+      if (target?.isCurrent) {
+        // Revoking the device we're actually using right now immediately
+        // invalidates this very session - any request right after this one
+        // (including ones already in flight) would otherwise also trip the
+        // generic "session expired" toast from the global 401 handler,
+        // showing two different messages for one action. Mark this as an
+        // intentional logout first so only our own clear message shows, then
+        // sign out of this device for real.
+        markIntentionalLogout();
+        notify.success(t('status.sessionRevokedSelf'));
+        clearSession();
+        return;
+      }
       notify.success(t('status.sessionRevoked'));
     } catch (error) {
       notify.error(tServer(error));
@@ -1011,9 +1038,13 @@ function DevicesSection() {
 
   const LOOPBACK_IPS = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
   const ipLabel = (ip) => (LOOPBACK_IPS.has(ip) ? t('settings.localDevice') : ip);
+  const hasLocalSession = sessions.some((session) => LOOPBACK_IPS.has(session.ip));
 
   return (
     <SettingsCard title={t('settings.devicesTitle')} subtitle={t('settings.devicesSubtitle')}>
+      {!loading && hasLocalSession && (
+        <p className="mb-4 rounded-lg bg-surface px-3 py-2 text-xs text-muted">{t('settings.devicesLocalNote')}</p>
+      )}
       {loading ? (
         <p className="text-sm text-muted">{t('common.loading')}</p>
       ) : (
@@ -1264,7 +1295,7 @@ function DangerZoneSection() {
 
   return (
     <SettingsCard title={t('settings.dangerZoneTitle')} subtitle={t('settings.dangerZoneSubtitle')}>
-      <div ref={sectionRef}>
+      <div ref={sectionRef} className="min-w-0">
         {stage === 'idle' && (
           <button
             type="button"
@@ -1304,7 +1335,7 @@ function DangerZoneSection() {
               />
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button type="submit" loading={deleting} loadingLabel={t('common.saving')}>
                 {t('settings.sendDeleteCode')}
               </Button>
@@ -1359,11 +1390,26 @@ function DangerZoneSection() {
   );
 }
 
+function GoogleAccountSection() {
+  const { user, updateUser } = useAuth();
+  const { t } = useTranslation();
+
+  return (
+    <SettingsCard
+      title={t('settings.googleTitle')}
+      subtitle={user?.hasPassword ? t('settings.googleSubtitle') : t('settings.googleSubtitleGoogleOnly')}
+    >
+      <GoogleLinkStatus user={user} updateUser={updateUser} />
+    </SettingsCard>
+  );
+}
+
 function SecuritySection() {
   return (
     <div className="flex flex-col gap-6">
       <EmailSection />
       <PasswordSection />
+      <GoogleAccountSection />
       <MfaSection />
     </div>
   );

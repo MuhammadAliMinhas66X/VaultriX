@@ -23,6 +23,7 @@ import { sendMail } from '../utils/mailer.js';
 import { signupOtpEmail, deviceLoginEmail, googleUnlinkedEmail } from '../utils/mailTemplates.js';
 import { decryptSecret } from '../utils/mfaCrypto.js';
 import { cooldownLockedUntilIso, googleLinkLockedUntilIso, googleLinkLockedUntil } from '../utils/cooldown.js';
+import { deviceAccountLimitReached } from '../utils/deviceLimit.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -47,7 +48,13 @@ const MESSAGES = {
   loginRequired: 'Enter your email and password to continue.',
   invalidLogin: 'That email or password is not right.',
   signupRequired: 'Name, email and password are all required.',
-  duplicate: 'An account with this email already exists.',
+  // Every current caller of this message is somewhere in the signup flow
+  // (signup() itself, and verifySignupOtp()'s own duplicate-race checks) -
+  // so "try signing in instead" is always the right next step to suggest,
+  // including the exact scenario where a slow/glitchy connection made a
+  // signup's own success response look like a failure: the account really
+  // was created, and signing in is how to recover from that.
+  duplicate: 'An account with this email already exists. Try signing in instead.',
   locked: 'Too many failed sign-in attempts. Please try again later.',
   googleAccount: 'This account was created with Google. Use the Google sign-in button instead.',
   googleUnverified: 'Google sign-in could not be verified.',
@@ -64,6 +71,8 @@ const MESSAGES = {
   otpExpired: 'That code has expired. Request a new one.',
   otpTooMany: 'Too many wrong codes. Request a new one.',
   signupSessionExpired: 'Your signup session has expired. Please start again.',
+  deviceAccountLimit:
+    "This device has already created the maximum number of Vaultrix accounts. If you need another account, please contact support.",
 };
 
 // A single account can be signed in on this many devices at once. Signing in
@@ -272,6 +281,13 @@ export const signup = async (req, res, next) => {
     const existingPending = await PendingSignup.findOne({ email });
     const isResend = body.resend === true && Boolean(existingPending);
 
+    // Only block brand-new signup attempts - a resend for a pending signup
+    // that already passed this check once shouldn't re-block mid-flow.
+    if (!isResend && (await deviceAccountLimitReached(req))) {
+      securityLog('signup_device_limit_blocked', req, { email });
+      return fail(res, 400, MESSAGES.deviceAccountLimit);
+    }
+
     let name;
     let passwordHash;
 
@@ -323,6 +339,8 @@ export const signup = async (req, res, next) => {
           windowStartedAt: inWindow ? existingPending.windowStartedAt : new Date(now),
           sendCount: inWindow ? existingPending.sendCount + 1 : 1,
           expiresAt: new Date(now + HOUR_MS),
+          deviceId: isResend ? existingPending.deviceId : req.deviceId || null,
+          deviceFallbackId: isResend ? existingPending.deviceFallbackId : req.deviceFallbackId || null,
         },
       },
       { upsert: true }
@@ -382,6 +400,16 @@ export const verifySignupOtp = async (req, res, next) => {
       return fail(res, 409, MESSAGES.duplicate);
     }
 
+    // Re-check at creation time, not just when the code was first sent -
+    // closes the race where several signups on the same device were all
+    // started before any of them had created an account yet.
+    const deviceReq = { deviceId: record.deviceId, deviceFallbackId: record.deviceFallbackId };
+    if (await deviceAccountLimitReached(deviceReq)) {
+      await PendingSignup.deleteOne({ email });
+      securityLog('signup_device_limit_blocked', req, { email, atVerify: true });
+      return fail(res, 400, MESSAGES.deviceAccountLimit);
+    }
+
     organization = await Organization.create({ name: `${record.name}'s workspace` });
 
     const user = await User.create({
@@ -390,6 +418,8 @@ export const verifySignupOtp = async (req, res, next) => {
       email,
       passwordHash: record.passwordHash,
       role: 'owner',
+      signupDeviceId: record.deviceId || null,
+      signupDeviceFallbackId: record.deviceFallbackId || null,
     });
 
     organization.ownerId = user._id;
@@ -739,7 +769,7 @@ export const unlinkGoogleAccount = async (req, res, next) => {
   }
 };
 
-const resolveGoogleUser = async (idToken) => {
+const resolveGoogleUser = async (idToken, deviceReq = {}) => {
   const ticket = await googleClient.verifyIdToken({
     idToken,
     audience: process.env.GOOGLE_CLIENT_ID,
@@ -760,6 +790,10 @@ const resolveGoogleUser = async (idToken) => {
   let user = await User.findOne({ email: parsed.email });
 
   if (!user) {
+    if (await deviceAccountLimitReached(deviceReq)) {
+      throw Object.assign(new Error(MESSAGES.deviceAccountLimit), { status: 400 });
+    }
+
     const displayName = cleanName(payload.name) || cleanName(parsed.local) || 'Vaultrix user';
     const organization = await Organization.create({ name: `${displayName}'s workspace` });
 
@@ -771,6 +805,8 @@ const resolveGoogleUser = async (idToken) => {
       googleId: payload.sub,
       avatarUrl: payload.picture || '',
       role: 'owner',
+      signupDeviceId: deviceReq.deviceId || null,
+      signupDeviceFallbackId: deviceReq.deviceFallbackId || null,
     });
 
     organization.ownerId = user._id;
@@ -810,7 +846,7 @@ export const googleAuth = async (req, res, next) => {
 
     let user;
     try {
-      user = await resolveGoogleUser(idToken);
+      user = await resolveGoogleUser(idToken, { deviceId: req.deviceId, deviceFallbackId: req.deviceFallbackId });
     } catch (error) {
       if (error.status) return fail(res, error.status, error.message);
       securityLog('google_token_rejected', req, { error: error.message });
@@ -845,7 +881,7 @@ export const googleCallback = async (req, res) => {
       return res.redirect(failureUrl);
     }
 
-    const user = await resolveGoogleUser(credential);
+    const user = await resolveGoogleUser(credential, { deviceId: req.deviceId, deviceFallbackId: req.deviceFallbackId });
 
     if (!user) {
       return res.redirect(failureUrl);
