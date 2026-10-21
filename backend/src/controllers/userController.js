@@ -156,20 +156,34 @@ export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Please sign in again.' });
+    }
+
+    // A Google-only account has no existing password to prove ownership
+    // with, so there's nothing to require here - this is the ONLY way such
+    // an account can ever get a password at all (needed before it can
+    // unlink Google, since unlinking requires a password to fall back on).
+    // Once a password exists, changing it always requires the current one.
+    const isSettingFirstPassword = !user.passwordHash;
+
+    if (!isSettingFirstPassword && !currentPassword) {
       return res.status(400).json({
         success: false,
         message: 'Enter your current password and a new password.',
       });
     }
 
-    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
-      return res.status(400).json({ success: false, message: 'Enter your current password and a new password.' });
+    if (!newPassword || typeof newPassword !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Enter your current password and a new password.',
+      });
     }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Please sign in again.' });
+    if (!isSettingFirstPassword && typeof currentPassword !== 'string') {
+      return res.status(400).json({ success: false, message: 'Enter your current password and a new password.' });
     }
 
     const passwordError = validatePassword(newPassword, { email: user.email, name: user.name });
@@ -177,16 +191,11 @@ export const changePassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: passwordError });
     }
 
-    if (!user.passwordHash) {
-      return res.status(400).json({
-        success: false,
-        message: 'This account signs in with Google and does not have a password to change.',
-      });
-    }
-
-    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!matches) {
-      return res.status(400).json({ success: false, message: 'Your current password is not right.' });
+    if (!isSettingFirstPassword) {
+      const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!matches) {
+        return res.status(400).json({ success: false, message: 'Your current password is not right.' });
+      }
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
