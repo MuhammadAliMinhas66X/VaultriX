@@ -10,8 +10,15 @@ import PendingAccountDeletion from '../models/PendingAccountDeletion.js';
 import { describeDevice } from '../utils/deviceLabel.js';
 import { cooldownLockedUntilIso, googleLinkLockedUntilIso } from '../utils/cooldown.js';
 import { isCountryCode, isCurrencyCode, cleanName, NAME_MESSAGE } from '../utils/validators.js';
+import { parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { sendMail } from '../utils/mailer.js';
-import { otpEmail, accountDeactivatedEmail, accountReactivatedEmail, mfaDisabledByAdminEmail } from '../utils/mailTemplates.js';
+import {
+  otpEmail,
+  accountDeactivatedEmail,
+  accountReactivatedEmail,
+  mfaDisabledByAdminEmail,
+  emailChangedEmail,
+} from '../utils/mailTemplates.js';
 import { securityLog } from '../utils/securityLog.js';
 import { ADMIN_EMAIL } from '../config/env.js';
 
@@ -210,13 +217,35 @@ export const updateUserAsAdmin = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) return notFound(res);
 
-    const { name, country, currency, language, role, plan } = req.body || {};
+    const { name, email, country, currency, language, role, plan, onboardingCompleted } = req.body || {};
     const update = {};
+    let emailChangedTo = null;
+    let previousEmail = null;
 
     if (name !== undefined) {
       const cleaned = cleanName(name);
       if (!cleaned) return fail(res, 400, NAME_MESSAGE);
       update.name = cleaned;
+    }
+    if (email !== undefined && email !== user.email) {
+      // Admin sets the email directly - no OTP round trip, unlike the
+      // user's own self-service email change (requestEmailChange /
+      // verifyEmailChange in userController.js). Still runs the same
+      // parsing/uniqueness checks and leaves the same emailHistory trail
+      // and notice email to the OLD address, so the account's own audit
+      // trail doesn't have a gap just because an admin made this change.
+      const parsed = parseEmail(email);
+      if (!parsed) return fail(res, 400, EMAIL_MESSAGES.format);
+      const taken = await User.findOne({ email: parsed.email, _id: { $ne: user._id } });
+      if (taken) return fail(res, 400, 'An account with this email already exists.');
+      previousEmail = user.email;
+      emailChangedTo = parsed.email;
+      update.email = parsed.email;
+      update.emailChangedAt = new Date();
+      update.emailHistory = [...(user.emailHistory || []), { value: previousEmail, changedAt: new Date() }].slice(-20);
+    }
+    if (onboardingCompleted !== undefined) {
+      update.onboardingCompleted = Boolean(onboardingCompleted);
     }
     if (country !== undefined) {
       if (country !== '' && !isCountryCode(country)) return fail(res, 400, 'That is not a valid country.');
@@ -241,6 +270,14 @@ export const updateUserAsAdmin = async (req, res, next) => {
 
     Object.assign(user, update);
     await user.save();
+
+    if (emailChangedTo) {
+      // Notice goes to the OLD address, same as the self-service flow in
+      // userController.js's verifyEmailChange - whoever still has that
+      // inbox finds out immediately, even though this change didn't go
+      // through their own OTP step.
+      sendInBackground(emailChangedEmail({ name: user.name, newEmail: emailChangedTo }), previousEmail);
+    }
 
     securityLog('admin_user_updated', req, { adminEmail: ADMIN_EMAIL, userId: String(user._id), fields: Object.keys(update) });
 
