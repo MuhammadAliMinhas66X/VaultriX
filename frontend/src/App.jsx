@@ -4,9 +4,11 @@ import SignupPage from './pages/SignupPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
+import RequireAdmin from './components/RequireAdmin.jsx';
 import DashboardHeader from './components/DashboardHeader.jsx';
 import ToastViewport from './components/ToastViewport.jsx';
 import OfflineBanner from './components/OfflineBanner.jsx';
@@ -87,6 +89,10 @@ function App() {
           <Route element={<RequireOnboarding />}>
             <Route path="/dashboard" element={<DashboardPlaceholder />} />
             <Route path="/settings" element={<SettingsPage />} />
+
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin" element={<AdminPage />} />
+            </Route>
           </Route>
         </Route>
 

@@ -10,6 +10,7 @@ import { sanitizeInput, noStore, allowedOrigins } from './middleware/security.js
 import { attachDeviceId } from './middleware/deviceId.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -92,6 +93,7 @@ app.use('/api', apiLimiter, noStore);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

@@ -24,3 +24,6 @@ export const sessionsLimiter = build(15 * 60 * 1000, 60);
 export const emailChangeLimiter = build(15 * 60 * 1000, 20);
 export const accountDeleteLimiter = build(60 * 60 * 1000, 10);
 export const mfaLimiter = build(15 * 60 * 1000, 20);
+// Generous - this gates the whole admin router, used by one trusted
+// operator account, not a per-action limit like the others above.
+export const adminLimiter = build(5 * 60 * 1000, 300);

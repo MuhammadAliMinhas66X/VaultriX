@@ -138,3 +138,32 @@ export const googleUnlinkedEmail = ({ name }) => ({
      <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was not you, contact support right away.</p>`
   ),
 });
+
+export const accountDeactivatedEmail = ({ name }) => ({
+  subject: 'Your Vaultrix account has been deactivated',
+  text: `Hi ${name || 'there'},\n\nYour Vaultrix account has been deactivated by an administrator and you will not be able to sign in. All of your devices have been signed out.\n\nIf you think this is a mistake, contact support.\n`,
+  html: shell(
+    'Your account has been deactivated',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, your Vaultrix account has been deactivated by an administrator and you will not be able to sign in. All of your devices have been signed out.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you think this is a mistake, contact support.</p>`
+  ),
+});
+
+export const accountReactivatedEmail = ({ name }) => ({
+  subject: 'Your Vaultrix account has been reactivated',
+  text: `Hi ${name || 'there'},\n\nYour Vaultrix account has been reactivated. You can sign in again as usual.\n`,
+  html: shell(
+    'Your account has been reactivated',
+    `<p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, your Vaultrix account has been reactivated. You can sign in again as usual.</p>`
+  ),
+});
+
+export const mfaDisabledByAdminEmail = ({ name }) => ({
+  subject: '2-step verification was turned off on your Vaultrix account',
+  text: `Hi ${name || 'there'},\n\n2-step verification was just turned off on your Vaultrix account by an administrator, usually to help you back in after losing access to your authenticator app. You can turn it back on any time from Settings.\n\nIf you did not request this, contact support right away.\n`,
+  html: shell(
+    '2-step verification was turned off',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, 2-step verification was just turned off on your Vaultrix account by an administrator, usually to help you back in after losing access to your authenticator app. You can turn it back on any time from Settings.</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you did not request this, contact support right away.</p>`
+  ),
+});

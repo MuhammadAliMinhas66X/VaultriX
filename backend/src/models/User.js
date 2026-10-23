@@ -42,11 +42,19 @@ const userSchema = new mongoose.Schema(
     // never updated after signup, and never used for anything else.
     signupDeviceId: { type: String, default: null },
     signupDeviceFallbackId: { type: String, default: null },
+    // Admin-only moderation. A deactivated account can't log in (checked in
+    // authController and the auth middleware) but its data is kept - this
+    // is the reversible "suspend" action; adminController.deleteUser is the
+    // separate, permanent one.
+    isActive: { type: Boolean, default: true },
+    deactivatedAt: { type: Date, default: null },
+    deactivatedBy: { type: String, default: null }, // the admin's email, for the audit trail
   },
   { timestamps: true }
 );
 
 userSchema.index({ signupDeviceId: 1 });
 userSchema.index({ signupDeviceFallbackId: 1 });
+userSchema.index({ isActive: 1 });
 
 export default mongoose.model('User', userSchema);

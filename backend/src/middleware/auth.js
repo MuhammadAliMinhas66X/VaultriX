@@ -25,7 +25,7 @@ export const authenticate = async (req, res, next) => {
     // logging out everywhere, takes effect on that device's very next
     // request rather than waiting for its access token to expire.
     const [user, sessionAlive] = await Promise.all([
-      User.findById(payload.sub).select('orgId role plan tokenVersion'),
+      User.findById(payload.sub).select('orgId role plan tokenVersion email isActive'),
       payload.jti ? Session.exists({ _id: payload.jti }) : Promise.resolve(true),
     ]);
 
@@ -33,11 +33,19 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Your session has expired. Please sign in again.' });
     }
 
+    // An admin-deactivated account is rejected on its very next request,
+    // the same way a revoked session or a bumped tokenVersion already are -
+    // it doesn't wait for the access token to expire first.
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: 'This account has been deactivated.' });
+    }
+
     req.user = {
       id: String(user._id),
       orgId: user.orgId,
       role: user.role,
       plan: user.plan,
+      email: user.email,
     };
     next();
   } catch (error) {

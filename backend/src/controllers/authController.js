@@ -47,6 +47,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const MESSAGES = {
   loginRequired: 'Enter your email and password to continue.',
   invalidLogin: 'That email or password is not right.',
+  deactivated: 'This account has been deactivated. Contact support if you think this is a mistake.',
   signupRequired: 'Name, email and password are all required.',
   // Every current caller of this message is somewhere in the signup flow
   // (signup() itself, and verifySignupOtp()'s own duplicate-race checks) -
@@ -466,6 +467,11 @@ export const login = async (req, res, next) => {
       return fail(res, 401, MESSAGES.invalidLogin);
     }
 
+    if (user.isActive === false) {
+      securityLog('login_while_deactivated', req, { userId: String(user._id) });
+      return fail(res, 403, MESSAGES.deactivated);
+    }
+
     if (user.lockUntil && user.lockUntil > new Date()) {
       securityLog('login_while_locked', req, { userId: String(user._id), tier: user.lockTier || 1 });
       return failLocked(res, user.lockUntil, user.lockTier || 1);
@@ -857,6 +863,11 @@ export const googleAuth = async (req, res, next) => {
       return fail(res, 400, 'Could not read your Google account details.');
     }
 
+    if (user.isActive === false) {
+      securityLog('login_while_deactivated', req, { userId: String(user._id) });
+      return fail(res, 403, MESSAGES.deactivated);
+    }
+
     await startSession(req, res, user);
   } catch (error) {
     next(error);
@@ -883,7 +894,7 @@ export const googleCallback = async (req, res) => {
 
     const user = await resolveGoogleUser(credential, { deviceId: req.deviceId, deviceFallbackId: req.deviceFallbackId });
 
-    if (!user) {
+    if (!user || user.isActive === false) {
       return res.redirect(failureUrl);
     }
 

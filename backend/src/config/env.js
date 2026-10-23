@@ -1,5 +1,12 @@
 const isWeakSecret = (value) => !value || value.length < 32 || /replace_this|changeme|secret/i.test(value);
 
+// The one account allowed into the Admin Dashboard (see
+// middleware/requireAdmin.js). A hardcoded default rather than a role flag
+// on purpose - this is for Vaultrix's own operator, not a per-organization
+// "admin" role, and ADMIN_EMAIL lets it be overridden per-deployment
+// without a code change.
+export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'minhasvirtual@gmail.com').toLowerCase();
+
 export const validateEnv = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   const problems = [];
