@@ -11,6 +11,9 @@ import { attachDeviceId } from './middleware/deviceId.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import accountRoutes from './routes/accountRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import incomeStreamRoutes from './routes/incomeStreamRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -94,6 +97,9 @@ app.use('/api', apiLimiter, noStore);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/income-streams', incomeStreamRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
