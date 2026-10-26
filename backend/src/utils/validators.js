@@ -35,3 +35,18 @@ export const cleanName = (raw) => {
 
 export const isCountryCode = (value) => typeof value === 'string' && /^[A-Z]{2}$/.test(value);
 export const isCurrencyCode = (value) => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
+
+// Free-text labels (account names, category names) - looser than cleanName
+// above, which is letters-only and meant for a person's own name. "Chase
+// Checking", "Food & Dining", "401(k)" all need to be valid here.
+const LABEL_PATTERN = /^[\p{L}\p{N}][\p{L}\p{M}\p{N} .,&'()/-]*$/u;
+
+export const cleanLabel = (raw) => {
+  if (typeof raw !== 'string') return null;
+  const value = raw.replace(/\s+/g, ' ').trim();
+  if (value.length < 1 || value.length > 60) return null;
+  if (!LABEL_PATTERN.test(value)) return null;
+  return value;
+};
+
+export const isHexColor = (value) => typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value);
