@@ -113,6 +113,7 @@ function Combobox({
         }`}
       >
         <span className="flex items-center gap-2 truncate">
+          {selected?.icon}
           {selected?.flag && <span className="text-base leading-none">{selected.flag}</span>}
           {selected?.symbol && (
             <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{selected.symbol}</span>
@@ -175,6 +176,7 @@ function Combobox({
                     isSelected ? 'bg-accent/10 font-semibold text-ink' : index === highlighted ? 'bg-surface text-ink' : 'text-ink'
                   }`}
                 >
+                  {item.icon}
                   {item.flag && <span className="text-base leading-none">{item.flag}</span>}
                   {item.symbol && (
                     <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>
