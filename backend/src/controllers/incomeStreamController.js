@@ -26,11 +26,44 @@ const cleanOptionalLabel = (raw) => {
   return cleaned === null ? undefined : cleaned; // undefined = invalid, caller checks for it
 };
 
+const MAX_DEDUCTIONS = 10;
+
+const parseDeductions = (raw) => {
+  if (!Array.isArray(raw) || raw.length > MAX_DEDUCTIONS) return undefined;
+  const parsed = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') return undefined;
+    const name = cleanFreeText(item.name);
+    const kind = item.kind === 'fixed' ? 'fixed' : item.kind === 'percent' ? 'percent' : null;
+    const value = Number(item.value);
+    if (!name || !kind || !Number.isFinite(value) || value < 0) return undefined;
+    if (kind === 'percent') {
+      if (value > 100) return undefined;
+      parsed.push({ name, kind, percent: Math.round(value * 100) / 100, amountMinor: 0 });
+    } else {
+      if (value > 1e12) return undefined;
+      parsed.push({ name, kind, percent: 0, amountMinor: toMinor(value) });
+    }
+  }
+  return parsed;
+};
+
+const parseFlag = (raw) => (typeof raw === 'boolean' ? raw : undefined);
+
 const toIncomeStreamDto = (stream) => ({
   id: String(stream._id),
   name: stream.name,
   incomeType: stream.incomeType,
   typeDetail: stream.typeDetail || '',
+  payerName: stream.payerName || '',
+  taxEnabled: Boolean(stream.taxEnabled),
+  deductionsEnabled: Boolean(stream.deductionsEnabled),
+  deductFromTotal: Boolean(stream.deductFromTotal),
+  deductions: (stream.deductions || []).map((item) => ({
+    name: item.name,
+    kind: item.kind,
+    value: item.kind === 'fixed' ? toMajor(item.amountMinor) : item.percent,
+  })),
   frequency: stream.frequency,
   destinationMethod: stream.destinationMethod,
   destinationName: stream.destinationName || '',
@@ -61,7 +94,7 @@ export const listIncomeStreams = async (req, res, next) => {
 
 export const createIncomeStream = async (req, res, next) => {
   try {
-    const { name, incomeType, typeDetail, frequency, destinationMethod, destinationName, expectedAmount, currency } =
+    const { name, incomeType, typeDetail, payerName, frequency, destinationMethod, destinationName, expectedAmount, currency } =
       req.body || {};
 
     const cleanedName = cleanLabel(name);
@@ -73,6 +106,9 @@ export const createIncomeStream = async (req, res, next) => {
 
     const cleanedDetail = cleanOptionalLabel(typeDetail);
     if (cleanedDetail === undefined) return fail(res, 400, GENERIC_INVALID);
+
+    const cleanedPayer = cleanOptionalLabel(payerName);
+    if (cleanedPayer === undefined) return fail(res, 400, GENERIC_INVALID);
 
     // Cash needs no destination name; bank/wallet do - that's the one
     // piece of cross-field validation here.
@@ -97,6 +133,7 @@ export const createIncomeStream = async (req, res, next) => {
       name: cleanedName,
       incomeType: resolvedType,
       typeDetail: cleanedDetail,
+      payerName: cleanedPayer,
       frequency: resolvedFrequency,
       destinationMethod: resolvedMethod,
       destinationName: cleanedDestination,
@@ -118,7 +155,7 @@ export const updateIncomeStream = async (req, res, next) => {
     const stream = await IncomeStream.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!stream) return fail(res, 404, NOT_FOUND);
 
-    const { name, incomeType, typeDetail, frequency, destinationMethod, destinationName, expectedAmount, currency, isArchived } =
+    const { name, incomeType, typeDetail, payerName, frequency, destinationMethod, destinationName, expectedAmount, currency, isArchived, taxEnabled, deductionsEnabled, deductFromTotal, deductions } =
       req.body || {};
     const update = {};
 
@@ -135,6 +172,28 @@ export const updateIncomeStream = async (req, res, next) => {
       const cleanedDetail = cleanOptionalLabel(typeDetail);
       if (cleanedDetail === undefined) return fail(res, 400, GENERIC_INVALID);
       update.typeDetail = cleanedDetail;
+    }
+    if (taxEnabled !== undefined) {
+      if (parseFlag(taxEnabled) === undefined) return fail(res, 400, GENERIC_INVALID);
+      update.taxEnabled = taxEnabled;
+    }
+    if (deductionsEnabled !== undefined) {
+      if (parseFlag(deductionsEnabled) === undefined) return fail(res, 400, GENERIC_INVALID);
+      update.deductionsEnabled = deductionsEnabled;
+    }
+    if (deductFromTotal !== undefined) {
+      if (parseFlag(deductFromTotal) === undefined) return fail(res, 400, GENERIC_INVALID);
+      update.deductFromTotal = deductFromTotal;
+    }
+    if (deductions !== undefined) {
+      const parsedDeductions = parseDeductions(deductions);
+      if (parsedDeductions === undefined) return fail(res, 400, GENERIC_INVALID);
+      update.deductions = parsedDeductions;
+    }
+    if (payerName !== undefined) {
+      const cleanedPayer = cleanOptionalLabel(payerName);
+      if (cleanedPayer === undefined) return fail(res, 400, GENERIC_INVALID);
+      update.payerName = cleanedPayer;
     }
     if (frequency !== undefined) {
       if (!FREQUENCY_VALUES.includes(frequency)) return fail(res, 400, GENERIC_INVALID);

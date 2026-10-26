@@ -9,8 +9,8 @@ import mongoose from 'mongoose';
 // records which bank, digital wallet, or "cash" the income actually lands
 // in - purely informational for now (no live balance syncing), but it's
 // the honest shape for the "remaining after this month" feature later.
-const INCOME_TYPES = ['salaried', 'business', 'freelance', 'other'];
-const FREQUENCIES = ['daily', 'weekly', 'monthly', 'variable'];
+const INCOME_TYPES = ['salaried', 'business', 'freelance', 'bonus', 'gift', 'profit', 'sale', 'other'];
+const FREQUENCIES = ['once', 'daily', 'weekly', 'monthly', 'yearly', 'variable'];
 const DESTINATION_METHODS = ['cash', 'bank', 'wallet'];
 
 const incomeStreamSchema = new mongoose.Schema(
@@ -22,6 +22,22 @@ const incomeStreamSchema = new mongoose.Schema(
     // freelancing", "Rental income", whatever the person wants to call
     // it. Optional everywhere, not just for "other".
     typeDetail: { type: String, default: '' },
+    payerName: { type: String, default: '' },
+    taxEnabled: { type: Boolean, default: false },
+    deductionsEnabled: { type: Boolean, default: false },
+    deductFromTotal: { type: Boolean, default: false },
+    deductions: {
+      type: [
+        {
+          _id: false,
+          name: { type: String, required: true },
+          kind: { type: String, enum: ['percent', 'fixed'], default: 'percent' },
+          percent: { type: Number, default: 0, min: 0, max: 100 },
+          amountMinor: { type: Number, default: 0, min: 0 },
+        },
+      ],
+      default: [],
+    },
     frequency: { type: String, enum: FREQUENCIES, default: 'monthly' },
     // Where this income is actually received. "cash" needs nothing else;
     // "bank"/"wallet" pair with destinationName (a bank or digital wallet
