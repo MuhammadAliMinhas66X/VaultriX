@@ -1,11 +1,11 @@
 import api from './api.js';
 import { toApiError } from './apiError.js';
 
-// base: the app currency to convert everything else into. Response shape:
-// { success, base, rates: { USD: 0.0036, ... }, fetchedAt, stale? }
-export const getExchangeRates = async (base) => {
+export const getExchangeRates = async (base, symbols = []) => {
   try {
-    const { data } = await api.get('/fx/rates', { params: { base } });
+    const params = { base };
+    if (symbols.length) params.symbols = symbols.join(',');
+    const { data } = await api.get('/fx/rates', { params });
     return data;
   } catch (error) {
     throw toApiError(error);

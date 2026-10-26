@@ -7,9 +7,13 @@
 // trigger a fresh outbound call each time, and old numbers can still be
 // served for a while if every source is briefly unreachable.
 const CACHE_TTL_MS = 30 * 60 * 1000;
+const LIVE_TTL_MS = 60 * 1000;
 const FETCH_TIMEOUT_MS = 8000;
+const LIVE_TIMEOUT_MS = 5000;
+const MAX_LIVE_SYMBOLS = 10;
 
 const cache = new Map();
+const liveCache = new Map();
 
 export class ExchangeRateError extends Error {}
 
@@ -64,7 +68,56 @@ const SOURCES = [
   openErApi,
 ];
 
-export const getRates = async (base) => {
+const fetchLivePrice = async (from, to) => {
+  const pair = `${from}${to}=X`;
+  const cached = liveCache.get(pair);
+  if (cached && cached.expiresAt > Date.now()) return cached.price;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(pair)}?range=1d&interval=1m`,
+      {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Vaultrix/1.0)', Accept: 'application/json' },
+      }
+    );
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const price = Number(payload?.chart?.result?.[0]?.meta?.regularMarketPrice);
+    if (!Number.isFinite(price) || price <= 0) return null;
+    liveCache.set(pair, { price, expiresAt: Date.now() + LIVE_TTL_MS });
+    return price;
+  } catch (error) {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const withLiveRates = async (data, symbols) => {
+  const wanted = [...new Set(symbols)].filter((code) => code !== data.base).slice(0, MAX_LIVE_SYMBOLS);
+  if (wanted.length === 0) return data;
+
+  const prices = await Promise.all(wanted.map((code) => fetchLivePrice(code, data.base)));
+  const rates = { ...data.rates };
+  const live = [];
+  wanted.forEach((code, index) => {
+    if (prices[index]) {
+      rates[code] = 1 / prices[index];
+      live.push(code);
+    }
+  });
+  return live.length ? { ...data, rates, live, liveAt: new Date().toISOString() } : data;
+};
+
+export const getRates = async (base, symbols = []) => {
+  const table = await getRateTable(base);
+  return withLiveRates(table, symbols);
+};
+
+const getRateTable = async (base) => {
   const key = base.toUpperCase();
   const cached = cache.get(key);
   const now = Date.now();

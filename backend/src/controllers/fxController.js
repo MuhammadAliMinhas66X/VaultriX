@@ -11,7 +11,13 @@ export const getExchangeRates = async (req, res, next) => {
       return res.status(400).json({ success: false, message: GENERIC_INVALID });
     }
 
-    const data = await getRates(base);
+    const symbols = String(req.query.symbols || '')
+      .split(',')
+      .map((code) => code.trim().toUpperCase())
+      .filter((code) => isCurrencyCode(code))
+      .slice(0, 10);
+
+    const data = await getRates(base, symbols);
     res.json({ success: true, ...data });
   } catch (error) {
     if (error instanceof ExchangeRateError) {
