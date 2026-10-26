@@ -1,11 +1,11 @@
-// The real Dashboard - this is the "central point of gravity" the rest of
-// the product is being built around. A user adds their money streams
-// (accounts, cards, cash, whatever holds a balance) here; the sum of all
-// of them is the number everything else - transactions, budgets, reports,
-// once they exist - moves relative to.
-import { useCallback, useEffect, useState } from 'react';
-import { Pencil, Plus, Trash2, Wallet } from 'lucide-react';
-import AppShell from '../components/AppShell.jsx';
+// The Dashboard, folded back into one page per feedback - Income lives
+// here now, not on a separate route. The hero number is the sum of every
+// income stream's expected amount, each converted into the app's chosen
+// currency at a live exchange rate, so "add a USD stream while the app is
+// set to PKR" just works instead of silently being wrong or ignored.
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Banknote, Pencil, Plus, Trash2 } from 'lucide-react';
+import DashboardTopBar from '../components/DashboardTopBar.jsx';
 import Button from '../components/Button.jsx';
 import FormField from '../components/FormField.jsx';
 import Combobox from '../components/Combobox.jsx';
@@ -14,63 +14,233 @@ import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
-import { listAccounts, createAccount, updateAccount, deleteAccount } from '../services/accountService.js';
+import {
+  listIncomeStreams,
+  createIncomeStream,
+  updateIncomeStream,
+  deleteIncomeStream,
+} from '../services/incomeStreamService.js';
+import { getExchangeRates } from '../services/fxService.js';
 
-const ACCOUNT_TYPES = ['checking', 'savings', 'cash', 'credit_card', 'investment', 'other'];
+// Plain names only (no logos) - proper nouns, not translated per-language.
+const PAKISTANI_BANKS = [
+  'Habib Bank Limited (HBL)',
+  'United Bank Limited (UBL)',
+  'MCB Bank',
+  'Allied Bank Limited (ABL)',
+  'National Bank of Pakistan (NBP)',
+  'Bank Alfalah',
+  'Meezan Bank',
+  'Faysal Bank',
+  'Askari Bank',
+  'Bank Al Habib',
+  'Soneri Bank',
+  'JS Bank',
+  'Standard Chartered Pakistan',
+  'Habib Metropolitan Bank',
+  'Silk Bank',
+  'Summit Bank',
+  'BankIslami Pakistan',
+  'Dubai Islamic Bank Pakistan',
+  'Al Baraka Bank Pakistan',
+  'The Bank of Punjab',
+  'The Bank of Khyber',
+  'Sindh Bank',
+  'First Women Bank',
+  'MyBank',
+];
+
+const DIGITAL_WALLETS = ['JazzCash', 'Easypaisa', 'NayaPay', 'SadaPay', 'UPaisa', 'Konnect by HBL', 'Zindigi'];
+
+const OTHER_VALUE = '__other__';
+
+const TYPE_COLOR = {
+  salaried: '#1a1a1e',
+  business: '#059669',
+  freelance: '#0891b2',
+  other: '#7c3aed',
+};
+
+const INCOME_TYPES = ['salaried', 'business', 'freelance', 'other'];
+const FREQUENCIES = ['daily', 'weekly', 'monthly', 'variable'];
+
+const typeLabelKey = (type) => `income.type.${type}`;
+const frequencyLabelKey = (freq) => `income.frequency.${freq}`;
+
+const resolvePreset = (method, name) => {
+  const list = method === 'bank' ? PAKISTANI_BANKS : method === 'wallet' ? DIGITAL_WALLETS : [];
+  if (!name) return list.length ? '' : OTHER_VALUE;
+  return list.includes(name) ? name : OTHER_VALUE;
+};
 
 const emptyForm = (defaultCurrency) => ({
   name: '',
-  type: 'checking',
-  currency: defaultCurrency || 'USD',
-  balance: '',
+  incomeType: 'salaried',
+  typeDetail: '',
+  frequency: 'monthly',
+  destinationMethod: 'bank',
+  destinationPreset: '',
+  destinationCustom: '',
+  expectedAmount: '',
+  currency: defaultCurrency || 'PKR',
 });
 
-function AccountForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy }) {
+const formFromStream = (stream) => ({
+  name: stream.name,
+  incomeType: stream.incomeType,
+  typeDetail: stream.typeDetail || '',
+  frequency: stream.frequency,
+  destinationMethod: stream.destinationMethod,
+  destinationPreset: resolvePreset(stream.destinationMethod, stream.destinationName),
+  destinationCustom:
+    resolvePreset(stream.destinationMethod, stream.destinationName) === OTHER_VALUE ? stream.destinationName || '' : '',
+  expectedAmount: stream.expectedAmount === null ? '' : String(stream.expectedAmount),
+  currency: stream.currency,
+});
+
+function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy }) {
   const { t } = useTranslation();
   const [form, setForm] = useState(initial);
 
+  const destinationList = form.destinationMethod === 'bank' ? PAKISTANI_BANKS : DIGITAL_WALLETS;
+  const showDestinationPicker = form.destinationMethod !== 'cash';
+  const showCustomField = showDestinationPicker && form.destinationPreset === OTHER_VALUE;
+
   const submit = (event) => {
     event.preventDefault();
-    onSubmit(form);
+    const destinationName =
+      form.destinationMethod === 'cash'
+        ? ''
+        : form.destinationPreset === OTHER_VALUE
+        ? form.destinationCustom.trim()
+        : form.destinationPreset;
+
+    onSubmit({
+      name: form.name,
+      incomeType: form.incomeType,
+      typeDetail: form.typeDetail,
+      frequency: form.frequency,
+      destinationMethod: form.destinationMethod,
+      destinationName,
+      expectedAmount: form.expectedAmount,
+      currency: form.currency,
+    });
+  };
+
+  const pickMethod = (destinationMethod) => {
+    setForm((f) => ({ ...f, destinationMethod, destinationPreset: '', destinationCustom: '' }));
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+    <form onSubmit={submit} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
       <FormField
-        label={t('dashboard.streamNameLabel')}
+        label={t('income.nameLabel')}
         value={form.name}
         onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-        placeholder={t('dashboard.streamNamePlaceholder')}
+        placeholder={t('income.namePlaceholder')}
         autoFocus
       />
-      <div className="grid grid-cols-2 gap-2">
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">{t('dashboard.streamTypeLabel')}</span>
+          <span className="text-sm font-medium text-ink">{t('income.typeLabel')}</span>
           <select
-            value={form.type}
-            onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+            value={form.incomeType}
+            onChange={(e) => setForm((f) => ({ ...f, incomeType: e.target.value }))}
             className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
           >
-            {ACCOUNT_TYPES.map((type) => (
+            {INCOME_TYPES.map((type) => (
               <option key={type} value={type}>
-                {t(`dashboard.type${type.replace(/(^|_)([a-z])/g, (_, __, c) => c.toUpperCase())}`)}
+                {t(typeLabelKey(type))}
               </option>
             ))}
           </select>
         </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">{t('income.frequencyLabel')}</span>
+          <select
+            value={form.frequency}
+            onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value }))}
+            className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
+          >
+            {FREQUENCIES.map((freq) => (
+              <option key={freq} value={freq}>
+                {t(frequencyLabelKey(freq))}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="-mt-2 text-xs text-muted">{t('income.frequencyHint')}</p>
+
+      <FormField
+        label={t('income.typeDetailLabel')}
+        value={form.typeDetail}
+        onChange={(e) => setForm((f) => ({ ...f, typeDetail: e.target.value }))}
+        placeholder={t('income.typeDetailPlaceholder')}
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-ink">{t('income.destinationMethodLabel')}</span>
+        <select
+          value={form.destinationMethod}
+          onChange={(e) => pickMethod(e.target.value)}
+          className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
+        >
+          <option value="cash">{t('income.method.cash')}</option>
+          <option value="bank">{t('income.method.bank')}</option>
+          <option value="wallet">{t('income.method.wallet')}</option>
+        </select>
+      </div>
+
+      {showDestinationPicker && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">
+            {form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
+          </span>
+          <select
+            value={form.destinationPreset}
+            onChange={(e) => setForm((f) => ({ ...f, destinationPreset: e.target.value }))}
+            className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
+          >
+            <option value="" disabled>
+              {t('income.selectPlaceholder')}
+            </option>
+            {destinationList.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+            <option value={OTHER_VALUE}>{t('income.otherOption')}</option>
+          </select>
+        </div>
+      )}
+
+      {showCustomField && (
         <FormField
-          label={t('dashboard.startingBalanceLabel')}
+          label={t('income.otherDestinationLabel')}
+          value={form.destinationCustom}
+          onChange={(e) => setForm((f) => ({ ...f, destinationCustom: e.target.value }))}
+          placeholder={t('income.otherDestinationPlaceholder')}
+        />
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <FormField
+          label={t('income.expectedAmountLabel')}
           type="number"
           step="0.01"
-          value={form.balance}
-          onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
-          placeholder="0.00"
+          min="0"
+          value={form.expectedAmount}
+          onChange={(e) => setForm((f) => ({ ...f, expectedAmount: e.target.value }))}
+          placeholder={t('income.expectedAmountPlaceholder')}
         />
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">{t('income.currencyLabel')}</span>
+          <Combobox items={currencies} value={form.currency} onChange={(value) => setForm((f) => ({ ...f, currency: value }))} />
+        </label>
       </div>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-ink">{t('dashboard.streamCurrencyLabel')}</span>
-        <Combobox items={currencies} value={form.currency} onChange={(value) => setForm((f) => ({ ...f, currency: value }))} />
-      </label>
+
       <div className="flex gap-2 pt-1">
         <Button type="submit" loading={busy} loadingLabel={t('common.saving')}>
           {submitLabel}
@@ -84,24 +254,27 @@ function AccountForm({ initial, currencies, onCancel, onSubmit, submitLabel, bus
 }
 
 function DashboardPage() {
-  const { user, currency } = useAuth();
+  const { currency } = useAuth();
   const { t, tServer } = useTranslation();
   const { formatMoney } = useFormat();
   const { currencies } = useLocalizedOptions();
 
-  const [accounts, setAccounts] = useState([]);
-  const [totals, setTotals] = useState([]);
+  const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [headerLabel, setHeaderLabel] = useState('stream');
+
+  const [rates, setRates] = useState(null);
+  const [ratesLoading, setRatesLoading] = useState(true);
+  const [ratesStale, setRatesStale] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await listAccounts();
-      setAccounts(result.accounts);
-      setTotals(result.totals);
+      const result = await listIncomeStreams();
+      setStreams(result.incomeStreams);
     } catch (error) {
       notify.error(tServer(error));
     } finally {
@@ -113,11 +286,55 @@ function DashboardPage() {
     load();
   }, [load]);
 
-  const handleCreate = async (form) => {
+  // Live exchange rates, base = the app's own currency - lets every
+  // stream's amount (in whatever currency it was entered) convert into
+  // one honest total, instead of showing several totals or a wrong one.
+  useEffect(() => {
+    if (!currency) {
+      setRatesLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setRatesLoading(true);
+    getExchangeRates(currency)
+      .then((data) => {
+        if (cancelled) return;
+        setRates(data.rates);
+        setRatesStale(Boolean(data.stale));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setRates(null);
+      })
+      .finally(() => {
+        if (!cancelled) setRatesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currency]);
+
+  const { total, excludedCount } = useMemo(() => {
+    if (!rates) return { total: null, excludedCount: 0 };
+    let sum = 0;
+    let excluded = 0;
+    streams.forEach((stream) => {
+      if (stream.expectedAmount === null) return;
+      const rate = rates[stream.currency];
+      if (!rate) {
+        excluded += 1;
+        return;
+      }
+      sum += stream.expectedAmount / rate;
+    });
+    return { total: sum, excludedCount: excluded };
+  }, [streams, rates]);
+
+  const handleCreate = async (payload) => {
     setBusy(true);
     try {
-      await createAccount(form);
-      notify.success(t('dashboard.addStream'));
+      await createIncomeStream(payload);
+      notify.success(t('income.added'));
       setAdding(false);
       await load();
     } catch (error) {
@@ -127,10 +344,10 @@ function DashboardPage() {
     }
   };
 
-  const handleUpdate = async (id, form) => {
+  const handleUpdate = async (id, payload) => {
     setBusy(true);
     try {
-      await updateAccount(id, form);
+      await updateIncomeStream(id, payload);
       setEditingId(null);
       await load();
     } catch (error) {
@@ -140,130 +357,157 @@ function DashboardPage() {
     }
   };
 
-  const handleDelete = async (account) => {
-    if (!window.confirm(t('dashboard.deleteConfirm', { name: account.name }))) return;
+  const handleDelete = async (stream) => {
+    if (!window.confirm(t('income.deleteConfirm', { name: stream.name }))) return;
     try {
-      await deleteAccount(account.id);
+      await deleteIncomeStream(stream.id);
       await load();
     } catch (error) {
       notify.error(tServer(error));
     }
   };
 
+  const destinationLabel = (stream) =>
+    stream.destinationMethod === 'cash' ? t('income.method.cash') : stream.destinationName;
+
   return (
-    <AppShell>
+    <div className="min-h-screen bg-surface">
+      <DashboardTopBar />
       <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">{t('dashboard.greeting', { name: user?.name || '' })}</h1>
-          <p className="mt-1 text-sm text-muted">{t('dashboard.subtitle')}</p>
+          <select
+            value={headerLabel}
+            onChange={(e) => setHeaderLabel(e.target.value)}
+            aria-label={t('income.headerStream')}
+            className="-ml-1 rounded-lg border-none bg-transparent px-1 text-2xl font-semibold text-ink outline-none focus:ring-2 focus:ring-accent/20"
+          >
+            <option value="stream">{t('income.headerStream')}</option>
+            <option value="cashflow">{t('income.headerCashFlow')}</option>
+          </select>
+          <p className="mt-1 text-sm text-muted">{t('income.headerSubtitle')}</p>
         </div>
 
-        {/* The "central point of gravity" - one hero number per currency in
-            use (almost always just one), everything else on this page
-            exists to feed this. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {loading ? (
-            <div className="rounded-2xl border border-border bg-white px-6 py-8 text-center text-sm text-muted sm:col-span-2">
-              {t('common.loading')}
-            </div>
-          ) : totals.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-white px-6 py-8 text-center sm:col-span-2">
-              <Wallet className="mx-auto h-6 w-6 text-muted" />
-              <p className="mt-3 text-base font-medium text-ink">{t('dashboard.emptyTitle')}</p>
-              <p className="mx-auto mt-1 max-w-sm text-sm text-muted">{t('dashboard.emptySubtitle')}</p>
-            </div>
+        {/* Hero total - every stream's expected amount, converted into the
+            app's currency at a live rate, summed into one number. */}
+        <div className="rounded-2xl border border-border bg-white px-6 py-5">
+          <p className="text-[11px] uppercase tracking-wide text-muted">{t('income.totalLabel')}</p>
+          {ratesLoading ? (
+            <p className="mt-1 text-sm text-muted">{t('income.ratesLoading')}</p>
+          ) : total === null ? (
+            <p className="mt-1 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
           ) : (
-            totals.map((total) => (
-              <div key={total.currency} className="rounded-2xl border border-border bg-white px-6 py-5">
-                <p className="text-[11px] uppercase tracking-wide text-muted">{t('dashboard.totalLabel')}</p>
-                <p className="mt-1 text-3xl font-semibold tracking-tight text-ink">
-                  {formatMoney(total.total, { decimals: 2, currency: total.currency })}
+            <>
+              <p className="mt-1 text-3xl font-semibold tracking-tight text-ink">
+                {formatMoney(total, { decimals: 2, currency })}
+              </p>
+              <p className="mt-1 text-xs text-muted">{t('income.totalConvertedNote', { currency })}</p>
+              {ratesStale && <p className="mt-0.5 text-xs text-amber-600">{t('income.totalStaleNote')}</p>}
+              {excludedCount > 0 && (
+                <p className="mt-0.5 text-xs text-amber-600">
+                  {t('income.rateUnavailableNote', { count: excludedCount, currency })}
                 </p>
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
-            {accounts.length === 1 ? t('dashboard.acrossOne') : t('dashboard.acrossMany', { count: accounts.length })}
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{t(headerLabel === 'cashflow' ? 'income.headerCashFlow' : 'income.headerStream')}</h2>
           {!adding && (
             <button
               type="button"
               onClick={() => setAdding(true)}
               className="flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-medium text-white transition hover:opacity-90"
             >
-              <Plus className="h-3.5 w-3.5" /> {t('dashboard.addStream')}
+              <Plus className="h-3.5 w-3.5" /> {t('income.add')}
             </button>
           )}
         </div>
 
         {adding && (
-          <AccountForm
+          <IncomeStreamForm
             initial={emptyForm(currency)}
             currencies={currencies}
             onCancel={() => setAdding(false)}
             onSubmit={handleCreate}
-            submitLabel={t('dashboard.save')}
+            submitLabel={t('income.save')}
             busy={busy}
           />
         )}
 
-        {!loading && accounts.length > 0 && (
+        {loading ? (
+          <div className="rounded-2xl border border-border bg-white px-6 py-8 text-center text-sm text-muted">{t('common.loading')}</div>
+        ) : streams.length === 0 && !adding ? (
+          <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-8 text-center">
+            <Banknote className="mx-auto h-6 w-6 text-muted" />
+            <p className="mt-3 text-base font-medium text-ink">{t('income.emptyTitle')}</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted">{t('income.emptySubtitle')}</p>
+          </div>
+        ) : (
           <ul className="flex flex-col gap-2">
-            {accounts.map((account) =>
-              editingId === account.id ? (
-                <li key={account.id}>
-                  <AccountForm
-                    initial={{ name: account.name, type: account.type, currency: account.currency, balance: String(account.balance) }}
-                    currencies={currencies}
-                    onCancel={() => setEditingId(null)}
-                    onSubmit={(form) => handleUpdate(account.id, form)}
-                    submitLabel={t('dashboard.save')}
-                    busy={busy}
-                  />
-                </li>
-              ) : (
-                <li
-                  key={account.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white px-4 py-3.5"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: account.color }} />
+            {streams.map((stream) => {
+              if (editingId === stream.id) {
+                return (
+                  <li key={stream.id}>
+                    <IncomeStreamForm
+                      initial={formFromStream(stream)}
+                      currencies={currencies}
+                      onCancel={() => setEditingId(null)}
+                      onSubmit={(payload) => handleUpdate(stream.id, payload)}
+                      submitLabel={t('income.save')}
+                      busy={busy}
+                    />
+                  </li>
+                );
+              }
+
+              const color = TYPE_COLOR[stream.incomeType] || TYPE_COLOR.other;
+
+              return (
+                <li key={stream.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white px-4 py-3.5">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-ink">{account.name}</p>
-                      <p className="truncate text-xs text-muted">
-                        {t(`dashboard.type${account.type.replace(/(^|_)([a-z])/g, (_, __, c) => c.toUpperCase())}`)}
-                      </p>
+                      <p className="truncate font-medium text-ink">{stream.name}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{t(typeLabelKey(stream.incomeType))}</span>
+                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{t(frequencyLabelKey(stream.frequency))}</span>
+                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{destinationLabel(stream)}</span>
+                      </div>
+                      {stream.typeDetail && <p className="mt-1.5 text-sm text-muted">{stream.typeDetail}</p>}
+                      {stream.expectedAmount !== null && (
+                        <p className="mt-1.5 text-sm font-medium text-ink">
+                          {formatMoney(stream.expectedAmount, { decimals: 2, currency: stream.currency })}
+                          <span className="ml-1 font-normal text-muted">{t('income.perOccurrence')}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="font-medium text-ink">{formatMoney(account.balance, { decimals: 2, currency: account.currency })}</span>
+                  <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setEditingId(account.id)}
-                      aria-label={t('dashboard.edit')}
+                      onClick={() => setEditingId(stream.id)}
+                      aria-label={t('income.edit')}
                       className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-surface hover:text-ink"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(account)}
-                      aria-label={t('dashboard.delete')}
+                      onClick={() => handleDelete(stream)}
+                      aria-label={t('income.delete')}
                       className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </li>
-              )
-            )}
+              );
+            })}
           </ul>
         )}
       </div>
-    </AppShell>
+    </div>
   );
 }
 

@@ -50,3 +50,22 @@ export const cleanLabel = (raw) => {
 };
 
 export const isHexColor = (value) => typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value);
+
+// Open free text (income stream "detail", a custom bank/wallet name
+// typed under "Other", and anything similar later) - looser again than
+// cleanLabel above, which requires the text to START with a letter or
+// digit. That rule is right for a primary name (an account, a category)
+// but wrong for a detail someone is describing in their own words -
+// ".NET Web Developer", "50% remote", "(night shift)" are all reasonable
+// things to type here and were being rejected by cleanLabel's first-char
+// rule. This only trims, caps the length, and blocks control characters -
+// nothing about the first character.
+const CONTROL_CHAR_PATTERN = /[\u0000-\u001f\u007f]/;
+
+export const cleanFreeText = (raw, maxLength = 120) => {
+  if (typeof raw !== 'string') return null;
+  const value = raw.replace(/\s+/g, ' ').trim();
+  if (value.length > maxLength) return null;
+  if (CONTROL_CHAR_PATTERN.test(value)) return null;
+  return value;
+};

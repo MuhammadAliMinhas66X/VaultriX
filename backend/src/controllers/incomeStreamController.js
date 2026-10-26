@@ -3,7 +3,7 @@ import IncomeStream, {
   FREQUENCY_VALUES,
   DESTINATION_METHOD_VALUES,
 } from '../models/IncomeStream.js';
-import { cleanLabel, isCurrencyCode } from '../utils/validators.js';
+import { cleanLabel, cleanFreeText, isCurrencyCode } from '../utils/validators.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
@@ -13,12 +13,16 @@ const fail = (res, status, message) => res.status(status).json({ success: false,
 const toMinor = (amount) => Math.round(Number(amount) * 100);
 const toMajor = (minor) => (minor === null || minor === undefined ? null : Math.round(minor) / 100);
 
-// typeDetail/destinationName are optional free text - looser than a
-// label used as a primary name, so a short cleanLabel pass is enough
-// (also accepts an empty string, cleanLabel does not).
+// typeDetail/destinationName are open free text someone is describing in
+// their own words ("Physical retail store", ".NET Web Developer") - using
+// cleanLabel (which requires the text to START with a letter or digit,
+// right for a primary name) here rejected perfectly normal detail text
+// like ".NET Web Developer". cleanFreeText only trims, caps length, and
+// blocks control characters. Also accepts/returns '' for "not provided",
+// which cleanLabel/cleanFreeText alone do not.
 const cleanOptionalLabel = (raw) => {
   if (raw === undefined || raw === null || raw === '') return '';
-  const cleaned = cleanLabel(raw);
+  const cleaned = cleanFreeText(raw);
   return cleaned === null ? undefined : cleaned; // undefined = invalid, caller checks for it
 };
 
