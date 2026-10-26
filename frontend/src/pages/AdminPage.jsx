@@ -15,7 +15,6 @@
 // without sacrificing legibility anywhere body copy actually lives.
 // Motion (Framer Motion) carries the "alive" feel instead of color.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -38,7 +37,8 @@ import {
   Users as UsersIcon,
   X,
 } from 'lucide-react';
-import DashboardHeader from '../components/DashboardHeader.jsx';
+import AppShell from '../components/layout/AppShell.jsx';
+import { useTranslation } from '../i18n/useTranslation.js';
 import Button from '../components/Button.jsx';
 import FormField from '../components/FormField.jsx';
 import { notify } from '../i18n/notifications.js';
@@ -1078,112 +1078,31 @@ const SECTIONS = [
   { id: 'audit', label: 'Audit log', Icon: ScrollText, Component: AuditLogSection },
 ];
 
-function Sidebar({ active, onSelect, onBack }) {
-  return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-white px-4 py-6 lg:flex">
-      <div className="mb-8 px-2">
-        <p className="text-sm font-semibold tracking-tight text-ink">Vaultrix</p>
-        <p className="font-mono text-xs uppercase tracking-wide text-muted">Admin</p>
-      </div>
-
-      <nav className="flex flex-1 flex-col gap-1">
-        {SECTIONS.map((section) => {
-          const isActive = active === section.id;
-          return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => onSelect(section.id)}
-              className="relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm transition"
-            >
-              {isActive && (
-                <motion.span
-                  layoutId="admin-nav-active"
-                  transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                  className="absolute inset-0 rounded-lg bg-surface"
-                />
-              )}
-              <section.Icon className={`relative h-4 w-4 shrink-0 ${isActive ? 'text-ink' : 'text-muted'}`} />
-              <span className={`relative font-medium ${isActive ? 'text-ink' : 'text-muted'}`}>{section.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-col gap-3 border-t border-border pt-4">
-        <span className="flex items-center gap-2 px-2 font-mono text-xs uppercase tracking-wide text-muted">
-          <LiveDot /> Live
-        </span>
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-muted transition hover:text-ink"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Vaultrix
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-function MobileNav({ active, onSelect }) {
-  return (
-    <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto border-b border-border bg-white px-3 py-2 lg:hidden">
-      {SECTIONS.map((section) => {
-        const isActive = active === section.id;
-        return (
-          <button
-            key={section.id}
-            type="button"
-            onClick={() => onSelect(section.id)}
-            aria-current={isActive ? 'page' : undefined}
-            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
-              isActive ? 'bg-surface text-ink' : 'text-muted hover:text-ink'
-            }`}
-          >
-            <section.Icon className="h-4 w-4 shrink-0" />
-            {section.label}
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 function AdminPage() {
-  const navigate = useNavigate();
   const [active, setActive] = useState('overview');
-  const ActiveComponent = useMemo(() => SECTIONS.find((s) => s.id === active)?.Component || OverviewSection, [active]);
+  const { t } = useTranslation();
+  const current = SECTIONS.find((s) => s.id === active) || SECTIONS[0];
+  const ActiveComponent = current.Component;
+
+  const items = SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.label,
+    icon: section.Icon,
+    onSelect: () => setActive(section.id),
+  }));
+  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' }];
 
   return (
-    <div className="min-h-screen bg-surface">
-      <DashboardHeader />
-      <MobileNav active={active} onSelect={setActive} />
-      <div className="flex">
-        <Sidebar active={active} onSelect={setActive} onBack={() => navigate('/dashboard')} />
-
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="mb-6">
-            <h1 className="text-xl font-semibold tracking-tight text-ink">
-              {SECTIONS.find((s) => s.id === active)?.label}
-            </h1>
-            <p className="text-sm text-muted">Operator-only tools. Not part of the regular Vaultrix product.</p>
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-            >
-              <ActiveComponent />
-            </motion.div>
-          </AnimatePresence>
-        </main>
+    <AppShell title={t('nav.admin')} pageTitle={t('nav.admin')} items={items} activeId={current.id} footerItems={footerItems}>
+      <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <h1 className="mb-6 text-xl font-semibold tracking-tight text-ink">{current.label}</h1>
+        <AnimatePresence mode="wait">
+          <motion.div key={current.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}>
+            <ActiveComponent />
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

@@ -12,7 +12,7 @@ export default {
         accent: '#1a1a1e',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'Noto Sans Arabic', 'Noto Sans Devanagari', 'system-ui', 'sans-serif'],
         display: ['Syne', '"Arial Black"', 'sans-serif'],
       },
     },

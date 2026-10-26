@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera,
@@ -18,8 +17,9 @@ import {
   Link2,
   Link2Off,
   History,
+  LogOut,
 } from 'lucide-react';
-import DashboardHeader from '../components/DashboardHeader.jsx';
+import AppShell from '../components/layout/AppShell.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
 import Combobox from '../components/Combobox.jsx';
@@ -1445,49 +1445,9 @@ const useSettingsSections = () => {
   ];
 };
 
-function SettingsNav({ sections, active, onChange }) {
-  return (
-    <nav
-      aria-label="Settings sections"
-      className="flex flex-row gap-1 overflow-x-auto pb-1 sm:flex-col sm:gap-1 sm:overflow-visible sm:pb-0"
-    >
-      {sections.map((section) => {
-        const Icon = section.icon;
-        const isActive = section.id === active;
-        return (
-          <button
-            key={section.id}
-            type="button"
-            onClick={() => onChange(section.id)}
-            aria-current={isActive ? 'page' : undefined}
-            className={`relative flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors ${
-              isActive
-                ? section.danger
-                  ? 'text-red-700'
-                  : 'text-ink'
-                : 'text-muted hover:text-ink'
-            }`}
-          >
-            {isActive && (
-              <motion.span
-                layoutId="settingsActiveTab"
-                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                className={`absolute inset-0 rounded-lg ${section.danger ? 'bg-red-50' : 'bg-black/[0.04]'}`}
-              />
-            )}
-            <Icon className="relative z-10 h-4 w-4 shrink-0" />
-            <span className="relative z-10">{section.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 function SettingsPage() {
   const { signOut } = useAuth();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   const [activeSection, setActiveSection] = useState('profile');
   const sections = useSettingsSections();
@@ -1497,56 +1457,46 @@ function SettingsPage() {
     await signOut();
   };
 
-  const ActiveComponent = sections.find((section) => section.id === activeSection)?.Component || ProfileSection;
+  const active = sections.find((section) => section.id === activeSection) || sections[0];
+  const ActiveComponent = active.Component;
+
+  const items = sections.map((section) => ({
+    id: section.id,
+    label: section.label,
+    icon: section.icon,
+    danger: section.danger,
+    onSelect: () => setActiveSection(section.id),
+  }));
+
+  const footerItems = [
+    { id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' },
+    {
+      id: 'signout',
+      label: signingOut ? t('common.signingOut') : t('settings.signOut'),
+      icon: LogOut,
+      onSelect: handleSignOut,
+      loading: signingOut,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-surface">
-      <DashboardHeader />
-
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              aria-label={t('settings.back')}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink hover:bg-black/[0.03]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <h1 className="text-2xl font-semibold text-ink">{t('settings.title')}</h1>
-          </div>
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            aria-busy={signingOut ? 'true' : undefined}
-            className="flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-black/[0.03] disabled:cursor-wait disabled:opacity-70"
+    <AppShell title={t('settings.title')} pageTitle={t('settings.title')} items={items} activeId={active.id} footerItems={footerItems}>
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink">{active.label}</h1>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={active.id}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="min-w-0"
           >
-            {signingOut && <Loader2 className="h-4 w-4 animate-spin" />}
-            {signingOut ? t('common.signingOut') : t('settings.signOut')}
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-6 sm:grid sm:grid-cols-[200px_1fr] sm:items-start sm:gap-8">
-          <div className="min-w-0 sm:sticky sm:top-6">
-            <SettingsNav sections={sections} active={activeSection} onChange={setActiveSection} />
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.2 }}
-              className="min-w-0"
-            >
-              <ActiveComponent />
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            <ActiveComponent />
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

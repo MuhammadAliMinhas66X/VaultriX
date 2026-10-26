@@ -13,7 +13,15 @@ html {
 }
 
 body {
-  @apply bg-background text-ink font-sans;
+  @apply bg-background text-ink font-sans antialiased;
+  font-feature-settings: 'cv11', 'ss03', 'calt';
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
 }
 
 p,
