@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { refresh as refreshSession, logout as logoutRequest, me as fetchMe } from '../services/authService.js';
-import { setAuthToken, setUnauthorizedHandler } from '../services/api.js';
+import { setAuthToken, setUnauthorizedHandler, setTokenRefreshedHandler } from '../services/api.js';
 import {
   getGuestLanguage,
   setGuestLanguage as storeGuestLanguage,
@@ -96,6 +96,14 @@ export function AuthProvider({ children }) {
       }
       notify.warning(translate(languageRef.current, 'errors.sessionExpired'));
       clearSession();
+    });
+
+    // api.js silently refreshes an expired access token in the background
+    // (see refreshAccessToken there) whenever a request 401s mid-session -
+    // this keeps this context's own `user`/`accessToken` state in sync
+    // with that, the same way a normal setSession() call would.
+    setTokenRefreshedHandler((data) => {
+      setSession(data);
     });
 
     let cancelled = false;
