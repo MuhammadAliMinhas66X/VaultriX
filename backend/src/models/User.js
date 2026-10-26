@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     deactivatedAt: { type: Date, default: null },
     deactivatedBy: { type: String, default: null }, // the admin's email, for the audit trail
+    // Free-text, admin-only (never shown to the user, never sent in any
+    // user-facing API response) - a place to leave a note like "refunded
+    // manually, see ticket #42" without needing anywhere else to store it.
+    adminNotes: { type: String, default: '' },
   },
   { timestamps: true }
 );
