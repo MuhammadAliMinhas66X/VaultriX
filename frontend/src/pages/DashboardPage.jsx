@@ -1,8 +1,3 @@
-// The Dashboard, folded back into one page per feedback - Income lives
-// here now, not on a separate route. The hero number is the sum of every
-// income stream's expected amount, each converted into the app's chosen
-// currency at a live exchange rate, so "add a USD stream while the app is
-// set to PKR" just works instead of silently being wrong or ignored.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Banknote, Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardTopBar from '../components/DashboardTopBar.jsx';
@@ -63,6 +58,7 @@ const TYPE_COLOR = {
 
 const INCOME_TYPES = ['salaried', 'business', 'freelance', 'other'];
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'variable'];
+const METHODS = ['cash', 'bank', 'wallet'];
 
 const typeLabelKey = (type) => `income.type.${type}`;
 const frequencyLabelKey = (freq) => `income.frequency.${freq}`;
@@ -98,6 +94,20 @@ const formFromStream = (stream) => ({
   currency: stream.currency,
 });
 
+const selectClass =
+  'w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm';
+
+function SelectField({ label, value, onChange, children }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-sm font-medium text-ink">{label}</span>
+      <select value={value} onChange={onChange} className={selectClass}>
+        {children}
+      </select>
+    </label>
+  );
+}
+
 function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy }) {
   const { t } = useTranslation();
   const [form, setForm] = useState(initial);
@@ -132,7 +142,7 @@ function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4">
+    <form onSubmit={submit} className="flex flex-col gap-5 rounded-2xl border border-border bg-white p-4 sm:p-6">
       <FormField
         label={t('income.nameLabel')}
         value={form.name}
@@ -141,37 +151,31 @@ function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel
         autoFocus
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">{t('income.typeLabel')}</span>
-          <select
-            value={form.incomeType}
-            onChange={(e) => setForm((f) => ({ ...f, incomeType: e.target.value }))}
-            className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
-          >
-            {INCOME_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {t(typeLabelKey(type))}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">{t('income.frequencyLabel')}</span>
-          <select
-            value={form.frequency}
-            onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value }))}
-            className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
-          >
-            {FREQUENCIES.map((freq) => (
-              <option key={freq} value={freq}>
-                {t(frequencyLabelKey(freq))}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SelectField
+          label={t('income.typeLabel')}
+          value={form.incomeType}
+          onChange={(e) => setForm((f) => ({ ...f, incomeType: e.target.value }))}
+        >
+          {INCOME_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {t(typeLabelKey(type))}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField
+          label={t('income.frequencyLabel')}
+          value={form.frequency}
+          onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value }))}
+        >
+          {FREQUENCIES.map((freq) => (
+            <option key={freq} value={freq}>
+              {t(frequencyLabelKey(freq))}
+            </option>
+          ))}
+        </SelectField>
+        <p className="-mt-2 text-xs text-muted sm:col-span-2">{t('income.frequencyHint')}</p>
       </div>
-      <p className="-mt-2 text-xs text-muted">{t('income.frequencyHint')}</p>
 
       <FormField
         label={t('income.typeDetailLabel')}
@@ -181,27 +185,36 @@ function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel
       />
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-ink">{t('income.destinationMethodLabel')}</span>
-        <select
-          value={form.destinationMethod}
-          onChange={(e) => pickMethod(e.target.value)}
-          className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
-        >
-          <option value="cash">{t('income.method.cash')}</option>
-          <option value="bank">{t('income.method.bank')}</option>
-          <option value="wallet">{t('income.method.wallet')}</option>
-        </select>
+        <span className="text-sm font-medium text-ink" id="income-method-label">
+          {t('income.destinationMethodLabel')}
+        </span>
+        <div role="radiogroup" aria-labelledby="income-method-label" className="grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
+          {METHODS.map((method) => {
+            const active = form.destinationMethod === method;
+            return (
+              <button
+                key={method}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => pickMethod(method)}
+                className={`rounded-lg px-2 py-2.5 text-sm font-medium transition ${
+                  active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'
+                }`}
+              >
+                {t(`income.method.${method}`)}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {showDestinationPicker && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">
-            {form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
-          </span>
-          <select
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <SelectField
+            label={form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
             value={form.destinationPreset}
             onChange={(e) => setForm((f) => ({ ...f, destinationPreset: e.target.value }))}
-            className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-accent"
           >
             <option value="" disabled>
               {t('income.selectPlaceholder')}
@@ -212,42 +225,54 @@ function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel
               </option>
             ))}
             <option value={OTHER_VALUE}>{t('income.otherOption')}</option>
-          </select>
+          </SelectField>
+
+          {showCustomField && (
+            <FormField
+              label={t('income.otherDestinationLabel')}
+              value={form.destinationCustom}
+              onChange={(e) => setForm((f) => ({ ...f, destinationCustom: e.target.value }))}
+              placeholder={t('income.otherDestinationPlaceholder')}
+            />
+          )}
         </div>
       )}
 
-      {showCustomField && (
-        <FormField
-          label={t('income.otherDestinationLabel')}
-          value={form.destinationCustom}
-          onChange={(e) => setForm((f) => ({ ...f, destinationCustom: e.target.value }))}
-          placeholder={t('income.otherDestinationPlaceholder')}
-        />
-      )}
-
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           label={t('income.expectedAmountLabel')}
           type="number"
+          inputMode="decimal"
           step="0.01"
           min="0"
           value={form.expectedAmount}
           onChange={(e) => setForm((f) => ({ ...f, expectedAmount: e.target.value }))}
           placeholder={t('income.expectedAmountPlaceholder')}
         />
-        <label className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <span className="text-sm font-medium text-ink">{t('income.currencyLabel')}</span>
-          <Combobox items={currencies} value={form.currency} onChange={(value) => setForm((f) => ({ ...f, currency: value }))} />
-        </label>
+          <Combobox
+            items={currencies}
+            ariaLabel={t('income.currencyLabel')}
+            value={form.currency}
+            onChange={(value) => setForm((f) => ({ ...f, currency: value }))}
+          />
+        </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
-        <Button type="submit" loading={busy} loadingLabel={t('common.saving')}>
-          {submitLabel}
-        </Button>
-        <button type="button" onClick={onCancel} className="text-sm text-muted hover:text-ink">
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink"
+        >
           {t('common.cancel')}
         </button>
+        <div className="sm:w-40">
+          <Button type="submit" loading={busy} loadingLabel={t('common.saving')}>
+            {submitLabel}
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -256,7 +281,7 @@ function IncomeStreamForm({ initial, currencies, onCancel, onSubmit, submitLabel
 function DashboardPage() {
   const { currency } = useAuth();
   const { t, tServer } = useTranslation();
-  const { formatMoney } = useFormat();
+  const { formatMoney, formatNumber, formatDate } = useFormat();
   const { currencies } = useLocalizedOptions();
 
   const [streams, setStreams] = useState([]);
@@ -269,6 +294,7 @@ function DashboardPage() {
   const [rates, setRates] = useState(null);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [ratesStale, setRatesStale] = useState(false);
+  const [ratesUpdatedAt, setRatesUpdatedAt] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -301,6 +327,7 @@ function DashboardPage() {
         if (cancelled) return;
         setRates(data.rates);
         setRatesStale(Boolean(data.stale));
+        setRatesUpdatedAt(data.updatedAt || data.fetchedAt || null);
       })
       .catch(() => {
         if (cancelled) return;
@@ -329,6 +356,19 @@ function DashboardPage() {
     });
     return { total: sum, excludedCount: excluded };
   }, [streams, rates]);
+
+  const rateLines = useMemo(() => {
+    if (!rates) return [];
+    const codes = [...new Set(streams.filter((st) => st.expectedAmount !== null).map((st) => st.currency))];
+    return codes
+      .filter((code) => code !== currency && rates[code])
+      .map((code) => ({ code, value: 1 / rates[code] }));
+  }, [streams, rates, currency]);
+
+  const convertedAmount = (stream) => {
+    if (!rates || stream.expectedAmount === null || stream.currency === currency || !rates[stream.currency]) return null;
+    return stream.expectedAmount / rates[stream.currency];
+  };
 
   const handleCreate = async (payload) => {
     setBusy(true);
@@ -373,13 +413,13 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-surface">
       <DashboardTopBar />
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
-        <div>
+      <div className="mx-auto flex max-w-3xl flex-col gap-5 px-4 py-6 sm:gap-6 sm:px-6 sm:py-10">
+        <div className="min-w-0">
           <select
             value={headerLabel}
             onChange={(e) => setHeaderLabel(e.target.value)}
             aria-label={t('income.headerStream')}
-            className="-ml-1 rounded-lg border-none bg-transparent px-1 text-2xl font-semibold text-ink outline-none focus:ring-2 focus:ring-accent/20"
+            className="-ml-1 max-w-full rounded-lg border-none bg-transparent px-1 text-xl font-semibold text-ink outline-none focus:ring-2 focus:ring-accent/20 sm:text-2xl"
           >
             <option value="stream">{t('income.headerStream')}</option>
             <option value="cashflow">{t('income.headerCashFlow')}</option>
@@ -387,39 +427,55 @@ function DashboardPage() {
           <p className="mt-1 text-sm text-muted">{t('income.headerSubtitle')}</p>
         </div>
 
-        {/* Hero total - every stream's expected amount, converted into the
-            app's currency at a live rate, summed into one number. */}
-        <div className="rounded-2xl border border-border bg-white px-6 py-5">
-          <p className="text-[11px] uppercase tracking-wide text-muted">{t('income.totalLabel')}</p>
+        <div className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('income.totalLabel')}</p>
           {ratesLoading ? (
-            <p className="mt-1 text-sm text-muted">{t('income.ratesLoading')}</p>
+            <p className="mt-2 text-sm text-muted">{t('income.ratesLoading')}</p>
           ) : total === null ? (
-            <p className="mt-1 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
+            <p className="mt-2 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
           ) : (
             <>
-              <p className="mt-1 text-3xl font-semibold tracking-tight text-ink">
+              <p className="mt-1 break-words text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
                 {formatMoney(total, { decimals: 2, currency })}
               </p>
-              <p className="mt-1 text-xs text-muted">{t('income.totalConvertedNote', { currency })}</p>
-              {ratesStale && <p className="mt-0.5 text-xs text-amber-600">{t('income.totalStaleNote')}</p>}
+              {rateLines.length > 0 && (
+                <div className="mt-4 flex flex-col gap-1 border-t border-border pt-3 text-xs text-muted">
+                  <p>{t('income.totalConvertedNote', { currency })}</p>
+                  <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                    {rateLines.map((line) => (
+                      <li key={line.code} className="font-medium text-ink">
+                        {t('income.rateLine', {
+                          from: line.code,
+                          rate: formatNumber(line.value, { maximumFractionDigits: line.value < 1 ? 4 : 2 }),
+                          to: currency,
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                  {ratesUpdatedAt && (
+                    <p>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), { day: 'numeric', month: 'short', year: 'numeric' }) })}</p>
+                  )}
+                </div>
+              )}
+              {ratesStale && <p className="mt-2 text-xs text-amber-600">{t('income.totalStaleNote')}</p>}
               {excludedCount > 0 && (
-                <p className="mt-0.5 text-xs text-amber-600">
-                  {t('income.rateUnavailableNote', { count: excludedCount, currency })}
-                </p>
+                <p className="mt-1 text-xs text-amber-600">{t('income.rateUnavailableNote', { count: excludedCount, currency })}</p>
               )}
             </>
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{t(headerLabel === 'cashflow' ? 'income.headerCashFlow' : 'income.headerStream')}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="min-w-0 truncate text-sm font-semibold uppercase tracking-wide text-muted">
+            {t(headerLabel === 'cashflow' ? 'income.headerCashFlow' : 'income.headerStream')}
+          </h2>
           {!adding && (
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-medium text-white transition hover:opacity-90"
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
-              <Plus className="h-3.5 w-3.5" /> {t('income.add')}
+              <Plus className="h-4 w-4" /> {t('income.add')}
             </button>
           )}
         </div>
@@ -438,13 +494,13 @@ function DashboardPage() {
         {loading ? (
           <div className="rounded-2xl border border-border bg-white px-6 py-8 text-center text-sm text-muted">{t('common.loading')}</div>
         ) : streams.length === 0 && !adding ? (
-          <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-8 text-center">
+          <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center">
             <Banknote className="mx-auto h-6 w-6 text-muted" />
             <p className="mt-3 text-base font-medium text-ink">{t('income.emptyTitle')}</p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted">{t('income.emptySubtitle')}</p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {streams.map((stream) => {
               if (editingId === stream.id) {
                 return (
@@ -462,45 +518,54 @@ function DashboardPage() {
               }
 
               const color = TYPE_COLOR[stream.incomeType] || TYPE_COLOR.other;
+              const converted = convertedAmount(stream);
 
               return (
-                <li key={stream.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-white px-4 py-3.5">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-ink">{stream.name}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{t(typeLabelKey(stream.incomeType))}</span>
-                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{t(frequencyLabelKey(stream.frequency))}</span>
-                        <span className="rounded-full bg-surface px-2 py-0.5 font-medium">{destinationLabel(stream)}</span>
-                      </div>
-                      {stream.typeDetail && <p className="mt-1.5 text-sm text-muted">{stream.typeDetail}</p>}
-                      {stream.expectedAmount !== null && (
-                        <p className="mt-1.5 text-sm font-medium text-ink">
-                          {formatMoney(stream.expectedAmount, { decimals: 2, currency: stream.currency })}
-                          <span className="ml-1 font-normal text-muted">{t('income.perOccurrence')}</span>
-                        </p>
-                      )}
+                <li key={stream.id} className="rounded-2xl border border-border bg-white p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                      <p className="truncate text-base font-semibold text-ink">{stream.name}</p>
+                    </div>
+                    <div className="-mr-1.5 -mt-1.5 flex shrink-0 items-center">
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(stream.id)}
+                        aria-label={t('income.edit')}
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-surface hover:text-ink"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(stream)}
+                        aria-label={t('income.delete')}
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(stream.id)}
-                      aria-label={t('income.edit')}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-surface hover:text-ink"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(stream)}
-                      aria-label={t('income.delete')}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+
+                  {stream.expectedAmount !== null && (
+                    <div className="mt-2">
+                      <p className="break-words text-xl font-semibold tracking-tight text-ink">
+                        {formatMoney(stream.expectedAmount, { decimals: 2, currency: stream.currency })}
+                        <span className="ml-1.5 text-xs font-normal text-muted">{t('income.perOccurrence')}</span>
+                      </p>
+                      {converted !== null && (
+                        <p className="mt-0.5 text-sm text-muted">{t('income.approx', { amount: formatMoney(converted, { decimals: 2, currency }) })}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    <span className="rounded-full bg-surface px-2.5 py-1 font-medium">{t(typeLabelKey(stream.incomeType))}</span>
+                    <span className="rounded-full bg-surface px-2.5 py-1 font-medium">{t(frequencyLabelKey(stream.frequency))}</span>
+                    <span className="max-w-full truncate rounded-full bg-surface px-2.5 py-1 font-medium">{destinationLabel(stream)}</span>
                   </div>
+
+                  {stream.typeDetail && <p className="mt-3 break-words text-sm text-muted">{stream.typeDetail}</p>}
                 </li>
               );
             })}
