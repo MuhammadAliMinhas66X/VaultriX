@@ -24,11 +24,10 @@ function DashboardHeader() {
             to="/admin"
             aria-label="Admin Dashboard"
             title="Admin Dashboard"
-            className="group relative flex items-center gap-1.5 overflow-hidden rounded-full bg-[#111114] py-1.5 pl-2.5 pr-3 text-white shadow-[0_0_0_1px_rgba(139,92,246,0.4)] transition hover:shadow-[0_0_0_1px_rgba(139,92,246,0.8),0_0_14px_1px_rgba(139,92,246,0.45)]"
+            className="flex items-center gap-1.5 rounded-full border border-border bg-ink py-1.5 pl-2.5 pr-3 text-sm font-medium text-white transition hover:opacity-90"
           >
-            <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-violet-500/20 via-transparent to-cyan-400/20 opacity-0 transition group-hover:opacity-100" />
-            <ShieldCheck className="relative h-3.5 w-3.5 text-violet-400" />
-            <span className="relative font-display text-[11px] font-bold uppercase tracking-wide">Admin</span>
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Admin
           </Link>
         )}
 
