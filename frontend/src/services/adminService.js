@@ -99,3 +99,33 @@ export const getAdminAuditLog = async ({ page = 1, event = '' } = {}) => {
     throw toApiError(error);
   }
 };
+
+export const getAdminSecurityOverview = async () => {
+  try {
+    const { data } = await api.get('/admin/security-overview');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const unlockAdminUser = async (id) => {
+  try {
+    const { data } = await api.post(`/admin/users/${id}/unlock`);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+// Returns the raw CSV text, not JSON - the caller wraps it in a Blob and
+// triggers a browser download. responseType 'text' avoids axios trying
+// (and failing) to JSON.parse a CSV body.
+export const exportAdminUsersCsv = async ({ search = '', status = 'all' } = {}) => {
+  try {
+    const { data } = await api.get('/admin/users/export', { params: { search, status }, responseType: 'text' });
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
