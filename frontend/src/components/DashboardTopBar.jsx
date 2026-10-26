@@ -38,7 +38,7 @@ function DashboardTopBar() {
   const itemClass = 'flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-ink transition hover:bg-surface';
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-6 py-4">
+    <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
       <Logo size="sm" linkTo="/dashboard" />
 
       <div ref={rootRef} className="relative">
@@ -48,7 +48,7 @@ function DashboardTopBar() {
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={t('common.moreOptions')}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition hover:bg-surface hover:text-ink"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-muted transition hover:bg-surface hover:text-ink"
         >
           <MoreVertical className="h-5 w-5" />
         </button>
@@ -56,7 +56,7 @@ function DashboardTopBar() {
         {open && (
           <div
             role="menu"
-            className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-xl border border-border bg-white py-1 shadow-lg"
+            className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border bg-white py-1 shadow-lg"
           >
             <Link to="/settings" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
               <SettingsIcon className="h-4 w-4 shrink-0 text-muted" />

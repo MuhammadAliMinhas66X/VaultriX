@@ -15,7 +15,7 @@ function DashboardHeader() {
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-6 py-4">
+    <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
       <Logo size="sm" linkTo="/dashboard" />
 
       <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ function DashboardHeader() {
         <Link
           to="/settings"
           aria-label={t('settings.title')}
-          className="flex items-center gap-2 rounded-full border border-border py-1.5 pl-1.5 pr-3 transition hover:bg-surface"
+          className="flex items-center gap-2 rounded-full border border-border py-1.5 pl-1.5 pr-1.5 transition hover:bg-surface sm:pr-3"
         >
           {avatarSrc && !avatarFailed ? (
             <img
@@ -49,7 +49,7 @@ function DashboardHeader() {
               {initialsFromName(user?.name)}
             </span>
           )}
-          <span className="text-sm font-medium text-ink">{user?.name}</span>
+          <span className="hidden max-w-[10rem] truncate text-sm font-medium text-ink sm:inline">{user?.name}</span>
         </Link>
       </div>
     </header>

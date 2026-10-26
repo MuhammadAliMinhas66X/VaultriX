@@ -1503,7 +1503,7 @@ function SettingsPage() {
     <div className="min-h-screen bg-surface">
       <DashboardHeader />
 
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button

@@ -1080,7 +1080,7 @@ const SECTIONS = [
 
 function Sidebar({ active, onSelect, onBack }) {
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-border bg-white px-4 py-6">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-white px-4 py-6 lg:flex">
       <div className="mb-8 px-2">
         <p className="text-sm font-semibold tracking-tight text-ink">Vaultrix</p>
         <p className="font-mono text-xs uppercase tracking-wide text-muted">Admin</p>
@@ -1126,6 +1126,30 @@ function Sidebar({ active, onSelect, onBack }) {
   );
 }
 
+function MobileNav({ active, onSelect }) {
+  return (
+    <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto border-b border-border bg-white px-3 py-2 lg:hidden">
+      {SECTIONS.map((section) => {
+        const isActive = active === section.id;
+        return (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => onSelect(section.id)}
+            aria-current={isActive ? 'page' : undefined}
+            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-sm font-medium transition ${
+              isActive ? 'bg-surface text-ink' : 'text-muted hover:text-ink'
+            }`}
+          >
+            <section.Icon className="h-4 w-4 shrink-0" />
+            {section.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const [active, setActive] = useState('overview');
@@ -1134,10 +1158,11 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-surface">
       <DashboardHeader />
+      <MobileNav active={active} onSelect={setActive} />
       <div className="flex">
         <Sidebar active={active} onSelect={setActive} onBack={() => navigate('/dashboard')} />
 
-        <main className="min-w-0 flex-1 px-8 py-8">
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="mb-6">
             <h1 className="text-xl font-semibold tracking-tight text-ink">
               {SECTIONS.find((s) => s.id === active)?.label}
