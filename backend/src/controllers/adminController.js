@@ -44,6 +44,8 @@ const notFound = (res) => fail(res, 404, 'That account could not be found.');
 // Deliberately excludes passwordHash, mfaSecret, mfaBackupCodes - the admin
 // panel can act on those (disable MFA, force a reset) without ever needing
 // to read them.
+const isLocked = (user) => Boolean(user.lockUntil && new Date(user.lockUntil).getTime() > Date.now());
+
 const adminUserSummary = (user, onlineUserIds) => ({
   id: String(user._id),
   name: user.name,
@@ -63,6 +65,10 @@ const adminUserSummary = (user, onlineUserIds) => ({
   deactivatedAt: user.deactivatedAt,
   deactivatedBy: user.deactivatedBy,
   isOnline: onlineUserIds.has(String(user._id)),
+  isLocked: isLocked(user),
+  lockUntil: user.lockUntil,
+  failedLoginAttempts: user.failedLoginAttempts || 0,
+  adminNotes: user.adminNotes || '',
   lastLoginAt: user.lastLoginAt,
   createdAt: user.createdAt,
 });
@@ -77,20 +83,65 @@ const getOnlineUserIds = async (userIds) => {
 
 // --- Overview -------------------------------------------------------------
 
+const SIGNUP_TREND_DAYS = 14;
+
+// Mongo's aggregation only returns days that actually had a signup - this
+// fills in the gaps with 0s so the chart has one point per day, not gaps
+// that would look like missing data.
+const fillDailySeries = (rows, days) => {
+  const byDay = new Map(rows.map((r) => [r._id, r.count]));
+  const series = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    series.push({ date: key, count: byDay.get(key) || 0 });
+  }
+  return series;
+};
+
 export const getOverview = async (req, res, next) => {
   try {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const trendStart = new Date(Date.now() - SIGNUP_TREND_DAYS * 24 * 60 * 60 * 1000);
 
-    const [totalUsers, deactivatedUsers, signupsToday, signupsThisWeek, onlineUserIds, recentSignups] =
-      await Promise.all([
-        User.countDocuments({}),
-        User.countDocuments({ isActive: false }),
-        User.countDocuments({ createdAt: { $gte: dayAgo } }),
-        User.countDocuments({ createdAt: { $gte: weekAgo } }),
-        getOnlineUserIds(),
-        User.find({}).sort({ createdAt: -1 }).limit(8).select('name email authProvider createdAt').lean(),
-      ]);
+    const [
+      totalUsers,
+      deactivatedUsers,
+      lockedUsers,
+      signupsToday,
+      signupsThisWeek,
+      onlineUserIds,
+      recentSignups,
+      signupTrendRaw,
+      providerBreakdownRaw,
+      planBreakdownRaw,
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ isActive: false }),
+      User.countDocuments({ lockUntil: { $gt: new Date() } }),
+      User.countDocuments({ createdAt: { $gte: dayAgo } }),
+      User.countDocuments({ createdAt: { $gte: weekAgo } }),
+      getOnlineUserIds(),
+      User.find({}).sort({ createdAt: -1 }).limit(8).select('name email authProvider createdAt').lean(),
+      User.aggregate([
+        { $match: { createdAt: { $gte: trendStart } } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+      ]),
+      User.aggregate([{ $group: { _id: '$authProvider', count: { $sum: 1 } } }]),
+      User.aggregate([{ $group: { _id: '$plan', count: { $sum: 1 } } }]),
+    ]);
+
+    const providerBreakdown = { password: 0, google: 0 };
+    providerBreakdownRaw.forEach((row) => {
+      providerBreakdown[row._id === 'google' ? 'google' : 'password'] += row.count;
+    });
+
+    const planBreakdown = { standard: 0, premium: 0 };
+    planBreakdownRaw.forEach((row) => {
+      if (row._id === 'premium') planBreakdown.premium += row.count;
+      else planBreakdown.standard += row.count;
+    });
 
     res.json({
       success: true,
@@ -98,10 +149,14 @@ export const getOverview = async (req, res, next) => {
         totalUsers,
         activeUsers: totalUsers - deactivatedUsers,
         deactivatedUsers,
+        lockedUsers,
         onlineNow: onlineUserIds.size,
         signupsToday,
         signupsThisWeek,
       },
+      signupTrend: fillDailySeries(signupTrendRaw, SIGNUP_TREND_DAYS),
+      providerBreakdown,
+      planBreakdown,
       recentSignups: recentSignups.map((u) => ({
         id: String(u._id),
         name: u.name,
@@ -217,7 +272,7 @@ export const updateUserAsAdmin = async (req, res, next) => {
     const user = await User.findById(req.params.id);
     if (!user) return notFound(res);
 
-    const { name, email, country, currency, language, role, plan, onboardingCompleted } = req.body || {};
+    const { name, email, country, currency, language, role, plan, onboardingCompleted, adminNotes } = req.body || {};
     const update = {};
     let emailChangedTo = null;
     let previousEmail = null;
@@ -227,25 +282,35 @@ export const updateUserAsAdmin = async (req, res, next) => {
       if (!cleaned) return fail(res, 400, NAME_MESSAGE);
       update.name = cleaned;
     }
-    if (email !== undefined && email !== user.email) {
+    if (email !== undefined) {
       // Admin sets the email directly - no OTP round trip, unlike the
       // user's own self-service email change (requestEmailChange /
       // verifyEmailChange in userController.js). Still runs the same
       // parsing/uniqueness checks and leaves the same emailHistory trail
       // and notice email to the OLD address, so the account's own audit
       // trail doesn't have a gap just because an admin made this change.
+      //
+      // Parsed BEFORE comparing against the stored email - emails are
+      // stored lowercase, so comparing the raw, possibly-mixed-case input
+      // against it directly would treat "Foo@Example.com" as a change
+      // from "foo@example.com" and send a pointless notice email.
       const parsed = parseEmail(email);
       if (!parsed) return fail(res, 400, EMAIL_MESSAGES.format);
-      const taken = await User.findOne({ email: parsed.email, _id: { $ne: user._id } });
-      if (taken) return fail(res, 400, 'An account with this email already exists.');
-      previousEmail = user.email;
-      emailChangedTo = parsed.email;
-      update.email = parsed.email;
-      update.emailChangedAt = new Date();
-      update.emailHistory = [...(user.emailHistory || []), { value: previousEmail, changedAt: new Date() }].slice(-20);
+      if (parsed.email !== user.email) {
+        const taken = await User.findOne({ email: parsed.email, _id: { $ne: user._id } });
+        if (taken) return fail(res, 400, 'An account with this email already exists.');
+        previousEmail = user.email;
+        emailChangedTo = parsed.email;
+        update.email = parsed.email;
+        update.emailChangedAt = new Date();
+        update.emailHistory = [...(user.emailHistory || []), { value: previousEmail, changedAt: new Date() }].slice(-20);
+      }
     }
     if (onboardingCompleted !== undefined) {
       update.onboardingCompleted = Boolean(onboardingCompleted);
+    }
+    if (adminNotes !== undefined) {
+      update.adminNotes = String(adminNotes).slice(0, 4000);
     }
     if (country !== undefined) {
       if (country !== '' && !isCountryCode(country)) return fail(res, 400, 'That is not a valid country.');
@@ -419,6 +484,160 @@ export const forcePasswordReset = async (req, res, next) => {
     res.json({ success: true, expiresInMinutes: OTP_TTL_MINUTES });
   } catch (error) {
     if (error?.name === 'CastError') return notFound(res);
+    next(error);
+  }
+};
+
+// --- Unlock a login-rate-limited account -------------------------------------------------------------
+// Separate from deactivate/reactivate: this clears the automatic lockout
+// that authController's own failed-login counter applies (see lockUntil /
+// lockTier / failedLoginAttempts on the User model) - for when someone
+// locks themselves out and doesn't want to wait out the timer.
+
+export const unlockUserAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return notFound(res);
+    if (!isLocked(user)) return fail(res, 400, 'This account is not currently locked out.');
+
+    user.lockUntil = null;
+    user.lockTier = 0;
+    user.failedLoginAttempts = 0;
+    await user.save();
+
+    securityLog('admin_unlocked_account', req, { adminEmail: ADMIN_EMAIL, userId: String(user._id) });
+
+    const onlineUserIds = await getOnlineUserIds([user._id]);
+    res.json({ success: true, user: adminUserSummary(user.toObject(), onlineUserIds) });
+  } catch (error) {
+    if (error?.name === 'CastError') return notFound(res);
+    next(error);
+  }
+};
+
+// --- Security overview -------------------------------------------------------------
+// A focused view of the same SecurityEvent collection the general audit
+// log reads from, filtered to the events that actually mean "something is
+// going wrong with sign-in" - plus the accounts currently locked out,
+// which the audit log alone doesn't surface as a standing list.
+
+const SECURITY_EVENT_TYPES = ['login_failed', 'account_locked', 'login_while_locked', 'login_unknown_email', 'mfa_wrong_code'];
+
+export const getSecurityOverview = async (req, res, next) => {
+  try {
+    const [lockedUsers, recentEvents, failedLoginsToday] = await Promise.all([
+      User.find({ lockUntil: { $gt: new Date() } })
+        .sort({ lockUntil: -1 })
+        .select('name email lockUntil lockTier failedLoginAttempts')
+        .lean(),
+      SecurityEvent.find({ event: { $in: SECURITY_EVENT_TYPES } })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean(),
+      SecurityEvent.countDocuments({
+        event: { $in: SECURITY_EVENT_TYPES },
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      }),
+    ]);
+
+    const userIds = recentEvents.map((e) => e.userId).filter(Boolean);
+    const users = await User.find({ _id: { $in: userIds } }).select('name email').lean();
+    const userMap = new Map(users.map((u) => [String(u._id), u]));
+
+    res.json({
+      success: true,
+      failedLoginsToday,
+      lockedAccounts: lockedUsers.map((u) => ({
+        id: String(u._id),
+        name: u.name,
+        email: u.email,
+        lockUntil: u.lockUntil,
+        lockTier: u.lockTier,
+        failedLoginAttempts: u.failedLoginAttempts,
+      })),
+      events: recentEvents.map((event) => {
+        const user = event.userId ? userMap.get(String(event.userId)) : null;
+        return {
+          id: String(event._id),
+          event: event.event,
+          userId: event.userId ? String(event.userId) : null,
+          userName: user?.name || null,
+          userEmail: user?.email || null,
+          ip: event.ip,
+          createdAt: event.createdAt,
+        };
+      }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- CSV export -------------------------------------------------------------
+
+const CSV_EXPORT_LIMIT = 5000;
+
+const csvCell = (value) => {
+  const str = value === null || value === undefined ? '' : String(value);
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+};
+
+const CSV_COLUMNS = [
+  'id',
+  'name',
+  'email',
+  'authProvider',
+  'role',
+  'plan',
+  'country',
+  'currency',
+  'language',
+  'isActive',
+  'mfaEnabled',
+  'onboardingCompleted',
+  'createdAt',
+  'lastLoginAt',
+];
+
+export const exportUsersCsv = async (req, res, next) => {
+  try {
+    const search = String(req.query.search || '').trim();
+    const status = String(req.query.status || 'all');
+
+    const filter = {};
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [{ name: new RegExp(escaped, 'i') }, { email: new RegExp(escaped, 'i') }];
+    }
+    if (status === 'active') filter.isActive = { $ne: false };
+    if (status === 'deactivated') filter.isActive = false;
+
+    const users = await User.find(filter).sort({ createdAt: -1 }).limit(CSV_EXPORT_LIMIT).lean();
+
+    const lines = [CSV_COLUMNS.join(',')];
+    users.forEach((u) => {
+      lines.push(
+        CSV_COLUMNS.map((col) =>
+          csvCell(
+            col === 'id'
+              ? String(u._id)
+              : col === 'createdAt' || col === 'lastLoginAt'
+                ? u[col]
+                  ? new Date(u[col]).toISOString()
+                  : ''
+                : u[col]
+          )
+        ).join(',')
+      );
+    });
+
+    securityLog('admin_users_exported', req, { adminEmail: ADMIN_EMAIL, count: users.length });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="vaultrix-users-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send(lines.join('\n'));
+  } catch (error) {
     next(error);
   }
 };
