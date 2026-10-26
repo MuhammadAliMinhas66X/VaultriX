@@ -38,3 +38,7 @@ export const mfaLimiter = build(15 * 60 * 1000, 20);
 // Generous - this gates the whole admin router, used by one trusted
 // operator account, not a per-action limit like the others above.
 export const adminLimiter = build(5 * 60 * 1000, 300);
+// Accounts/Categories writes - ordinary product usage (adding a few
+// accounts, editing one) shouldn't come close to this; it's here purely
+// to match the rest of the app's "every mutation is rate limited" posture.
+export const financeLimiter = build(15 * 60 * 1000, 120);
