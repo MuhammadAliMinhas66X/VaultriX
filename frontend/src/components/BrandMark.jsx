@@ -14,6 +14,7 @@ const loadManifest = () => {
   if (!manifestPromise) {
     manifestPromise = fetch('/logos/index.json')
       .then((response) => (response.ok ? response.json() : {}))
+      .then((data) => (data && typeof data === 'object' ? data : {}))
       .catch(() => ({}));
   }
   return manifestPromise;
@@ -29,19 +30,17 @@ const initialsOf = (name) =>
     .join('');
 
 const sourcesFor = (brand, manifest) => {
-  if (!brand) return [];
   const list = [];
   if (manifest[brand.id]) list.push(`/logos/${manifest[brand.id]}`);
-  brand.domains.forEach((domain) => {
-    list.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&nfrd=1&url=https://${domain}&size=64`);
-    list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
-  });
+  brand.domains.forEach((domain) => list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`));
+  brand.domains.forEach((domain) => list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`));
   return list;
 };
 
 function BrandMark({ method, name, size = 'md' }) {
   const [manifest, setManifest] = useState(null);
   const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const dim = SIZES[size];
   const brand = method === 'cash' ? null : findBrand(name);
 
@@ -55,35 +54,39 @@ function BrandMark({ method, name, size = 'md' }) {
 
   useEffect(() => {
     setAttempt(0);
+    setLoaded(false);
   }, [name, method]);
 
-  const sources = useMemo(() => sourcesFor(brand, manifest || {}), [brand, manifest]);
+  const sources = useMemo(() => (brand && manifest ? sourcesFor(brand, manifest) : []), [brand, manifest]);
+  const current = sources[attempt];
   const Fallback = FALLBACK_ICON[method] || Landmark;
-  const boxClass = `flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white text-muted ${dim.box}`;
+  const boxClass = `relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white text-muted ${dim.box}`;
 
-  if (brand && manifest && attempt < sources.length) {
-    return (
-      <span className={boxClass}>
-        <img
-          key={sources[attempt]}
-          src={sources[attempt]}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onError={() => setAttempt((prev) => prev + 1)}
-          className={`${dim.img} object-contain`}
-        />
-      </span>
+  const placeholder =
+    method !== 'cash' && name ? (
+      <span className={`${dim.text} font-semibold tracking-tight`}>{initialsOf(name)}</span>
+    ) : (
+      <Fallback className={dim.icon} />
     );
-  }
-
-  if (method !== 'cash' && name && (!brand || manifest)) {
-    return <span className={`${boxClass} ${dim.text} font-semibold tracking-tight`}>{initialsOf(name)}</span>;
-  }
 
   return (
     <span className={boxClass}>
-      <Fallback className={dim.icon} />
+      {!loaded && placeholder}
+      {current && (
+        <img
+          key={current}
+          src={current}
+          alt=""
+          referrerPolicy="no-referrer"
+          onLoad={(event) => {
+            if (event.currentTarget.naturalWidth > 1) setLoaded(true);
+            else setAttempt((prev) => prev + 1);
+          }}
+          onError={() => setAttempt((prev) => prev + 1)}
+          className={`${dim.img} object-contain`}
+          style={{ display: loaded ? 'block' : 'none' }}
+        />
+      )}
     </span>
   );
 }

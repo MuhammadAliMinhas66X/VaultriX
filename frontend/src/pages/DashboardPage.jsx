@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Banknote, ChevronDown, LayoutDashboard, LogOut, Plus, Settings as SettingsIcon, ShieldCheck } from 'lucide-react';
+import { Banknote, ChevronDown, LayoutDashboard, Plus, ShieldCheck } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import { ADMIN_EMAIL } from '../components/RequireAdmin.jsx';
 import IncomeForm, { emptyForm, formFromStream } from '../components/income/IncomeForm.jsx';
@@ -16,7 +16,7 @@ import {
   deleteIncomeStream,
 } from '../services/incomeStreamService.js';
 import { getExchangeRates } from '../services/fxService.js';
-import { amountForTotal } from '../utils/salaryCuts.js';
+import { amountForTotal, calculateCuts } from '../utils/salaryCuts.js';
 
 const toPayloadDeductions = (items) =>
   items
@@ -24,7 +24,7 @@ const toPayloadDeductions = (items) =>
     .map((item) => ({ name: item.name.trim(), kind: item.kind, value: Number(item.value) }));
 
 function DashboardPage() {
-  const { user, currency, signOut } = useAuth();
+  const { user, currency } = useAuth();
   const { t, tServer } = useTranslation();
   const { formatMoney, formatNumber, formatDate } = useFormat();
   const { currencies } = useLocalizedOptions();
@@ -36,7 +36,8 @@ function DashboardPage() {
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
+  const [cutsStatus, setCutsStatus] = useState({});
+  const listRef = useRef(null);
   const saveTimers = useRef({});
   const streamsRef = useRef([]);
   streamsRef.current = streams;
@@ -126,6 +127,7 @@ function DashboardPage() {
   const saveCuts = useCallback(async (id) => {
     const current = streamsRef.current.find((item) => item.id === id);
     if (!current) return;
+    setCutsStatus((prev) => ({ ...prev, [id]: 'saving' }));
     try {
       await updateIncomeStream(id, {
         taxEnabled: Boolean(current.taxEnabled),
@@ -133,8 +135,10 @@ function DashboardPage() {
         deductFromTotal: Boolean(current.deductFromTotal),
         deductions: toPayloadDeductions(current.deductions || []),
       });
+      setCutsStatus((prev) => ({ ...prev, [id]: 'saved' }));
     } catch (error) {
-      notify.error(tServer(error));
+      setCutsStatus((prev) => ({ ...prev, [id]: 'error' }));
+      notify.error(tServer(error), { title: t('income.saveFailedTitle') });
       load();
     }
   }, [load, tServer]);
@@ -143,6 +147,19 @@ function DashboardPage() {
   saveCutsRef.current = saveCuts;
 
   const handleCutsChange = (id, patch, options = {}) => {
+    if (patch.deductFromTotal !== undefined) {
+      const target = streamsRef.current.find((item) => item.id === id);
+      if (target) {
+        const merged = { ...target, ...patch };
+        if (patch.deductFromTotal) {
+          notify.success(t('income.deductedBody', { amount: formatMoney(calculateCuts(merged).netPerPeriod, { decimals: 0, currency: target.currency }) }), {
+            title: t('income.deductedTitle'),
+          });
+        } else {
+          notify.info(t('income.undoneBody'), { title: t('income.undoneTitle') });
+        }
+      }
+    }
     setStreams((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
     clearTimeout(saveTimers.current[id]);
     saveTimers.current[id] = setTimeout(() => {
@@ -161,29 +178,24 @@ function DashboardPage() {
     []
   );
 
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await signOut();
-    } finally {
-      setSigningOut(false);
-    }
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
+  const showIncomeList = () => {
+    setOpen(true);
+    setTimeout(() => listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
   const navItems = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard, to: '/dashboard' },
-    { id: 'settings', label: t('settings.title'), icon: SettingsIcon, to: '/settings' },
-    ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
-  ];
-  const footerItems = [
     {
-      id: 'signout',
-      label: signingOut ? t('common.signingOut') : t('settings.signOut'),
-      icon: LogOut,
-      onSelect: handleSignOut,
-      loading: signingOut,
+      id: 'dashboard',
+      label: t('nav.dashboard'),
+      icon: LayoutDashboard,
+      onSelect: () => {
+        setOpen(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
     },
+    { id: 'income', label: t('income.headerStream'), icon: Banknote, onSelect: showIncomeList },
+    ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
   const startAdding = () => {
@@ -196,11 +208,11 @@ function DashboardPage() {
     setBusy(true);
     try {
       await createIncomeStream(payload);
-      notify.success(t('income.added'));
+      notify.success(t('income.addedBody', { name: payload.name.trim() }), { title: t('income.addedTitle') });
       setAdding(false);
       await load();
     } catch (error) {
-      notify.error(tServer(error));
+      notify.error(tServer(error), { title: t('income.addFailedTitle') });
     } finally {
       setBusy(false);
     }
@@ -210,27 +222,28 @@ function DashboardPage() {
     setBusy(true);
     try {
       await updateIncomeStream(id, payload);
+      notify.success(t('income.updatedBody', { name: payload.name.trim() }), { title: t('income.updatedTitle') });
       setEditingId(null);
       await load();
     } catch (error) {
-      notify.error(tServer(error));
+      notify.error(tServer(error), { title: t('income.updateFailedTitle') });
     } finally {
       setBusy(false);
     }
   };
 
   const handleDelete = async (stream) => {
-    if (!window.confirm(t('income.deleteConfirm', { name: stream.name }))) return;
     try {
       await deleteIncomeStream(stream.id);
+      notify.success(t('income.deletedBody', { name: stream.name }), { title: t('income.deletedTitle') });
       await load();
     } catch (error) {
-      notify.error(tServer(error));
+      notify.error(tServer(error), { title: t('income.deleteFailedTitle') });
     }
   };
 
   return (
-    <AppShell showLogo items={navItems} activeId="dashboard" footerItems={footerItems}>
+    <AppShell showLogo pageTitle={t('nav.dashboard')} items={navItems} activeId={open ? 'income' : 'dashboard'}>
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6 sm:gap-5 sm:px-6 sm:py-10">
         <div className="rounded-2xl border border-border bg-white p-5 sm:p-6">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('income.totalLabel')}</p>
@@ -276,7 +289,7 @@ function DashboardPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div ref={listRef} className="flex scroll-mt-20 items-center gap-2">
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
@@ -349,6 +362,7 @@ function DashboardPage() {
                       }}
                       onDelete={() => handleDelete(stream)}
                       onCutsChange={(patch, options) => handleCutsChange(stream.id, patch, options)}
+                      cutsStatus={cutsStatus[stream.id]}
                     />
                   )
                 )}

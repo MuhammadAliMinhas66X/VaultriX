@@ -4,6 +4,7 @@ import FormField from '../FormField.jsx';
 import Combobox from '../Combobox.jsx';
 import Select from '../Select.jsx';
 import BrandMark from '../BrandMark.jsx';
+import FieldError from '../FieldError.jsx';
 import { Banknote, Landmark, Smartphone } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { PAKISTANI_BANKS, DIGITAL_WALLETS } from '../../utils/paymentBrands.js';
@@ -69,7 +70,11 @@ function Field({ label, children }) {
 function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy }) {
   const { t } = useTranslation();
   const [form, setForm] = useState(initial);
-  const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
+  const [errors, setErrors] = useState({});
+  const set = (key) => (value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
+  };
 
   const kind = detailKind(form.incomeType);
   const destinationList = form.destinationMethod === 'bank' ? PAKISTANI_BANKS : DIGITAL_WALLETS;
@@ -91,8 +96,22 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
     [destinationList, form.destinationMethod, t]
   );
 
+  const validate = () => {
+    const found = {};
+    if (!form.name.trim()) found.name = t('income.errName');
+    if (form.expectedAmount !== '' && !(Number(form.expectedAmount) >= 0)) found.expectedAmount = t('income.errAmount');
+    if (!form.currency) found.currency = t('income.errCurrency');
+    if (form.destinationMethod !== 'cash') {
+      if (!form.destinationPreset) found.destinationPreset = t('income.errDestination');
+      else if (form.destinationPreset === OTHER_VALUE && !form.destinationCustom.trim()) found.destinationCustom = t('income.errCustom');
+    }
+    setErrors(found);
+    return Object.keys(found).length === 0;
+  };
+
   const submit = (event) => {
     event.preventDefault();
+    if (!validate()) return;
     const destinationName =
       form.destinationMethod === 'cash' ? '' : form.destinationPreset === OTHER_VALUE ? form.destinationCustom.trim() : form.destinationPreset;
 
@@ -114,12 +133,13 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
   };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-5 rounded-2xl border border-border bg-white p-4 sm:p-6">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-2xl border border-border bg-white p-4 sm:p-6">
       <FormField
         label={<StepLabel n={1}>{t('income.nameLabel')}</StepLabel>}
         value={form.name}
         onChange={(e) => set('name')(e.target.value)}
         placeholder={t('income.namePlaceholder')}
+        error={errors.name}
         autoFocus
       />
 
@@ -133,9 +153,17 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
           value={form.expectedAmount}
           onChange={(e) => set('expectedAmount')(e.target.value)}
           placeholder={t('income.expectedAmountPlaceholder')}
+          error={errors.expectedAmount}
         />
         <Field label={<span className="text-sm font-medium text-ink sm:pl-7">{t('income.currencyLabel')}</span>}>
-          <Combobox items={currencies} ariaLabel={t('income.currencyLabel')} value={form.currency} onChange={set('currency')} />
+          <Combobox
+            items={currencies}
+            ariaLabel={t('income.currencyLabel')}
+            placeholder={t('income.currencyPlaceholder')}
+            value={form.currency}
+            onChange={set('currency')}
+          />
+          <FieldError>{errors.currency}</FieldError>
         </Field>
       </div>
 
@@ -190,19 +218,23 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
 
         {showPicker && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Combobox
-              items={destinationItems}
-              ariaLabel={form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
-              placeholder={t('income.selectPlaceholder')}
-              value={form.destinationPreset}
-              onChange={set('destinationPreset')}
-            />
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Combobox
+                items={destinationItems}
+                ariaLabel={form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
+                placeholder={form.destinationMethod === 'bank' ? t('income.bankPlaceholder') : t('income.walletPlaceholder')}
+                value={form.destinationPreset}
+                onChange={set('destinationPreset')}
+              />
+              <FieldError>{errors.destinationPreset}</FieldError>
+            </div>
             {showCustom && (
               <FormField
                 label={t('income.otherDestinationLabel')}
                 value={form.destinationCustom}
                 onChange={(e) => set('destinationCustom')(e.target.value)}
                 placeholder={t('income.otherDestinationPlaceholder')}
+                error={errors.destinationCustom}
               />
             )}
           </div>

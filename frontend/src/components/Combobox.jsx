@@ -15,6 +15,7 @@ function Combobox({
   value,
   onChange,
   placeholder,
+  searchPlaceholder,
   loading = false,
   error,
   className = '',
@@ -153,7 +154,7 @@ function Combobox({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={resolvedPlaceholder}
+              placeholder={searchPlaceholder || t('common.search')}
               className="w-full text-sm text-ink outline-none placeholder:text-muted"
             />
           </div>

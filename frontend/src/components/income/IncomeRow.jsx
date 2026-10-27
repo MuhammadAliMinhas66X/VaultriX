@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import SalaryCutsPanel from './SalaryCutsPanel.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
-import { supportsCuts } from '../../utils/salaryCuts.js';
+import { amountForTotal, supportsCuts } from '../../utils/salaryCuts.js';
 import { typeLabelKey, frequencyLabelKey, detailKind } from './incomeOptions.js';
 
 function Detail({ label, children }) {
@@ -15,13 +16,16 @@ function Detail({ label, children }) {
   );
 }
 
-function IncomeRow({ index, stream, converted, currency, expanded, onToggle, onEdit, onDelete, onCutsChange }) {
+function IncomeRow({ index, stream, converted, currency, expanded, onToggle, onEdit, onDelete, onCutsChange, cutsStatus }) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
 
   const receivedIn = stream.destinationMethod === 'cash' ? t('income.method.cash') : stream.destinationName;
   const kind = detailKind(stream.incomeType);
   const cutsEligible = supportsCuts(stream);
+  const deducted = cutsEligible && stream.deductFromTotal;
+  const shownAmount = deducted ? amountForTotal(stream) : stream.expectedAmount;
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <li className="overflow-hidden rounded-2xl border border-border bg-white">
@@ -42,9 +46,11 @@ function IncomeRow({ index, stream, converted, currency, expanded, onToggle, onE
         {stream.expectedAmount !== null && (
           <span className="shrink-0 text-end">
             <span className="block text-sm font-semibold tabular-nums text-ink sm:text-base">
-              {formatMoney(stream.expectedAmount, { decimals: 0, currency: stream.currency })}
+              {formatMoney(shownAmount, { decimals: 0, currency: stream.currency })}
             </span>
-            {converted !== null && (
+            {deducted ? (
+              <span className="block text-xs text-muted">{t('income.afterDeductions')}</span>
+            ) : converted !== null && (
               <span className="block text-xs tabular-nums text-muted">
                 {t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) })}
               </span>
@@ -69,23 +75,45 @@ function IncomeRow({ index, stream, converted, currency, expanded, onToggle, onE
             {stream.typeDetail && <Detail label={t(`income.detail${kind}Label`)}>{stream.typeDetail}</Detail>}
           </dl>
 
-          {cutsEligible && <SalaryCutsPanel stream={stream} onChange={onCutsChange} />}
+          {cutsEligible && <SalaryCutsPanel stream={stream} onChange={onCutsChange} status={cutsStatus} />}
 
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-ink transition hover:bg-surface"
-            >
-              <Pencil className="h-4 w-4" /> {t('income.edit')}
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" /> {t('income.delete')}
-            </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {confirming ? (
+              <>
+                <span className="me-auto text-sm font-medium text-ink">{t('income.deleteAsk')}</span>
+                <button
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  className="rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4" /> {t('income.delete')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-ink transition hover:bg-surface"
+                >
+                  <Pencil className="h-4 w-4" /> {t('income.edit')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirming(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" /> {t('income.delete')}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
