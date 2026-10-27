@@ -17,7 +17,6 @@ import {
   Link2,
   Link2Off,
   History,
-  LogOut,
 } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import FormField from '../components/FormField.jsx';
@@ -1446,16 +1445,9 @@ const useSettingsSections = () => {
 };
 
 function SettingsPage() {
-  const { signOut } = useAuth();
   const { t } = useTranslation();
-  const [signingOut, setSigningOut] = useState(false);
   const [activeSection, setActiveSection] = useState('profile');
   const sections = useSettingsSections();
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    await signOut();
-  };
 
   const active = sections.find((section) => section.id === activeSection) || sections[0];
   const ActiveComponent = active.Component;
@@ -1468,19 +1460,10 @@ function SettingsPage() {
     onSelect: () => setActiveSection(section.id),
   }));
 
-  const footerItems = [
-    { id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' },
-    {
-      id: 'signout',
-      label: signingOut ? t('common.signingOut') : t('settings.signOut'),
-      icon: LogOut,
-      onSelect: handleSignOut,
-      loading: signingOut,
-    },
-  ];
+  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' }];
 
   return (
-    <AppShell title={t('settings.title')} pageTitle={t('settings.title')} items={items} activeId={active.id} footerItems={footerItems}>
+    <AppShell title={t('settings.title')} pageTitle={t('settings.title')} items={items} activeId={active.id} footerItems={footerItems} hideSettingsLink>
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink">{active.label}</h1>
         <AnimatePresence mode="wait">

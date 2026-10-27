@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import Sidebar, { SidebarBody, useSidebarCollapsed } from './Sidebar.jsx';
-import Logo from '../Logo.jsx';
+import AccountMenu from './AccountMenu.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 
-function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerItems = [], children }) {
+function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerItems = [], hideSettingsLink = false, children }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
@@ -55,16 +55,20 @@ function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerI
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur sm:px-6">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
             aria-label={t('nav.openMenu')}
-            className="-ms-2 flex h-10 w-10 items-center justify-center rounded-lg text-ink outline-none transition hover:bg-black/[0.04] focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="-ms-2 flex h-10 w-10 items-center justify-center rounded-lg text-ink outline-none transition hover:bg-black/[0.04] focus-visible:ring-2 focus-visible:ring-accent/40 lg:hidden"
           >
             <Menu className="h-5 w-5" strokeWidth={1.75} />
           </button>
-          {pageTitle ? <span className="truncate text-base font-semibold text-ink">{pageTitle}</span> : <Logo size="sm" linkTo="/dashboard" />}
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-base font-semibold tracking-tight text-ink lg:hidden">{pageTitle}</span>
+            <span className="hidden truncate text-sm font-medium text-muted lg:block">{pageTitle}</span>
+          </div>
+          <AccountMenu hideSettings={hideSettingsLink} />
         </header>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
