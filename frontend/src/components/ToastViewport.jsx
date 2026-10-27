@@ -16,6 +16,7 @@ function ToastViewport() {
           <AlertBanner
             key={toast.id}
             tone={toast.tone}
+            title={toast.title}
             message={toast.message}
             duration={toast.duration}
             stamp={toast.stamp}

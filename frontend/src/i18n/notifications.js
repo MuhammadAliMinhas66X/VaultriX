@@ -22,7 +22,7 @@ export const dismissToast = (id) => {
 const push = (tone, message, options = {}) => {
   if (!message) return null;
 
-  const existing = toasts.find((toast) => toast.tone === tone && toast.message === message);
+  const existing = toasts.find((toast) => toast.tone === tone && toast.message === message && toast.title === options.title);
   if (existing) {
     toasts = toasts.map((toast) =>
       toast.id === existing.id ? { ...toast, stamp: toast.stamp + 1 } : toast
@@ -35,6 +35,7 @@ const push = (tone, message, options = {}) => {
   const toast = {
     id: options.id || `toast-${counter}`,
     tone,
+    title: options.title || '',
     message,
     duration: options.duration ?? DEFAULT_DURATION[tone],
     stamp: 0,

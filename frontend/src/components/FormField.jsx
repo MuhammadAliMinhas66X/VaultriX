@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import FieldError from './FieldError.jsx';
 
 function FormField({ label, type = 'text', value, onChange, error, id, ...rest }) {
   const generatedId = useId();
@@ -18,15 +19,11 @@ function FormField({ label, type = 'text', value, onChange, error, id, ...rest }
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={error ? errorId : undefined}
         className={`w-full rounded-lg border px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:ring-2 focus:ring-accent/20 ${
-          error ? 'border-red-400 focus:border-red-500' : 'border-border focus:border-accent'
+          error ? 'border-red-300 bg-red-50/30 focus:border-red-500' : 'border-border hover:border-ink/30 focus:border-accent'
         }`}
         {...rest}
       />
-      {error && (
-        <span id={errorId} role="alert" className="text-xs font-medium text-red-600">
-          {error}
-        </span>
-      )}
+      <FieldError id={errorId}>{error}</FieldError>
     </div>
   );
 }
