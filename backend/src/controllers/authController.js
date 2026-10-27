@@ -803,20 +803,25 @@ const resolveGoogleUser = async (idToken, deviceReq = {}) => {
     const displayName = cleanName(payload.name) || cleanName(parsed.local) || 'Vaultrix user';
     const organization = await Organization.create({ name: `${displayName}'s workspace` });
 
-    user = await User.create({
-      orgId: organization._id,
-      name: displayName,
-      email: parsed.email,
-      authProvider: 'google',
-      googleId: payload.sub,
-      avatarUrl: payload.picture || '',
-      role: 'owner',
-      signupDeviceId: deviceReq.deviceId || null,
-      signupDeviceFallbackId: deviceReq.deviceFallbackId || null,
-    });
+    try {
+      user = await User.create({
+        orgId: organization._id,
+        name: displayName,
+        email: parsed.email,
+        authProvider: 'google',
+        googleId: payload.sub,
+        avatarUrl: payload.picture || '',
+        role: 'owner',
+        signupDeviceId: deviceReq.deviceId || null,
+        signupDeviceFallbackId: deviceReq.deviceFallbackId || null,
+      });
 
-    organization.ownerId = user._id;
-    await organization.save();
+      organization.ownerId = user._id;
+      await organization.save();
+    } catch (error) {
+      await Organization.deleteOne({ _id: organization._id }).catch(() => {});
+      throw error;
+    }
   } else if (!user.googleId) {
     // This email already has an account that has never linked Google before.
     if (user.passwordHash) {

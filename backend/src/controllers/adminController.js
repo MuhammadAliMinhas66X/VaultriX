@@ -21,6 +21,7 @@ import {
 } from '../utils/mailTemplates.js';
 import { securityLog } from '../utils/securityLog.js';
 import { ADMIN_EMAIL } from '../config/env.js';
+import { removeOrganizationIfEmpty } from '../utils/organizations.js';
 
 // Must match frontend/src/i18n/locales.
 const APP_LANGUAGES = ['en', 'fr', 'es', 'ar', 'hi', 'ur'];
@@ -426,6 +427,7 @@ export const deleteUserAsAdmin = async (req, res, next) => {
     ]);
 
     await User.deleteOne({ _id: userId });
+    await removeOrganizationIfEmpty(user.orgId);
 
     securityLog('admin_user_deleted', req, { adminEmail: ADMIN_EMAIL, userId: String(userId), email: user.email });
 

@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
-import Organization from '../models/Organization.js';
+import { removeOrganizationIfEmpty } from '../utils/organizations.js';
 import PendingEmailChange from '../models/PendingEmailChange.js';
 import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
 import PendingAccountDeletion from '../models/PendingAccountDeletion.js';
@@ -601,14 +601,7 @@ export const confirmAccountDeletion = async (req, res, next) => {
 
     await User.deleteOne({ _id: userId });
 
-    // Every org is still exactly one user today (the multi-member side of
-    // Organization isn't built yet), so deleting the org alongside its only
-    // user never orphans anyone else's data - but the "no one else left"
-    // check is kept anyway so this stays correct once that changes.
-    const remainingMembers = await User.countDocuments({ orgId });
-    if (remainingMembers === 0) {
-      await Organization.deleteOne({ _id: orgId });
-    }
+    await removeOrganizationIfEmpty(orgId);
 
     securityLog('account_deleted', req, { userId: String(userId) });
     sendInBackground(accountDeletedEmail({ name: user.name }), user.email);
