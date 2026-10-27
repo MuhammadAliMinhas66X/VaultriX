@@ -1,4 +1,5 @@
-import { AlertCircle, Check, Loader2, Plus, X } from 'lucide-react';
+import { AlertCircle, Check, Info, Loader2, Plus, X } from 'lucide-react';
+import FieldError from '../FieldError.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { TAX_YEAR } from '../../utils/fbrTax.js';
@@ -10,6 +11,13 @@ const cleanNumber = (raw) => {
   const value = String(raw).replace(/[^0-9.]/g, '');
   const parts = value.split('.');
   return parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : value;
+};
+
+const rowIssue = (item) => {
+  if (!String(item.name || '').trim()) return 'income.errDeductionName';
+  const number = Number(item.value);
+  if (item.value === '' || item.value === undefined || !Number.isFinite(number) || number <= 0) return 'income.errDeductionValue';
+  return null;
 };
 
 const roundText = (number) => String(Math.round(number * 100) / 100);
@@ -41,8 +49,11 @@ function DeductionRow({ item, salary, currency, onChange, onRemove }) {
   const amountText = item.kind === 'fixed' ? typed : hasNumber ? roundText((salary * number) / 100) : '';
   const percentText = item.kind === 'percent' ? typed : hasNumber && salary > 0 ? roundText((number / salary) * 100) : '';
 
+  const issue = rowIssue(item);
+
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-xl border border-border bg-white p-2.5 sm:grid-cols-[minmax(0,1fr)_9.5rem_7rem_auto] sm:items-center">
+    <div className={`flex flex-col gap-2 rounded-xl border bg-white p-2.5 ${issue ? 'border-red-200' : 'border-border'}`}>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_9.5rem_7rem_auto] sm:items-center">
       <input
         value={item.name}
         onChange={(e) => onChange({ name: e.target.value })}
@@ -86,6 +97,8 @@ function DeductionRow({ item, salary, currency, onChange, onRemove }) {
           <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">%</span>
         </div>
       </div>
+    </div>
+      <FieldError>{issue ? t(issue) : ''}</FieldError>
     </div>
   );
 }
@@ -142,6 +155,7 @@ function SalaryCutsPanel({ stream, onChange, status }) {
       ]
     : [];
 
+  const blocked = Boolean(stream.deductionsEnabled) && (deductions.length === 0 || deductions.some((item) => rowIssue(item)));
   const cell = 'text-end tabular-nums text-ink';
 
   return (
@@ -162,7 +176,13 @@ function SalaryCutsPanel({ stream, onChange, status }) {
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-ink">{t('income.deductions')}</p>
-        <Switch checked={Boolean(stream.deductionsEnabled)} onChange={(on) => onChange({ deductionsEnabled: on }, { immediate: true })} label={t('income.deductions')} />
+        <Switch
+          checked={Boolean(stream.deductionsEnabled)}
+          onChange={(on) =>
+            onChange(on && deductions.length === 0 ? { deductionsEnabled: true, deductions: [{ name: '', kind: 'fixed', value: '' }] } : { deductionsEnabled: on }, { immediate: true })
+          }
+          label={t('income.deductions')}
+        />
       </div>
 
       {stream.deductionsEnabled && (
@@ -230,11 +250,17 @@ function SalaryCutsPanel({ stream, onChange, status }) {
             ) : (
               <button
                 type="button"
+                disabled={blocked}
                 onClick={() => onChange({ deductFromTotal: true }, { immediate: true })}
-                className="rounded-lg border border-ink bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-ink hover:text-white"
+                className="rounded-lg border border-ink bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-muted disabled:hover:bg-surface disabled:hover:text-muted"
               >
                 {t('income.deductFromSalary')}
               </button>
+            )}
+            {blocked && (
+              <p className="flex items-start gap-1.5 text-xs text-muted">
+                <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {t('income.deductHint')}
+              </p>
             )}
             <div className="flex min-h-[1rem] justify-end">
               <StatusLine status={status} />
