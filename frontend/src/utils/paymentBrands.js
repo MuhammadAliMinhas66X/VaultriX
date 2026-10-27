@@ -1,10 +1,10 @@
 export const PAKISTANI_BANKS = [
   { id: 'hbl', name: 'Habib Bank Limited (HBL)', domains: ['hbl.com'] },
-  { id: 'ubl', name: 'United Bank Limited (UBL)', domains: ['ubl.com.pk', 'ubldigital.com'] },
+  { id: 'ubl', name: 'United Bank Limited (UBL)', domains: ['ubl.com.pk', 'ubldigital.com', 'ubl.com'] },
   { id: 'mcb', name: 'MCB Bank', domains: ['mcb.com.pk'] },
   { id: 'abl', name: 'Allied Bank Limited (ABL)', domains: ['abl.com', 'abl.com.pk'] },
   { id: 'nbp', name: 'National Bank of Pakistan (NBP)', domains: ['nbp.com.pk'] },
-  { id: 'alfalah', name: 'Bank Alfalah', domains: ['bankalfalah.com'] },
+  { id: 'alfalah', name: 'Bank Alfalah', domains: ['bankalfalah.com', 'alfalahdigital.com', 'alfalah.com'] },
   { id: 'meezan', name: 'Meezan Bank', domains: ['meezanbank.com'] },
   { id: 'faysal', name: 'Faysal Bank', domains: ['faysalbank.com'] },
   { id: 'askari', name: 'Askari Bank', domains: ['askaribank.com'] },
@@ -13,8 +13,8 @@ export const PAKISTANI_BANKS = [
   { id: 'jsbank', name: 'JS Bank', domains: ['jsbl.com'] },
   { id: 'scb', name: 'Standard Chartered Pakistan', domains: ['sc.com'] },
   { id: 'hmb', name: 'Habib Metropolitan Bank', domains: ['habibmetro.com'] },
-  { id: 'silk', name: 'Silk Bank', domains: ['silkbank.com.pk'] },
-  { id: 'summit', name: 'Summit Bank', domains: ['summitbank.com.pk'] },
+  { id: 'silk', name: 'Silk Bank', domains: ['silkbank.com.pk', 'silkbank.com'] },
+  { id: 'summit', name: 'Summit Bank', domains: ['summitbank.com.pk', 'summitbank.com'] },
   { id: 'bankislami', name: 'BankIslami Pakistan', domains: ['bankislami.com.pk'] },
   { id: 'dib', name: 'Dubai Islamic Bank Pakistan', domains: ['dibpak.com'] },
   { id: 'albaraka', name: 'Al Baraka Bank Pakistan', domains: ['albaraka.com.pk'] },
@@ -22,15 +22,15 @@ export const PAKISTANI_BANKS = [
   { id: 'bok', name: 'The Bank of Khyber', domains: ['bok.com.pk'] },
   { id: 'sindh', name: 'Sindh Bank', domains: ['sindhbank.com.pk'] },
   { id: 'fwbl', name: 'First Women Bank', domains: ['fwbl.com.pk'] },
-  { id: 'mybank', name: 'MyBank', domains: ['mybank.pk'] },
+  { id: 'mybank', name: 'MyBank', domains: ['mybank.pk', 'mybank.com.pk'] },
 ];
 
 export const DIGITAL_WALLETS = [
   { id: 'jazzcash', name: 'JazzCash', domains: ['jazzcash.com.pk'] },
-  { id: 'easypaisa', name: 'Easypaisa', domains: ['easypaisa.com.pk'] },
+  { id: 'easypaisa', name: 'Easypaisa', domains: ['easypaisa.com.pk', 'telenor.com.pk', 'easypaisa.com'] },
   { id: 'nayapay', name: 'NayaPay', domains: ['nayapay.com'] },
   { id: 'sadapay', name: 'SadaPay', domains: ['sadapay.pk'] },
-  { id: 'upaisa', name: 'UPaisa', domains: ['upaisa.com'] },
+  { id: 'upaisa', name: 'UPaisa', domains: ['upaisa.com', 'ufone.com'] },
   { id: 'konnect', name: 'Konnect by HBL', domains: ['hblkonnect.com', 'konnect.hbl.com', 'hbl.com'] },
   { id: 'zindigi', name: 'Zindigi', domains: ['zindigi.com.pk', 'zindigi.pk'] },
 ];

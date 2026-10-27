@@ -7,6 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../public/logos');
 const manifestPath = path.join(outDir, 'index.json');
 const MIN_BYTES = 900;
+const MIN_WIDTH = 17;
 
 const EXTENSIONS = { 'image/png': 'png', 'image/x-icon': 'ico', 'image/vnd.microsoft.icon': 'ico', 'image/svg+xml': 'svg', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 
@@ -19,6 +20,20 @@ const exists = async (file) => {
   }
 };
 
+const widthOf = (buffer, extension) => {
+  if (extension === 'png' && buffer.length > 24 && buffer.toString('ascii', 1, 4) === 'PNG') return buffer.readUInt32BE(16);
+  if (extension === 'ico' && buffer.length > 8) {
+    const count = buffer.readUInt16LE(4);
+    let widest = 0;
+    for (let i = 0; i < count && 6 + i * 16 < buffer.length; i += 1) {
+      const raw = buffer[6 + i * 16];
+      widest = Math.max(widest, raw === 0 ? 256 : raw);
+    }
+    return widest;
+  }
+  return 999;
+};
+
 const download = async (url) => {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(12000), headers: { 'User-Agent': 'Mozilla/5.0' } });
@@ -27,7 +42,8 @@ const download = async (url) => {
     const extension = EXTENSIONS[type];
     if (!extension) return null;
     const buffer = Buffer.from(await response.arrayBuffer());
-    return buffer.length >= MIN_BYTES ? { buffer, extension } : null;
+    if (buffer.length < MIN_BYTES || widthOf(buffer, extension) < MIN_WIDTH) return null;
+    return { buffer, extension };
   } catch (error) {
     return null;
   }
@@ -43,6 +59,17 @@ try {
 }
 
 const brands = [...PAKISTANI_BANKS, ...DIGITAL_WALLETS];
+
+for (const id of Object.keys(manifest)) {
+  const file = path.join(outDir, manifest[id]);
+  try {
+    const buffer = await readFile(file);
+    const extension = path.extname(file).slice(1);
+    if (widthOf(buffer, extension) < MIN_WIDTH) delete manifest[id];
+  } catch (error) {
+    delete manifest[id];
+  }
+}
 const missing = [];
 let added = 0;
 

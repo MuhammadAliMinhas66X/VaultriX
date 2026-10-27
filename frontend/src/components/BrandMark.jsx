@@ -7,6 +7,8 @@ const SIZES = {
   md: { box: 'h-9 w-9', icon: 'h-5 w-5', img: 'h-6 w-6', text: 'text-xs' },
 };
 
+const MIN_LOGO_WIDTH = 16;
+
 const FALLBACK_ICON = { cash: Banknote, bank: Landmark, wallet: Smartphone };
 
 let manifestPromise = null;
@@ -79,7 +81,7 @@ function BrandMark({ method, name, size = 'md' }) {
           alt=""
           referrerPolicy="no-referrer"
           onLoad={(event) => {
-            if (event.currentTarget.naturalWidth > 1) setLoaded(true);
+            if (event.currentTarget.naturalWidth > MIN_LOGO_WIDTH) setLoaded(true);
             else setAttempt((prev) => prev + 1);
           }}
           onError={() => setAttempt((prev) => prev + 1)}
