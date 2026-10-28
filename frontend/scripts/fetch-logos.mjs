@@ -35,9 +35,43 @@ const download = async (url) => {
   }
 };
 
+const BROWSER = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', Accept: 'text/html,*/*' };
+
+const fetchPage = async (url) => {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect: 'follow', headers: BROWSER });
+    if (!response.ok) return null;
+    const type = (response.headers.get('content-type') || '').toLowerCase();
+    if (!type.includes('html')) return null;
+    return { html: await response.text(), base: response.url };
+  } catch (error) {
+    return null;
+  }
+};
+
+const declaredIcons = (html, base) => {
+  const found = [];
+  for (const tag of html.match(/<link\b[^>]*>/gi) || []) {
+    const rel = (/rel\s*=\s*["']([^"']+)["']/i.exec(tag) || [])[1];
+    const href = (/href\s*=\s*["']([^"']+)["']/i.exec(tag) || [])[1];
+    if (!rel || !href || !rel.toLowerCase().includes('icon')) continue;
+    const size = Number(((/sizes\s*=\s*["'](\d+)x\d+["']/i.exec(tag) || [])[1]) || 0);
+    let score = rel.toLowerCase().includes('apple-touch-icon') ? 1000 : 0;
+    score += size;
+    if (/\.svg(\?|$)/i.test(href)) score += 900;
+    if (/\.ico(\?|$)/i.test(href)) score -= 200;
+    try {
+      found.push({ url: new URL(href, base).href, score });
+    } catch (error) {
+      continue;
+    }
+  }
+  return found.sort((a, b) => b.score - a.score).map((item) => item.url);
+};
+
 const hash = (buffer) => createHash('sha1').update(buffer).digest('hex');
 
-const googleUrl = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+const googleUrl = (domain) => `https://www.google.com/s2/favicons?domain=${domain}&sz=256`;
 const duckUrl = (domain) => `https://icons.duckduckgo.com/ip3/${domain}.ico`;
 
 const defaults = new Set();
@@ -86,7 +120,12 @@ for (const brand of brands) {
 
   let saved = null;
   for (const domain of brand.domains) {
-    const urls = [`https://${domain}/apple-touch-icon.png`, `https://www.${domain}/apple-touch-icon.png`, googleUrl(domain), duckUrl(domain)];
+    const urls = [];
+    for (const host of [`https://${domain}`, `https://www.${domain}`]) {
+      const page = await fetchPage(host);
+      if (page) urls.push(...declaredIcons(page.html, page.base).slice(0, 4));
+    }
+    urls.push(`https://${domain}/apple-touch-icon.png`, `https://www.${domain}/apple-touch-icon.png`, `https://${domain}/favicon.ico`, `https://www.${domain}/favicon.ico`, googleUrl(domain), `https://www.google.com/s2/favicons?domain=www.${domain}&sz=256`, duckUrl(domain), duckUrl(`www.${domain}`));
     for (const url of urls) {
       const result = await download(url);
       if (result && !defaults.has(hash(result.buffer))) {

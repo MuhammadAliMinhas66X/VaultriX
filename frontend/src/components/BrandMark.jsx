@@ -3,8 +3,9 @@ import { Banknote, Landmark, Smartphone } from 'lucide-react';
 import { findBrand } from '../utils/paymentBrands.js';
 
 const SIZES = {
-  sm: { box: 'h-6 w-6', icon: 'h-3.5 w-3.5', img: 'h-4 w-4', text: 'text-[10px]' },
-  md: { box: 'h-9 w-9', icon: 'h-5 w-5', img: 'h-6 w-6', text: 'text-xs' },
+  sm: { box: 'h-7 w-7', icon: 'h-4 w-4', img: 'h-5 w-5', text: 'text-[10px]' },
+  md: { box: 'h-11 w-11 sm:h-10 sm:w-10', icon: 'h-5 w-5', img: 'h-8 w-8 sm:h-7 sm:w-7', text: 'text-sm sm:text-xs' },
+  lg: { box: 'h-14 w-14', icon: 'h-6 w-6', img: 'h-10 w-10', text: 'text-base' },
 };
 
 const MIN_LOGO_WIDTH = 16;
@@ -34,8 +35,14 @@ const initialsOf = (name) =>
 const sourcesFor = (brand, manifest) => {
   const list = [];
   if (manifest[brand.id]) list.push(`/logos/${manifest[brand.id]}`);
-  brand.domains.forEach((domain) => list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`));
-  brand.domains.forEach((domain) => list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`));
+  brand.domains.forEach((domain) => {
+    list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
+    list.push(`https://www.google.com/s2/favicons?domain=www.${domain}&sz=256`);
+  });
+  brand.domains.forEach((domain) => {
+    list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+    list.push(`https://icons.duckduckgo.com/ip3/www.${domain}.ico`);
+  });
   return list;
 };
 
@@ -86,6 +93,7 @@ function BrandMark({ method, name, size = 'md' }) {
           }}
           onError={() => setAttempt((prev) => prev + 1)}
           className={`${dim.img} object-contain`}
+          decoding="async"
           style={{ display: loaded ? 'block' : 'none' }}
         />
       )}
