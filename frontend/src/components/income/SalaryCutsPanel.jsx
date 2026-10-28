@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { AlertCircle, Check, Info, Loader2, Plus, X } from 'lucide-react';
 import FieldError from '../FieldError.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
-import { TAX_YEAR } from '../../utils/fbrTax.js';
+import { countryName, taxRuleForCurrency } from '../../utils/taxRules.js';
 import { calculateCuts, supportsTax } from '../../utils/salaryCuts.js';
 
 const MAX_DEDUCTIONS = 10;
@@ -129,9 +130,10 @@ function StatusLine({ status }) {
 
 function SalaryCutsPanel({ stream, onChange, status }) {
   const { t } = useTranslation();
-  const { formatMoney, formatPercent } = useFormat();
+  const { formatMoney, locale } = useFormat();
   const money = (value) => formatMoney(value, { decimals: 0, currency: stream.currency });
 
+  const taxRule = taxRuleForCurrency(stream.currency);
   const taxAvailable = supportsTax(stream);
   const taxOn = taxAvailable && Boolean(stream.taxEnabled);
   const anyCuts = taxOn || stream.deductionsEnabled;
@@ -145,7 +147,8 @@ function SalaryCutsPanel({ stream, onChange, status }) {
   const rows = result
     ? [
         { key: 'gross', label: t('income.beforeCuts'), monthly: result.monthly.gross, yearly: result.yearly.gross },
-        ...(taxOn ? [{ key: 'tax', label: t('income.taxCut'), monthly: result.monthly.tax, yearly: result.yearly.tax }] : []),
+        ...(taxOn ? [{ key: 'tax', label: t('income.incomeTax'), monthly: result.monthly.tax, yearly: result.yearly.tax }] : []),
+        ...result.yearly.contributions.map((item, index) => ({ key: `c${index}`, label: item.name, monthly: result.monthly.contributions[index].amount, yearly: item.amount })),
         ...result.yearly.deductions.map((item, index) => ({
           key: `d${index}`,
           label: item.name || t('income.deductionNamePlaceholder'),
@@ -156,6 +159,12 @@ function SalaryCutsPanel({ stream, onChange, status }) {
     : [];
 
   const blocked = Boolean(stream.deductionsEnabled) && (deductions.length === 0 || deductions.some((item) => rowIssue(item)));
+  const hasCuts = Boolean(result && result.hasCuts);
+  const showDeducted = Boolean(stream.deductFromTotal) && hasCuts;
+
+  useEffect(() => {
+    if (stream.deductFromTotal && !hasCuts) onChange({ deductFromTotal: false }, { immediate: true, silent: true });
+  }, [stream.deductFromTotal, hasCuts]);
   const cell = 'text-end tabular-nums text-ink';
 
   return (
@@ -164,11 +173,11 @@ function SalaryCutsPanel({ stream, onChange, status }) {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-ink">{t('income.afterTax')}</p>
-            {taxOn && result && (
-              <p className="mt-0.5 text-xs text-muted">
-                {t('income.taxRate')} {formatPercent(Math.round((result.yearly.tax / result.yearly.gross) * 10000) / 10000)} · {t('income.taxSource', { year: TAX_YEAR })}
-              </p>
-            )}
+            <p className="mt-0.5 text-xs text-muted">
+              {taxRule && taxRule.brackets.length === 0
+                ? t('income.noIncomeTax', { country: countryName(taxRule.code, locale) })
+                : t('income.taxRulesLine', { country: taxRule ? countryName(taxRule.code, locale) : '', year: taxRule ? taxRule.year : '' })}
+            </p>
           </div>
           <Switch checked={taxOn} onChange={(on) => onChange({ taxEnabled: on }, { immediate: true })} label={t('income.afterTax')} />
         </div>
@@ -233,8 +242,10 @@ function SalaryCutsPanel({ stream, onChange, status }) {
             <span className={`${cell} border-t border-border pt-2.5 font-semibold`}>{money(result.yearly.net)}</span>
           </div>
 
+          {taxOn && taxRule && taxRule.brackets.length > 0 && <p className="text-xs text-muted">{t('income.taxEstimate')}</p>}
+
           <div className="flex flex-col gap-2">
-            {stream.deductFromTotal ? (
+            {showDeducted ? (
               <div className="flex gap-2">
                 <div className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 text-sm font-medium text-white">
                   <Check className="h-4 w-4" /> {t('income.deductedFromSalary')}
@@ -250,16 +261,16 @@ function SalaryCutsPanel({ stream, onChange, status }) {
             ) : (
               <button
                 type="button"
-                disabled={blocked}
+                disabled={blocked || !hasCuts}
                 onClick={() => onChange({ deductFromTotal: true }, { immediate: true })}
                 className="rounded-lg border border-ink bg-white px-4 py-3 text-sm font-semibold text-ink transition hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-muted disabled:hover:bg-surface disabled:hover:text-muted"
               >
                 {t('income.deductFromSalary')}
               </button>
             )}
-            {blocked && (
+            {(blocked || !hasCuts) && !showDeducted && (
               <p className="flex items-start gap-1.5 text-xs text-muted">
-                <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {t('income.deductHint')}
+                <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {blocked ? t('income.deductHint') : t('income.nothingToDeduct')}
               </p>
             )}
             <div className="flex min-h-[1rem] justify-end">

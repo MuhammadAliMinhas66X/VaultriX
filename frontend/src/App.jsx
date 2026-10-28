@@ -7,6 +7,8 @@ import SettingsPage from './pages/SettingsPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import { IncomeLayout } from './context/IncomeContext.jsx';
+import IncomePage from './pages/IncomePage.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
@@ -30,9 +32,10 @@ function App() {
           <Route path="/onboarding" element={<OnboardingPage />} />
 
           <Route element={<RequireOnboarding />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            {/* Income moved onto the Dashboard itself - keep the old URL working for anyone with it bookmarked. */}
-            <Route path="/income" element={<Navigate to="/dashboard" replace />} />
+            <Route element={<IncomeLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/income" element={<IncomePage />} />
+            </Route>
             <Route path="/settings" element={<SettingsPage />} />
 
             <Route element={<RequireAdmin />}>

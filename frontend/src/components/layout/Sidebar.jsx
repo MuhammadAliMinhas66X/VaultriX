@@ -47,12 +47,12 @@ function Tooltip({ rect, children }) {
   );
 }
 
-function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
+function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compact = false }) {
   const Icon = item.icon;
   const ref = useRef(null);
   const [tipRect, setTipRect] = useState(null);
   const tone = item.danger ? 'text-red-600 hover:text-red-700' : active ? 'text-ink' : 'text-muted hover:text-ink';
-  const className = `relative flex h-10 items-center rounded-lg text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
+  const className = `relative flex ${compact ? 'h-9 text-[13px]' : 'h-10 text-sm'} items-center rounded-lg font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
   const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 42 };
 
   const showTip = () => collapsed && ref.current && setTipRect(ref.current.getBoundingClientRect());
@@ -121,52 +121,88 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
   );
 }
 
-function Group({ group, activeId, collapsed, uid, instant, onNavigate }) {
-  const [open, setOpen] = useState(true);
+const GROUP_KEY = 'vaultrix.sidebar.group';
+
+function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandSidebar }) {
+  const Icon = group.icon;
+  const ref = useRef(null);
+  const [tipRect, setTipRect] = useState(null);
+  const [open, setOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem(`${GROUP_KEY}.${group.id}`) === 'open';
+    } catch (error) {
+      return false;
+    }
+  });
+
+  const setAndSave = (next) => {
+    setOpen(next);
+    try {
+      window.localStorage.setItem(`${GROUP_KEY}.${group.id}`, next ? 'open' : 'closed');
+    } catch (error) {
+      return;
+    }
+  };
+
+  const headerTone = group.activeChild ? 'text-ink' : 'text-muted hover:text-ink';
 
   if (collapsed) {
     return (
-      <div className="flex flex-col gap-1">
-        <span className="mx-auto my-2 h-px w-6 bg-border" />
-        {group.items.map((item) => (
-          <NavItem key={item.id} item={item} active={item.id === activeId} collapsed activeId={uid} instant={instant} onNavigate={onNavigate} />
-        ))}
-      </div>
+      <>
+        <button
+          ref={ref}
+          type="button"
+          aria-label={group.label}
+          onClick={() => {
+            setAndSave(true);
+            onExpandSidebar?.();
+          }}
+          onMouseEnter={() => ref.current && setTipRect(ref.current.getBoundingClientRect())}
+          onMouseLeave={() => setTipRect(null)}
+          className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${group.activeChild ? 'bg-black/[0.05]' : ''} ${headerTone}`}
+        >
+          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        </button>
+        <Tooltip rect={tipRect}>{group.label}</Tooltip>
+      </>
     );
   }
 
   return (
-    <div className="mt-2 flex flex-col">
+    <div className="flex flex-col">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setAndSave(!open)}
         aria-expanded={open}
-        className="group flex h-9 items-center gap-2 rounded-lg px-3 text-[11px] font-semibold uppercase tracking-wider text-muted outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
+        className={`relative flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none transition-colors hover:bg-black/[0.03] focus-visible:ring-2 focus-visible:ring-accent/40 ${open || group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >
-        <span className="truncate">{group.label}</span>
-        {(group.count ?? group.items.length) > 0 && (
-          <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums normal-case tracking-normal">{group.count ?? group.items.length}</span>
-        )}
-        <motion.span
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: instant ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="h-px min-w-3 flex-1 origin-left bg-gradient-to-r from-border to-transparent"
-        />
-        <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
+        <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted">{group.count ?? group.items.length}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
+
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: instant ? 0 : 0.22, ease: 'easeInOut' }}
+            transition={{ duration: instant ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="flex flex-col gap-1 pb-1 pt-1">
-              {group.items.map((item) => (
-                <NavItem key={item.id} item={item} active={item.id === activeId} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} />
+            <div className="relative ms-[1.4rem] mt-1 flex max-h-72 flex-col gap-0.5 overflow-y-auto overflow-x-hidden border-s border-border ps-2 pe-0.5 pb-1">
+              {group.items.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={instant ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18, delay: instant ? 0 : Math.min(index, 8) * 0.03 }}
+                >
+                  <NavItem item={item} active={item.id === activeId} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} compact />
+                </motion.div>
               ))}
             </div>
           </motion.div>
@@ -209,7 +245,7 @@ export function SidebarBody({ title, showLogo, items, activeId, footerItems, col
       <nav aria-label={title || 'Main'} className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? 'px-0' : 'px-3'}`}>
         {items.map((item) =>
           item.type === 'group' ? (
-            <Group key={item.id} group={item} activeId={activeId} collapsed={collapsed} uid={uid} instant={instant} onNavigate={onNavigate} />
+            <Group key={item.id} group={item} activeId={activeId} collapsed={collapsed} uid={uid} instant={instant} onNavigate={onNavigate} onExpandSidebar={onToggle} />
           ) : (
             <NavItem key={item.id} item={item} active={item.id === activeId} collapsed={collapsed} activeId={uid} instant={instant} onNavigate={onNavigate} />
           )

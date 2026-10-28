@@ -7,6 +7,7 @@ import BrandMark from '../BrandMark.jsx';
 import FieldError from '../FieldError.jsx';
 import { Banknote, Landmark, Smartphone } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
+import { todayInput, toInputDate } from '../../utils/dates.js';
 import { PAKISTANI_BANKS, DIGITAL_WALLETS } from '../../utils/paymentBrands.js';
 import { INCOME_TYPES, FREQUENCIES, METHODS, OTHER_VALUE, typeLabelKey, frequencyLabelKey, detailKind } from './incomeOptions.js';
 
@@ -23,6 +24,7 @@ export const emptyForm = (defaultCurrency) => ({
   incomeType: 'salaried',
   typeDetail: '',
   payerName: '',
+  receivedAt: todayInput(),
   frequency: 'monthly',
   destinationMethod: 'bank',
   destinationPreset: '',
@@ -38,6 +40,7 @@ export const formFromStream = (stream) => {
     incomeType: stream.incomeType === 'freelance' ? 'business' : stream.incomeType,
     typeDetail: stream.typeDetail || '',
     payerName: stream.payerName || '',
+    receivedAt: toInputDate(stream.receivedAt),
     frequency: stream.frequency,
     destinationMethod: stream.destinationMethod,
     destinationPreset: preset,
@@ -100,6 +103,7 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
     const found = {};
     if (!form.name.trim()) found.name = t('income.errName');
     if (form.expectedAmount !== '' && !(Number(form.expectedAmount) >= 0)) found.expectedAmount = t('income.errAmount');
+    if (!form.receivedAt || form.receivedAt > todayInput()) found.receivedAt = t('income.errDate');
     if (!form.currency) found.currency = t('income.errCurrency');
     if (form.destinationMethod !== 'cash') {
       if (!form.destinationPreset) found.destinationPreset = t('income.errDestination');
@@ -120,6 +124,7 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
       incomeType: form.incomeType,
       typeDetail: form.typeDetail,
       payerName: form.payerName,
+      receivedAt: form.receivedAt,
       frequency: form.frequency,
       destinationMethod: form.destinationMethod,
       destinationName,
@@ -183,16 +188,26 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
         placeholder={t(`income.detail${kind}Placeholder`)}
       />
 
-      <FormField
-        label={<StepLabel n={5}>{t('income.payerLabel')}</StepLabel>}
-        value={form.payerName}
-        onChange={(e) => set('payerName')(e.target.value)}
-        placeholder={t('income.payerPlaceholder')}
-      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          label={<StepLabel n={5}>{t('income.payerLabel')}</StepLabel>}
+          value={form.payerName}
+          onChange={(e) => set('payerName')(e.target.value)}
+          placeholder={t('income.payerPlaceholder')}
+        />
+        <FormField
+          label={<StepLabel n={6}>{t('income.receivedLabel')}</StepLabel>}
+          type="date"
+          max={todayInput()}
+          value={form.receivedAt}
+          onChange={(e) => set('receivedAt')(e.target.value)}
+          error={errors.receivedAt}
+        />
+      </div>
 
       <div className="flex flex-col gap-3">
         <span id="income-method-label">
-          <StepLabel n={6}>{t('income.destinationMethodLabel')}</StepLabel>
+          <StepLabel n={7}>{t('income.destinationMethodLabel')}</StepLabel>
         </span>
         <div role="radiogroup" aria-labelledby="income-method-label" className="grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
           {METHODS.map((method) => {
