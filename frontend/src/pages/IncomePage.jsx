@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Banknote, Plus } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import IncomeForm, { emptyForm, formFromStream } from '../components/income/IncomeForm.jsx';
@@ -214,12 +215,12 @@ function IncomePage() {
     <AppShell showLogo pageTitle={t('income.headerStream')} items={items} activeId={activeId}>
       <div className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <h1 className="truncate text-2xl font-semibold tracking-tight text-ink">{t('income.headerStream')}</h1>
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('income.headerStream')}</h1>
             <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold tabular-nums text-muted ring-1 ring-border">{streams.length}</span>
           </div>
           {!adding && (
-            <button type="button" onClick={startAdding} className="flex shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+            <button type="button" onClick={startAdding} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('income.add')}
             </button>
@@ -265,6 +266,23 @@ function IncomePage() {
           </div>
         )}
       </div>
+      <AnimatePresence>
+        {!wide && !loading && !adding && !editing && !selected && streams.length > 0 && (
+          <motion.button
+            key="add-fab"
+            type="button"
+            onClick={startAdding}
+            initial={{ opacity: 0, y: 16, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] end-4 z-30 flex items-center gap-2 rounded-full bg-ink py-3.5 ps-4 pe-5 text-sm font-semibold text-white shadow-[0_14px_30px_-10px_rgba(0,0,0,0.6)] outline-none transition active:scale-95 focus-visible:ring-2 focus-visible:ring-accent/40 lg:hidden"
+          >
+            <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            {t('income.add')}
+          </motion.button>
+        )}
+      </AnimatePresence>
       <Drawer
         open={!wide && !loading && Boolean(sidePanel)}
         onClose={() => {
@@ -272,7 +290,8 @@ function IncomePage() {
           else if (editingId) setEditingId(null);
           else setSelectedId(null);
         }}
-        title={adding ? t('income.add') : editing ? editing.name : selected ? selected.name : ''}
+        title={adding ? t('income.add') : editing ? editing.name : ''}
+        label={selected ? selected.name : t('income.add')}
       >
         {sidePanel}
       </Drawer>

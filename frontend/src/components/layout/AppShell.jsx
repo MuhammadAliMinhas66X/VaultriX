@@ -36,7 +36,7 @@ function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerI
           </div>
           <AccountMenu hideSettings={hideSettingsLink} />
         </header>
-        <main className="min-w-0 flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+        <main className="min-w-0 flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
       </div>
 
       <BottomNav items={items} activeId={activeId} label={title || pageTitle} />

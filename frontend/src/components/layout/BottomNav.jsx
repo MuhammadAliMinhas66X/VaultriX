@@ -1,6 +1,6 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useId } from 'react';
 
 const tabsFrom = (items) =>
   items.map((item) => ({
@@ -10,33 +10,36 @@ const tabsFrom = (items) =>
     to: item.to,
     onSelect: item.onSelect,
     danger: item.danger,
-    active: item.type === 'group' ? Boolean(item.activeChild) : false,
+    groupActive: item.type === 'group' ? Boolean(item.activeChild) : false,
   }));
 
-function Tab({ tab, active, uid, reduced }) {
+function Tab({ tab, active, showLabel, uid, reduced }) {
   const Icon = tab.icon;
-  const tone = tab.danger ? (active ? 'text-red-600' : 'text-red-500/80') : active ? 'text-ink' : 'text-muted';
+  const pill = tab.danger ? 'bg-red-600' : 'bg-ink';
+  const tone = active ? 'text-white' : tab.danger ? 'text-red-500' : 'text-muted';
+  const grow = active ? 'flex-[1.7]' : 'flex-1';
+  const className = `relative flex h-12 min-w-0 items-center justify-center gap-2 rounded-[20px] px-3 outline-none transition-[flex-grow,color] duration-300 focus-visible:ring-2 focus-visible:ring-accent/40 ${grow} ${tone}`;
+
   const inner = (
     <>
       {active && (
         <motion.span
-          layoutId={`${uid}-tab`}
-          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 42 }}
-          className={`absolute inset-x-3 top-0 h-0.5 rounded-full ${tab.danger ? 'bg-red-600' : 'bg-ink'}`}
+          layoutId={`${uid}-pill`}
+          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 36 }}
+          className={`absolute inset-0 rounded-[20px] shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)] ${pill}`}
         />
       )}
-      <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
-      <span className="max-w-full truncate px-1 text-[10.5px] font-medium leading-tight">{tab.label}</span>
+      <Icon className="relative z-10 h-[21px] w-[21px] shrink-0" strokeWidth={active ? 2 : 1.7} />
+      {(active || showLabel) && <span className="relative z-10 truncate text-[13px] font-semibold tracking-tight">{tab.label}</span>}
     </>
   );
-  const className = `relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 outline-none transition-colors focus-visible:bg-black/[0.04] ${tone}`;
 
   return tab.to ? (
-    <Link to={tab.to} aria-current={active ? 'page' : undefined} className={className}>
+    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={className}>
       {inner}
     </Link>
   ) : (
-    <button type="button" onClick={tab.onSelect} aria-current={active ? 'page' : undefined} className={className}>
+    <button type="button" onClick={tab.onSelect} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={className}>
       {inner}
     </button>
   );
@@ -46,15 +49,13 @@ function BottomNav({ items, activeId, label }) {
   const uid = useId();
   const reduced = useReducedMotion();
   const tabs = tabsFrom(items);
+  const showAllLabels = tabs.length <= 3;
 
   return (
-    <nav
-      aria-label={label || 'Main'}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
-    >
-      <div className="mx-auto flex h-16 max-w-xl items-stretch">
+    <nav aria-label={label || 'Main'} className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+      <div className="pointer-events-auto mx-auto flex max-w-md items-stretch gap-1 rounded-[26px] border border-border/70 bg-white/85 p-1.5 shadow-[0_16px_44px_-14px_rgba(0,0,0,0.4)] backdrop-blur-xl">
         {tabs.map((tab) => (
-          <Tab key={tab.id} tab={tab} active={tab.active || tab.id === activeId} uid={uid} reduced={Boolean(reduced)} />
+          <Tab key={tab.id} tab={tab} active={tab.groupActive || tab.id === activeId} showLabel={showAllLabels} uid={uid} reduced={Boolean(reduced)} />
         ))}
       </div>
     </nav>

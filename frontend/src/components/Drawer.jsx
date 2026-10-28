@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 
-function Drawer({ open, onClose, title, children }) {
+function Drawer({ open, onClose, title, label, children }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
+  const controls = useDragControls();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -30,42 +31,52 @@ function Drawer({ open, onClose, title, children }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
+            transition={{ duration: reduced ? 0 : 0.25 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/40"
+            className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[3px]"
           />
           <motion.div
             key="drawer-sheet"
             role="dialog"
             aria-modal="true"
-            aria-label={title}
+            aria-label={label || title}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 38 }}
+            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 340, damping: 34, mass: 0.9 }}
             drag="y"
+            dragControls={controls}
+            dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.4 }}
+            dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={(_, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 600) onClose();
+              if (info.offset.y > 110 || info.velocity.y > 550) onClose();
             }}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col rounded-t-3xl bg-surface shadow-2xl"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[94vh] max-w-2xl flex-col overflow-hidden rounded-t-[32px] bg-surface shadow-[0_-24px_70px_-20px_rgba(0,0,0,0.5)] ring-1 ring-black/5"
           >
-            <div className="flex shrink-0 flex-col items-center px-4 pt-2.5">
-              <span className="h-1.5 w-10 rounded-full bg-border" />
-              <div className="mt-2 flex w-full items-center justify-between gap-3 pb-2">
-                <p className="truncate text-base font-semibold text-ink">{title}</p>
+            <div onPointerDown={(event) => controls.start(event)} className="flex shrink-0 cursor-grab touch-none flex-col items-center px-5 pt-3 active:cursor-grabbing">
+              <span className="h-1.5 w-11 rounded-full bg-black/15" />
+              <div className="flex h-14 w-full items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink">{title}</p>
                 <button
                   type="button"
+                  onPointerDown={(event) => event.stopPropagation()}
                   onClick={onClose}
                   aria-label={t('common.close')}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-muted ring-1 ring-border transition hover:text-ink"
+                  className="ms-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-sm ring-1 ring-black/10 outline-none transition hover:bg-black/[0.04] focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-[18px] w-[18px]" strokeWidth={2} />
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
+            <motion.div
+              initial={reduced ? false : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduced ? 0 : 0.08, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3.5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            >
+              {children}
+            </motion.div>
           </motion.div>
         </>
       )}

@@ -16,7 +16,7 @@ function IncomeCard({ stream, selected, flash, converted, currency, onSelect }) 
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`flex w-full flex-col gap-3.5 rounded-2xl border bg-white p-4 text-start outline-none transition-all focus-visible:ring-2 focus-visible:ring-accent/40 ${
+      className={`flex w-full flex-col gap-3.5 rounded-2xl border bg-white p-4 text-start outline-none transition-all active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-accent/40 ${
         selected ? 'border-ink shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)]' : 'border-border hover:border-ink/30 hover:shadow-sm'
       } ${flash ? 'ring-2 ring-ink/30' : ''}`}
     >
