@@ -81,7 +81,7 @@ function BrandMark({ method, name, size = 'md' }) {
           alt=""
           referrerPolicy="no-referrer"
           onLoad={(event) => {
-            if (event.currentTarget.naturalWidth > MIN_LOGO_WIDTH) setLoaded(true);
+            if (current.startsWith('/logos/') || event.currentTarget.naturalWidth > MIN_LOGO_WIDTH) setLoaded(true);
             else setAttempt((prev) => prev + 1);
           }}
           onError={() => setAttempt((prev) => prev + 1)}

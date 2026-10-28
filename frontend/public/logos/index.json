@@ -1,7 +1,8 @@
 {
+  "hbl": "hbl.jpg",
   "mcb": "mcb.png",
   "abl": "abl.png",
-  "nbp": "nbp.ico",
+  "nbp": "nbp.png",
   "meezan": "meezan.png",
   "faysal": "faysal.png",
   "askari": "askari.png",
@@ -14,9 +15,11 @@
   "dib": "dib.png",
   "albaraka": "albaraka.png",
   "bop": "bop.png",
+  "bok": "bok.png",
   "fwbl": "fwbl.png",
   "jazzcash": "jazzcash.png",
   "nayapay": "nayapay.png",
   "sadapay": "sadapay.png",
+  "konnect": "konnect.jpg",
   "zindigi": "zindigi.png"
 }
