@@ -13,12 +13,11 @@ const tabsFrom = (items) =>
     groupActive: item.type === 'group' ? Boolean(item.activeChild) : false,
   }));
 
-function Tab({ tab, active, showLabel, uid, reduced }) {
+function Tab({ tab, active, uid, reduced }) {
   const Icon = tab.icon;
   const pill = tab.danger ? 'bg-red-600' : 'bg-ink';
   const tone = active ? 'text-white' : tab.danger ? 'text-red-500' : 'text-muted';
-  const grow = active ? 'flex-[1.7]' : 'flex-1';
-  const className = `relative flex h-12 min-w-0 items-center justify-center gap-2 rounded-[20px] px-3 outline-none transition-[flex-grow,color] duration-300 focus-visible:ring-2 focus-visible:ring-accent/40 ${grow} ${tone}`;
+  const className = `relative flex h-12 min-w-0 items-center justify-center gap-2 rounded-[20px] px-3 outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/40 flex-1 ${tone}`;
 
   const inner = (
     <>
@@ -29,17 +28,16 @@ function Tab({ tab, active, showLabel, uid, reduced }) {
           className={`absolute inset-0 rounded-[20px] shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)] ${pill}`}
         />
       )}
-      <Icon className="relative z-10 h-[21px] w-[21px] shrink-0" strokeWidth={active ? 2 : 1.7} />
-      {(active || showLabel) && <span className="relative z-10 truncate text-[13px] font-semibold tracking-tight">{tab.label}</span>}
+      <Icon className="relative z-10 h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2 : 1.7} />
     </>
   );
 
   return tab.to ? (
-    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={className}>
+    <Link to={tab.to} aria-label={tab.label} title={tab.label} aria-current={active ? 'page' : undefined} className={className}>
       {inner}
     </Link>
   ) : (
-    <button type="button" onClick={tab.onSelect} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={className}>
+    <button type="button" onClick={tab.onSelect} aria-label={tab.label} title={tab.label} aria-current={active ? 'page' : undefined} className={className}>
       {inner}
     </button>
   );
@@ -49,13 +47,12 @@ function BottomNav({ items, activeId, label }) {
   const uid = useId();
   const reduced = useReducedMotion();
   const tabs = tabsFrom(items);
-  const showAllLabels = tabs.length <= 3;
 
   return (
     <nav aria-label={label || 'Main'} className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
       <div className="pointer-events-auto mx-auto flex max-w-md items-stretch gap-1 rounded-[26px] border border-border/70 bg-white/85 p-1.5 shadow-[0_16px_44px_-14px_rgba(0,0,0,0.4)] backdrop-blur-xl">
         {tabs.map((tab) => (
-          <Tab key={tab.id} tab={tab} active={tab.groupActive || tab.id === activeId} showLabel={showAllLabels} uid={uid} reduced={Boolean(reduced)} />
+          <Tab key={tab.id} tab={tab} active={tab.groupActive || tab.id === activeId} uid={uid} reduced={Boolean(reduced)} />
         ))}
       </div>
     </nav>

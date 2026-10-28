@@ -7,11 +7,12 @@ import {
   Mail,
   AlertTriangle,
   ShieldCheck,
+  CircleUserRound,
+  LockKeyhole,
   Copy,
   Check,
   Lock,
   MapPin,
-  User,
   SlidersHorizontal,
   ArrowLeft,
   Link2,
@@ -1436,8 +1437,8 @@ function SecuritySection() {
 const useSettingsSections = () => {
   const { t } = useTranslation();
   return [
-    { id: 'profile', label: t('settings.sectionProfile'), icon: User, Component: ProfileSection },
-    { id: 'security', label: t('settings.sectionSecurity'), icon: ShieldCheck, Component: SecuritySection },
+    { id: 'profile', label: t('settings.sectionProfile'), icon: CircleUserRound, Component: ProfileSection },
+    { id: 'security', label: t('settings.sectionSecurity'), icon: LockKeyhole, Component: SecuritySection },
     { id: 'devices', label: t('settings.sectionDevices'), icon: Laptop, Component: DevicesSection },
     { id: 'preferences', label: t('settings.sectionPreferences'), icon: SlidersHorizontal, Component: PreferencesSection },
     { id: 'danger', label: t('settings.sectionDanger'), icon: AlertTriangle, Component: DangerZoneSection, danger: true },
