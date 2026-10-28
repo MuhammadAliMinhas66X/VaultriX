@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'एक व्यक्ति के लिए अनुमान। राज्य, क्षेत्रीय और स्थानीय कर शामिल नहीं हैं।',
   'income.incomeTax': 'आयकर',
   'income.nothingToDeduct': 'पहले टैक्स चालू करें या कटौती जोड़ें। फिर उसे वेतन से घटा सकेंगे।',
-  'dashboard.inAccount': 'अभी आपके खाते में',
+  'dashboard.inAccount': 'कुल शेष',
   'dashboard.beforeDeductions': 'कटौती से पहले',
   'dashboard.deductions': 'कटौतियां',
   'dashboard.latest': 'हाल की आमदनी',

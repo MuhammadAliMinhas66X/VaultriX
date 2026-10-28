@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'Estimation pour une personne seule. Les impôts régionaux et locaux ne sont pas inclus.',
   'income.incomeTax': 'Impôt sur le revenu',
   'income.nothingToDeduct': 'Activez l’impôt ou ajoutez une retenue d’abord. Vous pourrez ensuite la déduire du salaire.',
-  'dashboard.inAccount': 'Sur votre compte maintenant',
+  'dashboard.inAccount': 'Solde total',
   'dashboard.beforeDeductions': 'Avant retenues',
   'dashboard.deductions': 'Retenues',
   'dashboard.latest': 'Derniers revenus',

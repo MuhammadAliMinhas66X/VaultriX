@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'تقدير لشخص واحد. لا يشمل الضرائب الإقليمية والمحلية.',
   'income.incomeTax': 'ضريبة الدخل',
   'income.nothingToDeduct': 'فعّل الضريبة أو أضف خصماً أولاً. بعدها يمكنك خصمه من الراتب.',
-  'dashboard.inAccount': 'في حسابك الآن',
+  'dashboard.inAccount': 'الرصيد الإجمالي',
   'dashboard.beforeDeductions': 'قبل الخصومات',
   'dashboard.deductions': 'الخصومات',
   'dashboard.latest': 'أحدث الدخل',

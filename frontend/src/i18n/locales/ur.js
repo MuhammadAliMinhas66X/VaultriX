@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'ایک فرد کے لیے اندازہ۔ صوبائی، علاقائی اور مقامی ٹیکس شامل نہیں ہیں۔',
   'income.incomeTax': 'انکم ٹیکس',
   'income.nothingToDeduct': 'پہلے ٹیکس آن کریں یا کٹوتی شامل کریں۔ پھر اسے تنخواہ سے منفی کر سکیں گے۔',
-  'dashboard.inAccount': 'اس وقت آپ کے اکاؤنٹ میں',
+  'dashboard.inAccount': 'کل بیلنس',
   'dashboard.beforeDeductions': 'کٹوتی سے پہلے',
   'dashboard.deductions': 'کٹوتیاں',
   'dashboard.latest': 'حالیہ آمدنی',

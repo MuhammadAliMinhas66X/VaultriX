@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'Estimación para una persona. No incluye impuestos estatales, regionales ni locales.',
   'income.incomeTax': 'Impuesto sobre la renta',
   'income.nothingToDeduct': 'Activa el impuesto o agrega una deducción primero. Después podrás descontarla del salario.',
-  'dashboard.inAccount': 'En tu cuenta ahora',
+  'dashboard.inAccount': 'Saldo total',
   'dashboard.beforeDeductions': 'Antes de deducciones',
   'dashboard.deductions': 'Deducciones',
   'dashboard.latest': 'Últimos ingresos',

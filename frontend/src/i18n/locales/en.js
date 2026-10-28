@@ -188,7 +188,7 @@ export default {
   'income.taxEstimate': 'Estimate for one person. State, regional and local taxes are not included.',
   'income.incomeTax': 'Income tax',
   'income.nothingToDeduct': 'Turn on tax or add a deduction first. Then you can deduct it from your salary.',
-  'dashboard.inAccount': 'In your account now',
+  'dashboard.inAccount': 'Total Balance',
   'dashboard.beforeDeductions': 'Before deductions',
   'dashboard.deductions': 'Deductions',
   'dashboard.latest': 'Latest income',
