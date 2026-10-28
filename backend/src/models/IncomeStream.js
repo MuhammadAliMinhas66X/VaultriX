@@ -23,6 +23,7 @@ const incomeStreamSchema = new mongoose.Schema(
     // it. Optional everywhere, not just for "other".
     typeDetail: { type: String, default: '' },
     payerName: { type: String, default: '' },
+    receivedAt: { type: Date, default: Date.now },
     taxEnabled: { type: Boolean, default: false },
     deductionsEnabled: { type: Boolean, default: false },
     deductFromTotal: { type: Boolean, default: false },

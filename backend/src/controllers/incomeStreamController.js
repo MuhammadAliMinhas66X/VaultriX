@@ -10,7 +10,7 @@ const NOT_FOUND = 'That action could not be completed.';
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
 
-const toMinor = (amount) => Math.round(Number(amount) * 100);
+const toMinor = (amount) => Math.round((Number(amount) + Number.EPSILON) * 100);
 const toMajor = (minor) => (minor === null || minor === undefined ? null : Math.round(minor) / 100);
 
 // typeDetail/destinationName are open free text someone is describing in
@@ -48,6 +48,15 @@ const parseDeductions = (raw) => {
   return parsed;
 };
 
+const parseReceivedAt = (raw) => {
+  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(raw)) return undefined;
+  const date = new Date(`${raw.slice(0, 10)}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+  if (date.getUTCFullYear() < 2000) return undefined;
+  if (date.getTime() > Date.now() + 24 * 60 * 60 * 1000) return undefined;
+  return date;
+};
+
 const parseFlag = (raw) => (typeof raw === 'boolean' ? raw : undefined);
 
 const toIncomeStreamDto = (stream) => ({
@@ -56,6 +65,7 @@ const toIncomeStreamDto = (stream) => ({
   incomeType: stream.incomeType,
   typeDetail: stream.typeDetail || '',
   payerName: stream.payerName || '',
+  receivedAt: stream.receivedAt || stream.createdAt,
   taxEnabled: Boolean(stream.taxEnabled),
   deductionsEnabled: Boolean(stream.deductionsEnabled),
   deductFromTotal: Boolean(stream.deductFromTotal),
@@ -94,7 +104,7 @@ export const listIncomeStreams = async (req, res, next) => {
 
 export const createIncomeStream = async (req, res, next) => {
   try {
-    const { name, incomeType, typeDetail, payerName, frequency, destinationMethod, destinationName, expectedAmount, currency } =
+    const { name, incomeType, typeDetail, payerName, receivedAt, frequency, destinationMethod, destinationName, expectedAmount, currency } =
       req.body || {};
 
     const cleanedName = cleanLabel(name);
@@ -109,6 +119,12 @@ export const createIncomeStream = async (req, res, next) => {
 
     const cleanedPayer = cleanOptionalLabel(payerName);
     if (cleanedPayer === undefined) return fail(res, 400, GENERIC_INVALID);
+
+    let resolvedReceivedAt = new Date();
+    if (receivedAt !== undefined && receivedAt !== null && receivedAt !== '') {
+      resolvedReceivedAt = parseReceivedAt(receivedAt);
+      if (!resolvedReceivedAt) return fail(res, 400, GENERIC_INVALID);
+    }
 
     // Cash needs no destination name; bank/wallet do - that's the one
     // piece of cross-field validation here.
@@ -134,6 +150,7 @@ export const createIncomeStream = async (req, res, next) => {
       incomeType: resolvedType,
       typeDetail: cleanedDetail,
       payerName: cleanedPayer,
+      receivedAt: resolvedReceivedAt,
       frequency: resolvedFrequency,
       destinationMethod: resolvedMethod,
       destinationName: cleanedDestination,
@@ -155,7 +172,7 @@ export const updateIncomeStream = async (req, res, next) => {
     const stream = await IncomeStream.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!stream) return fail(res, 404, NOT_FOUND);
 
-    const { name, incomeType, typeDetail, payerName, frequency, destinationMethod, destinationName, expectedAmount, currency, isArchived, taxEnabled, deductionsEnabled, deductFromTotal, deductions } =
+    const { name, incomeType, typeDetail, payerName, receivedAt, frequency, destinationMethod, destinationName, expectedAmount, currency, isArchived, taxEnabled, deductionsEnabled, deductFromTotal, deductions } =
       req.body || {};
     const update = {};
 
@@ -189,6 +206,11 @@ export const updateIncomeStream = async (req, res, next) => {
       const parsedDeductions = parseDeductions(deductions);
       if (parsedDeductions === undefined) return fail(res, 400, GENERIC_INVALID);
       update.deductions = parsedDeductions;
+    }
+    if (receivedAt !== undefined) {
+      const parsedReceived = parseReceivedAt(receivedAt);
+      if (!parsedReceived) return fail(res, 400, GENERIC_INVALID);
+      update.receivedAt = parsedReceived;
     }
     if (payerName !== undefined) {
       const cleanedPayer = cleanOptionalLabel(payerName);
