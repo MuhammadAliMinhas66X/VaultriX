@@ -1,5 +1,6 @@
 export default {
   'common.dismiss': 'Dismiss',
+  'common.close': 'Close',
   'common.search': 'Search',
   'common.noMatches': 'No matches',
   'common.moreOptions': 'More options',
@@ -148,7 +149,7 @@ export default {
   'income.headerStream': 'Income Stream',
   'income.headerCashFlow': 'Cash Flow',
   'income.headerSubtitle': 'Where your money comes from. Your total is built from this list.',
-  'income.add': 'Add income',
+  'income.add': 'Add income stream',
   'income.save': 'Save',
   'income.edit': 'Edit',
   'income.delete': 'Delete',

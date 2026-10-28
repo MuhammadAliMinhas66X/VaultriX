@@ -1,5 +1,6 @@
 export default {
   'common.dismiss': 'إغلاق',
+  'common.close': 'إغلاق',
   'common.search': 'بحث',
   'common.noMatches': 'لا توجد نتائج',
   'common.moreOptions': 'مزيد من الخيارات',

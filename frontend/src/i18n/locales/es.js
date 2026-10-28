@@ -1,5 +1,6 @@
 export default {
   'common.dismiss': 'Descartar',
+  'common.close': 'Cerrar',
   'common.search': 'Buscar',
   'common.noMatches': 'Sin resultados',
   'common.moreOptions': 'Más opciones',

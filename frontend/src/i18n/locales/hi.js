@@ -1,5 +1,6 @@
 export default {
   'common.dismiss': 'खारिज करें',
+  'common.close': 'बंद करें',
   'common.search': 'खोजें',
   'common.noMatches': 'कोई मिलान नहीं',
   'common.moreOptions': 'अधिक विकल्प',

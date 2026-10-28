@@ -1,5 +1,6 @@
 export default {
   'common.dismiss': 'خارج کریں',
+  'common.close': 'بند کریں',
   'common.search': 'تلاش کریں',
   'common.noMatches': 'کوئی نتیجہ نہیں',
   'common.moreOptions': 'مزید اختیارات',
