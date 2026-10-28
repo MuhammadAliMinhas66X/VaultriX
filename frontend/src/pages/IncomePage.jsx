@@ -6,6 +6,7 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import IncomeForm, { emptyForm, formFromStream } from '../components/income/IncomeForm.jsx';
 import IncomeCard from '../components/income/IncomeCard.jsx';
 import IncomeDetail from '../components/income/IncomeDetail.jsx';
+import Drawer from '../components/Drawer.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -240,29 +241,21 @@ function IncomePage() {
         ) : (
           <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
             <div className="flex min-w-0 flex-col gap-3">
-              {!wide && adding && addForm}
               <ul className="flex flex-col gap-3">
                 {streams.map((stream) => (
                   <li key={stream.id} id={`stream-${stream.id}`} className="scroll-mt-20">
-                    {!wide && editingId === stream.id ? (
-                      editForm
-                    ) : (
-                      <>
-                        <IncomeCard
-                          stream={stream}
-                          selected={selectedId === stream.id}
-                          flash={flashId === stream.id}
-                          currency={currency}
-                          converted={convertedAmount(stream)}
-                          onSelect={() => {
-                            setAdding(false);
-                            setEditingId(null);
-                            setSelectedId((prev) => (!wide && prev === stream.id ? null : stream.id));
-                          }}
-                        />
-                        {!wide && selectedId === stream.id && !adding && <div className="mt-3">{detailFor(stream)}</div>}
-                      </>
-                    )}
+                    <IncomeCard
+                      stream={stream}
+                      selected={selectedId === stream.id}
+                      flash={flashId === stream.id}
+                      currency={currency}
+                      converted={convertedAmount(stream)}
+                      onSelect={() => {
+                        setAdding(false);
+                        setEditingId(null);
+                        setSelectedId(stream.id);
+                      }}
+                    />
                   </li>
                 ))}
               </ul>
@@ -272,6 +265,17 @@ function IncomePage() {
           </div>
         )}
       </div>
+      <Drawer
+        open={!wide && !loading && Boolean(sidePanel)}
+        onClose={() => {
+          if (adding) setAdding(false);
+          else if (editingId) setEditingId(null);
+          else setSelectedId(null);
+        }}
+        title={adding ? t('income.add') : editing ? editing.name : selected ? selected.name : ''}
+      >
+        {sidePanel}
+      </Drawer>
     </AppShell>
   );
 }

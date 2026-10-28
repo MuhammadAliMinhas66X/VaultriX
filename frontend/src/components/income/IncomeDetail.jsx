@@ -27,7 +27,6 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
   const deducted = isDeducted(stream);
   const shown = deducted ? amountForTotal(stream) : stream.expectedAmount;
   const kind = detailKind(stream.incomeType);
-  const receivedIn = stream.destinationMethod === 'cash' ? t('income.method.cash') : stream.destinationName;
 
   const iconButton =
     'flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-muted outline-none transition hover:border-ink/30 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40';
@@ -35,7 +34,7 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-white">
       <div className="flex items-start gap-4 p-5">
-        <BrandMark method={stream.destinationMethod} name={stream.destinationName} />
+        <BrandMark method={stream.destinationMethod} name={stream.destinationName} size="lg" />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-lg font-semibold tracking-tight text-ink">{stream.name}</h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -91,12 +90,6 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
         <dl className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3">
           <Detail label={t('income.payerLabel')}>{stream.payerName || '-'}</Detail>
           <Detail label={t('income.receivedLabel')}>{formatDate(new Date(stream.receivedAt || stream.createdAt), dateOptions)}</Detail>
-          <Detail label={t('income.destinationMethodLabel')}>
-            <span className="flex items-center gap-2">
-              <BrandMark method={stream.destinationMethod} name={stream.destinationName} size="sm" />
-              <span className="min-w-0 break-words">{receivedIn}</span>
-            </span>
-          </Detail>
           {stream.typeDetail && <Detail label={t(`income.detail${kind}Label`)}>{stream.typeDetail}</Detail>}
         </dl>
 

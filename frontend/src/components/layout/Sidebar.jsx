@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import Logo from '../Logo.jsx';
@@ -126,6 +126,8 @@ const GROUP_KEY = 'vaultrix.sidebar.group';
 function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandSidebar }) {
   const Icon = group.icon;
   const ref = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [tipRect, setTipRect] = useState(null);
   const [open, setOpen] = useState(() => {
     try {
@@ -155,6 +157,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           aria-label={group.label}
           onClick={() => {
             setAndSave(true);
+            if (group.to) navigate(group.to);
             onExpandSidebar?.();
           }}
           onMouseEnter={() => ref.current && setTipRect(ref.current.getBoundingClientRect())}
@@ -172,7 +175,16 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
     <div className="flex flex-col">
       <button
         type="button"
-        onClick={() => setAndSave(!open)}
+        onClick={() => {
+          const goingTo = group.to && location.pathname !== group.to;
+          if (goingTo) {
+            setAndSave(true);
+            navigate(group.to);
+            onNavigate?.();
+          } else {
+            setAndSave(!open);
+          }
+        }}
         aria-expanded={open}
         className={`relative flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none transition-colors hover:bg-black/[0.03] focus-visible:ring-2 focus-visible:ring-accent/40 ${open || group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >

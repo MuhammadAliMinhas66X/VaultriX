@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { Banknote, LayoutDashboard, List, Plus, ShieldCheck } from 'lucide-react';
+import { HandCoins, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -22,12 +22,11 @@ export default function useAppNav() {
       type: 'group',
       id: 'income',
       label: t('income.headerStream'),
-      icon: Banknote,
+      icon: HandCoins,
+      to: '/income',
       count: streams.length,
       activeChild: onIncome,
       items: [
-        { id: 'income-all', label: t('income.all'), icon: List, to: '/income' },
-        { id: 'income-add', label: t('income.add'), icon: Plus, to: '/income?add=1' },
         ...streams.map((stream) => ({
           id: `stream:${stream.id}`,
           label: stream.name,
@@ -39,6 +38,6 @@ export default function useAppNav() {
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = !onIncome ? 'dashboard' : focusedId ? `stream:${focusedId}` : 'income-all';
+  const activeId = !onIncome ? 'dashboard' : focusedId ? `stream:${focusedId}` : 'income';
   return { items, activeId };
 }

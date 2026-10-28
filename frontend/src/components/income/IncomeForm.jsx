@@ -232,8 +232,11 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
         </div>
 
         {showPicker && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface/40 p-3.5">
             <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-ink">
+                {form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
+              </span>
               <Combobox
                 items={destinationItems}
                 ariaLabel={form.destinationMethod === 'bank' ? t('income.destinationBankLabel') : t('income.destinationWalletLabel')}
