@@ -8,9 +8,9 @@ import { useTranslation } from '../i18n/useTranslation.js';
 function RuleRow({ state, label }) {
   const tone =
     state === 'pass'
-      ? 'text-emerald-700'
+      ? 'text-ink'
       : state === 'fail'
-        ? 'text-red-600'
+        ? 'text-ink font-medium'
         : 'text-muted';
 
   return (
@@ -111,7 +111,7 @@ function EmailField({
           >
             <div className="mt-2 rounded-xl border border-border bg-white p-3.5 shadow-lg shadow-black/10">
               {valid ? (
-                <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+                <p className="flex items-center gap-2 text-sm font-medium text-ink">
                   <Check className="h-4 w-4" strokeWidth={2.5} />
                   {t('emailCheck.valid')}
                 </p>

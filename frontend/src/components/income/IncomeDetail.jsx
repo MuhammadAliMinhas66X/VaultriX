@@ -8,6 +8,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { amountForTotal, isDeducted, supportsCuts } from '../../utils/salaryCuts.js';
 import { dateOptions } from '../../utils/dates.js';
 import { typeLabelKey, frequencyLabelKey, detailKind } from './incomeOptions.js';
+import ErrorSlot from '../ErrorSlot.jsx';
 
 function Detail({ label, children }) {
   return (
@@ -73,6 +74,8 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ErrorSlot className="mx-5 mb-3" />
 
       {shown !== null && (
         <div className="mx-5 mb-1 flex items-end justify-between gap-4 rounded-xl bg-surface px-4 py-4">

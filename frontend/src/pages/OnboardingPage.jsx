@@ -16,6 +16,7 @@ import { resolveAvatarUrl } from '../utils/avatar.js';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
+import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
@@ -405,6 +406,7 @@ function OnboardingPage() {
 
         <footer className="sticky bottom-0 z-10 border-t border-border bg-white/90 px-5 backdrop-blur sm:px-8 lg:border-transparent lg:bg-transparent lg:px-12 lg:backdrop-blur-none">
           <div className="mx-auto w-full max-w-lg py-4">
+            <ErrorSlot className="mb-3" />
             <div className="flex items-center gap-3">
               {stepIndex > 0 && (
                 <button

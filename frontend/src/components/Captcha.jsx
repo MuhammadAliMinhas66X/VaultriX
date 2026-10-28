@@ -101,7 +101,7 @@ const Captcha = forwardRef(function Captcha({ onToken }, ref) {
     <div>
       <div ref={containerRef} className="flex w-full justify-center empty:hidden" />
       {failed && (
-        <p role="alert" className="text-xs font-medium leading-snug text-red-600">
+        <p role="alert" className="text-xs font-semibold leading-snug text-ink">
           {t('captcha.loadFailed')}
         </p>
       )}

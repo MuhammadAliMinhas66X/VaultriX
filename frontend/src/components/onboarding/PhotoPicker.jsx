@@ -24,7 +24,7 @@ function PhotoPicker({ name, displaySrc, file, error, uploading, onSelect, onCle
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       className={`flex flex-col items-center rounded-2xl border-2 border-dashed px-5 py-8 text-center transition ${
-        dragging ? 'border-ink bg-surface' : error ? 'border-red-300 bg-red-50/40' : 'border-border bg-white'
+        dragging ? 'border-ink bg-surface' : error ? 'border-ink bg-white' : 'border-border bg-white'
       }`}
     >
       <input
@@ -92,7 +92,7 @@ function PhotoPicker({ name, displaySrc, file, error, uploading, onSelect, onCle
 
       {file && <p className="mt-3 max-w-full truncate text-xs text-ink">{file.name}</p>}
       {error ? (
-        <p role="alert" className="mt-2 text-xs font-medium text-red-600">
+        <p role="alert" className="mt-2 text-xs font-semibold text-ink">
           {error}
         </p>
       ) : (

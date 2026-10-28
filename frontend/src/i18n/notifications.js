@@ -4,6 +4,46 @@ const MAX_VISIBLE = 3;
 let toasts = [];
 let counter = 0;
 const listeners = new Set();
+const slots = new Set();
+let lastAction = null;
+let lastActionAt = 0;
+const ACTION_WINDOW_MS = 60000;
+const SCOPE_SELECTOR = '[data-error-scope], form';
+
+if (typeof document !== 'undefined') {
+  const remember = (event) => {
+    lastAction = event.target;
+    lastActionAt = Date.now();
+  };
+  document.addEventListener('click', remember, true);
+  document.addEventListener('submit', remember, true);
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key === 'Enter') remember(event);
+    },
+    true
+  );
+}
+
+export const registerSlot = (slot) => {
+  slots.add(slot);
+  return () => slots.delete(slot);
+};
+
+const findSlot = () => {
+  const live = [...slots].filter((slot) => slot.el && slot.el.isConnected);
+  if (live.length === 0) return null;
+  if (lastAction && lastAction.closest && Date.now() - lastActionAt < ACTION_WINDOW_MS) {
+    let scope = lastAction.closest(SCOPE_SELECTOR);
+    while (scope) {
+      const hit = live.find((slot) => scope.contains(slot.el));
+      if (hit) return hit;
+      scope = scope.parentElement ? scope.parentElement.closest(SCOPE_SELECTOR) : null;
+    }
+  }
+  return live.length === 1 ? live[0] : null;
+};
 
 const emit = () => listeners.forEach((listener) => listener());
 
@@ -21,6 +61,14 @@ export const dismissToast = (id) => {
 
 const push = (tone, message, options = {}) => {
   if (!message) return null;
+
+  if ((tone === 'error' || tone === 'warning') && options.inline !== false) {
+    const slot = findSlot();
+    if (slot) {
+      slot.show({ tone, title: options.title || '', message, stamp: Date.now() });
+      return null;
+    }
+  }
 
   const existing = toasts.find((toast) => toast.tone === tone && toast.message === message && toast.title === options.title);
   if (existing) {

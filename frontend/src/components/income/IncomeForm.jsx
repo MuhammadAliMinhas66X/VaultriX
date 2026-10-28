@@ -10,6 +10,7 @@ import { useTranslation } from '../../i18n/useTranslation.js';
 import { todayInput, toInputDate } from '../../utils/dates.js';
 import { PAKISTANI_BANKS, DIGITAL_WALLETS } from '../../utils/paymentBrands.js';
 import { INCOME_TYPES, FREQUENCIES, METHODS, OTHER_VALUE, typeLabelKey, frequencyLabelKey, detailKind } from './incomeOptions.js';
+import ErrorSlot from '../ErrorSlot.jsx';
 
 const METHOD_ICON = { cash: Banknote, bank: Landmark, wallet: Smartphone };
 
@@ -258,6 +259,8 @@ function IncomeForm({ initial, currencies, onCancel, onSubmit, submitLabel, busy
           </div>
         )}
       </div>
+
+      <ErrorSlot />
 
       <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
         <button

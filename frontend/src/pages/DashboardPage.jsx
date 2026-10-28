@@ -67,8 +67,8 @@ function DashboardPage() {
               {ratesLive ? <span>{t('income.ratesLive')}</span> : ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>}
             </div>
           )}
-          {ratesStale && <p className="mt-2 text-xs text-amber-600">{t('income.totalStaleNote')}</p>}
-          {summary.excluded > 0 && <p className="mt-1 text-xs text-amber-600">{t('income.rateUnavailableNote', { count: summary.excluded, currency })}</p>}
+          {ratesStale && <p className="mt-2 text-xs text-muted">{t('income.totalStaleNote')}</p>}
+          {summary.excluded > 0 && <p className="mt-1 text-xs text-muted">{t('income.rateUnavailableNote', { count: summary.excluded, currency })}</p>}
         </>
       )}
     </div>

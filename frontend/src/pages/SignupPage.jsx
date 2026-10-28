@@ -17,6 +17,7 @@ import { signup, verifySignupCode, googleAuth } from '../services/authService.js
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
+import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_LENGTH = 6;
@@ -242,6 +243,8 @@ function SignupPage() {
 
               <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
+              <ErrorSlot />
+
               <Button
                 type="submit"
                 loading={loading}
@@ -282,13 +285,15 @@ function SignupPage() {
               />
               <div className="min-h-[1.25rem]" aria-live="assertive">
                 {codeError && (
-                  <span role="alert" className="text-xs font-medium text-red-600">
+                  <span role="alert" className="text-xs font-semibold text-ink">
                     {codeError}
                   </span>
                 )}
               </div>
               <p className="text-xs leading-snug text-muted">{t('signupVerify.codeHint')}</p>
             </div>
+
+            <ErrorSlot />
 
             <Button
               type="submit"

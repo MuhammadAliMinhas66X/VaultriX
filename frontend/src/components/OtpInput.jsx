@@ -106,7 +106,7 @@ function OtpInput({ length = 6, value, onChange, onComplete, disabled = false, h
           onFocus={(event) => event.target.select()}
           className={`h-12 w-full min-w-0 rounded-lg border bg-white text-center text-xl font-semibold text-ink outline-none transition focus:ring-2 focus:ring-accent/20 disabled:opacity-60 sm:h-14 sm:text-2xl ${
             hasError
-              ? 'border-red-400 focus:border-red-500'
+              ? 'border-ink focus:border-ink'
               : digit
                 ? 'border-accent'
                 : 'border-border focus:border-accent'

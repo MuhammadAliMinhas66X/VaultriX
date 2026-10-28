@@ -53,7 +53,7 @@ function DeductionRow({ item, salary, currency, onChange, onRemove }) {
   const issue = rowIssue(item);
 
   return (
-    <div className={`flex flex-col gap-2 rounded-xl border bg-white p-2.5 ${issue ? 'border-red-200' : 'border-border'}`}>
+    <div className={`flex flex-col gap-2 rounded-xl border bg-white p-2.5 ${issue ? 'border-ink' : 'border-border'}`}>
     <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_9.5rem_7rem_auto] sm:items-center">
       <input
         value={item.name}
@@ -116,7 +116,7 @@ function StatusLine({ status }) {
   }
   if (status === 'error') {
     return (
-      <span className="flex items-center gap-1.5 text-xs font-medium text-red-600">
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
         <AlertCircle className="h-3.5 w-3.5" /> {t('income.notSaved')}
       </span>
     );

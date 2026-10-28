@@ -13,6 +13,7 @@ import { requestPasswordReset, verifyResetCode, resetPassword } from '../service
 import { passwordIssue } from '../utils/emailRules.js';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
+import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const CODE_LENGTH = 6;
 const STEPS = ['email', 'code', 'password'];
@@ -221,6 +222,8 @@ function ForgotPasswordPage() {
 
             <Captcha ref={captchaRef} onToken={setCaptchaToken} />
 
+            <ErrorSlot />
+
             <Button
               type="submit"
               loading={loading}
@@ -259,13 +262,15 @@ function ForgotPasswordPage() {
               />
               <div className="min-h-[1.25rem]" aria-live="assertive">
                 {codeError && (
-                  <span role="alert" className="text-xs font-medium text-red-600">
+                  <span role="alert" className="text-xs font-semibold text-ink">
                     {codeError}
                   </span>
                 )}
               </div>
               <p className="text-xs leading-snug text-muted">{t('forgot.codeHint')}</p>
             </div>
+
+            <ErrorSlot />
 
             <Button type="submit" loading={loading} loadingLabel={t('forgot.verifying')} disabled={code.length < CODE_LENGTH}>
               {t('forgot.verify')}
@@ -327,6 +332,8 @@ function ForgotPasswordPage() {
               autoComplete="new-password"
               error={passwordErrors.confirm}
             />
+
+            <ErrorSlot />
 
             <Button type="submit" loading={loading} loadingLabel={t('forgot.updatingPassword')}>
               {t('forgot.updatePassword')}

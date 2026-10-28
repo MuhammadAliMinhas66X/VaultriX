@@ -49,6 +49,7 @@ import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { notify } from '../i18n/notifications.js';
 import { serverMessageKey, translate } from '../i18n/translate.js';
+import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const EMAIL_CODE_LENGTH = 6;
 
@@ -68,6 +69,7 @@ function SettingsCard({ title, subtitle, locked, children }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      data-error-scope=""
       className={`rounded-xl border bg-white ${locked ? 'border-ink' : 'border-border'}`}
     >
       {/* overflow-hidden used to live on the whole card so the locked
@@ -90,6 +92,7 @@ function SettingsCard({ title, subtitle, locked, children }) {
           </div>
         )}
         {subtitle && <p className={`${locked ? '' : 'mt-0.5'} text-sm text-muted`}>{subtitle}</p>}
+        <ErrorSlot className="mt-4" />
         <div className={subtitle || !locked ? 'mt-5' : ''}>{children}</div>
       </div>
     </motion.section>
@@ -678,7 +681,7 @@ function EmailSection() {
             />
           </div>
           {codeMessage && (
-            <p role="alert" className="text-xs font-medium text-red-600">
+            <p role="alert" className="text-xs font-semibold text-ink">
               {codeMessage}
             </p>
           )}
@@ -901,7 +904,7 @@ function MfaSection() {
               label={t('settings.mfaEnterCode')}
             />
             {codeError && (
-              <p role="alert" className="text-xs font-medium text-red-600">
+              <p role="alert" className="text-xs font-semibold text-ink">
                 {codeError}
               </p>
             )}
@@ -1382,7 +1385,7 @@ function DangerZoneSection() {
               label={t('auth.deviceCodeLabel')}
             />
             {codeError && (
-              <p role="alert" className="text-xs font-medium text-red-600">
+              <p role="alert" className="text-xs font-semibold text-ink">
                 {codeError}
               </p>
             )}

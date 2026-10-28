@@ -110,7 +110,7 @@ function Combobox({
         aria-busy={loading ? 'true' : undefined}
         aria-invalid={error ? 'true' : undefined}
         className={`flex w-full items-center justify-between rounded-lg border px-3.5 py-2.5 text-left text-sm text-ink outline-none transition focus:ring-2 focus:ring-accent/20 disabled:cursor-wait disabled:opacity-70 ${
-          error ? 'border-red-400 focus:border-red-500' : 'border-border focus:border-accent'
+          error ? 'border-ink focus:border-ink' : 'border-border focus:border-accent'
         }`}
       >
         <span className="flex items-center gap-2 truncate">
@@ -136,7 +136,7 @@ function Combobox({
       </button>
 
       {error && (
-        <span role="alert" className="text-xs font-medium text-red-600">
+        <span role="alert" className="text-xs font-semibold text-ink">
           {error}
         </span>
       )}

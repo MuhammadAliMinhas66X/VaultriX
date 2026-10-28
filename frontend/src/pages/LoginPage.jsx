@@ -15,6 +15,7 @@ import { login, googleAuth, getLoginStatus, verifyDeviceLogin, verifyMfaLogin } 
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
+import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const DEVICE_CODE_LENGTH = 6;
 
@@ -347,13 +348,15 @@ function LoginPage() {
                   label={t('auth.deviceCodeLabel')}
                 />
                 {mfaCodeError && (
-                  <p role="alert" className="text-xs font-medium text-red-600">
+                  <p role="alert" className="text-xs font-semibold text-ink">
                     {mfaCodeError}
                   </p>
                 )}
               </>
             )}
           </div>
+
+          <ErrorSlot />
 
           <Button type="submit" loading={mfaLoading} loadingLabel={t('auth.verifying')}>
             {t('auth.deviceVerifyButton')}
@@ -404,11 +407,13 @@ function LoginPage() {
               label={t('auth.deviceCodeLabel')}
             />
             {deviceCodeError && (
-              <p role="alert" className="text-xs font-medium text-red-600">
+              <p role="alert" className="text-xs font-semibold text-ink">
                 {deviceCodeError}
               </p>
             )}
           </div>
+
+          <ErrorSlot />
 
           <Button type="submit" loading={deviceLoading} loadingLabel={t('auth.verifying')}>
             {t('auth.deviceVerifyButton')}
@@ -496,6 +501,8 @@ function LoginPage() {
         </div>
 
         <Captcha ref={captchaRef} onToken={setCaptchaToken} />
+
+        <ErrorSlot />
 
         <Button
           type="submit"
