@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
 import Logo from '../Logo.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 
@@ -124,10 +124,10 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compa
 const GROUP_KEY = 'vaultrix.sidebar.group';
 
 function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandSidebar }) {
+  const { t } = useTranslation();
   const Icon = group.icon;
   const ref = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation();
   const [tipRect, setTipRect] = useState(null);
   const [open, setOpen] = useState(() => {
     try {
@@ -147,6 +147,15 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
   };
 
   const headerTone = group.activeChild ? 'text-ink' : 'text-muted hover:text-ink';
+  const arrived = useRef(false);
+
+  useEffect(() => {
+    if (!arrived.current) {
+      arrived.current = true;
+      return;
+    }
+    if (group.activeChild) setAndSave(true);
+  }, [group.activeChild]);
 
   if (collapsed) {
     return (
@@ -171,51 +180,91 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
     );
   }
 
+  const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 36 };
+  const expanded = open;
+
   return (
     <div className="flex flex-col">
-      <button
-        type="button"
-        onClick={() => {
-          const goingTo = group.to && location.pathname !== group.to;
-          if (goingTo) {
-            setAndSave(true);
-            navigate(group.to);
-            onNavigate?.();
-          } else {
-            setAndSave(!open);
-          }
-        }}
-        aria-expanded={open}
-        className={`relative flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none transition-colors hover:bg-black/[0.03] focus-visible:ring-2 focus-visible:ring-accent/40 ${open || group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
+      <div
+        className={`group/header relative flex h-10 w-full items-center rounded-lg transition-colors hover:bg-black/[0.03] ${group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
-        <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted">{group.count ?? group.items.length}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
+        <Link
+          to={group.to}
+          onClick={() => {
+            setAndSave(true);
+            onNavigate?.();
+          }}
+          aria-current={group.activeChild && !activeId.startsWith('stream:') ? 'page' : undefined}
+          className="relative flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg ps-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+            <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
+          <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted">{group.count ?? group.items.length}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setAndSave(!open)}
+          aria-expanded={expanded}
+          aria-label={group.label}
+          className="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg text-muted outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={spring} className="flex">
+            <ChevronDown className="h-4 w-4" />
+          </motion.span>
+        </button>
+      </div>
 
       <AnimatePresence initial={false}>
-        {open && (
+        {expanded && (
           <motion.div
+            key="children"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: instant ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+            transition={instant ? { duration: 0 } : { height: { type: 'spring', stiffness: 360, damping: 38 }, opacity: { duration: 0.16 } }}
             className="overflow-hidden"
           >
-            <div className="relative ms-[1.4rem] mt-1 flex max-h-72 flex-col gap-0.5 overflow-y-auto overflow-x-hidden border-s border-border ps-2 pe-0.5 pb-1">
-              {group.items.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={instant ? false : { opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.18, delay: instant ? 0 : Math.min(index, 8) * 0.03 }}
-                >
-                  <NavItem item={item} active={item.id === activeId} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} compact />
-                </motion.div>
-              ))}
+            <div className="relative ms-[1.65rem] mt-1 pb-1 ps-3">
+              <motion.span
+                aria-hidden="true"
+                initial={instant ? false : { scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ duration: instant ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
+                style={{ originY: 0 }}
+                className="absolute inset-y-1 start-0 w-px rounded-full bg-border"
+              />
+              <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto overflow-x-hidden pe-0.5">
+                {group.items.length === 0 && (
+                  <Link
+                    to={group.to}
+                    onClick={onNavigate}
+                    className="flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] font-medium text-muted outline-none transition-colors hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
+                  >
+                    <Plus className="h-4 w-4" strokeWidth={1.75} />
+                    {t('income.add')}
+                  </Link>
+                )}
+                {group.items.map((item, index) => {
+                  const itemActive = item.id === activeId;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      className="relative"
+                      initial={instant ? false : { opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 34, delay: instant ? 0 : Math.min(index, 8) * 0.04 }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`absolute -start-3 top-1/2 h-px w-3 transition-colors ${itemActive ? 'bg-ink' : 'bg-border'}`}
+                      />
+                      <NavItem item={item} active={itemActive} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} compact />
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}
