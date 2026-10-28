@@ -74,29 +74,6 @@ function DashboardPage() {
     </div>
   );
 
-  const placesCard = summary && summary.places.length > 0 && (
-    <div className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.whereItIs')}</p>
-      <ul className="mt-4 flex flex-col gap-4">
-        {summary.places.map((place) => {
-          const share = summary.net > 0 ? place.value / summary.net : 0;
-          return (
-            <li key={place.key}>
-              <div className="flex items-center gap-3">
-                <BrandMark method={place.method} name={place.name} size="sm" />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{place.method === 'cash' ? t('income.method.cash') : place.name}</span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">{formatMoney(place.value, { decimals: 0, currency })}</span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface">
-                <div className="h-full rounded-full bg-ink/80 transition-all duration-500" style={{ width: `${Math.max(2, Math.round(share * 100))}%` }} />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-
   const latestCard = (
     <div className="rounded-2xl border border-border bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
@@ -152,10 +129,7 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
-              <div className="min-w-0">{latestCard}</div>
-              <div className="flex min-w-0 flex-col gap-5">{placesCard}</div>
-            </div>
+            {latestCard}
           </div>
         )}
       </div>

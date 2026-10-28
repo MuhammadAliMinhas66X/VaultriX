@@ -3,12 +3,13 @@ import { Banknote, Landmark, Smartphone } from 'lucide-react';
 import { findBrand } from '../utils/paymentBrands.js';
 
 const SIZES = {
-  sm: { box: 'h-7 w-7', icon: 'h-4 w-4', img: 'h-5 w-5', text: 'text-[10px]' },
-  md: { box: 'h-11 w-11 sm:h-10 sm:w-10', icon: 'h-5 w-5', img: 'h-8 w-8 sm:h-7 sm:w-7', text: 'text-sm sm:text-xs' },
-  lg: { box: 'h-14 w-14', icon: 'h-6 w-6', img: 'h-10 w-10', text: 'text-base' },
+  sm: { box: 'h-7 w-7', icon: 'h-4 w-4', img: 'h-6 w-6', text: 'text-[10px]' },
+  md: { box: 'h-11 w-11', icon: 'h-5 w-5', img: 'h-9 w-9', text: 'text-sm' },
+  lg: { box: 'h-14 w-14', icon: 'h-6 w-6', img: 'h-11 w-11', text: 'text-base' },
 };
 
-const MIN_LOGO_WIDTH = 16;
+const MIN_REMOTE_WIDTH = 48;
+const SHARP_WIDTH = 96;
 
 const FALLBACK_ICON = { cash: Banknote, bank: Landmark, wallet: Smartphone };
 
@@ -50,6 +51,7 @@ function BrandMark({ method, name, size = 'md' }) {
   const [manifest, setManifest] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [natural, setNatural] = useState(0);
   const dim = SIZES[size];
   const brand = method === 'cash' ? null : findBrand(name);
 
@@ -64,10 +66,12 @@ function BrandMark({ method, name, size = 'md' }) {
   useEffect(() => {
     setAttempt(0);
     setLoaded(false);
+    setNatural(0);
   }, [name, method]);
 
   const sources = useMemo(() => (brand && manifest ? sourcesFor(brand, manifest) : []), [brand, manifest]);
   const current = sources[attempt];
+  const cap = natural > 0 && natural < SHARP_WIDTH ? natural : 0;
   const Fallback = FALLBACK_ICON[method] || Landmark;
   const boxClass = `relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white text-muted ${dim.box}`;
 
@@ -88,13 +92,18 @@ function BrandMark({ method, name, size = 'md' }) {
           alt=""
           referrerPolicy="no-referrer"
           onLoad={(event) => {
-            if (current.startsWith('/logos/') || event.currentTarget.naturalWidth > MIN_LOGO_WIDTH) setLoaded(true);
-            else setAttempt((prev) => prev + 1);
+            const width = event.currentTarget.naturalWidth;
+            if (current.startsWith('/logos/') || width >= MIN_REMOTE_WIDTH) {
+              setNatural(width);
+              setLoaded(true);
+            } else {
+              setAttempt((prev) => prev + 1);
+            }
           }}
           onError={() => setAttempt((prev) => prev + 1)}
           className={`${dim.img} object-contain`}
           decoding="async"
-          style={{ display: loaded ? 'block' : 'none' }}
+          style={{ display: loaded ? 'block' : 'none', ...(cap ? { maxWidth: cap, maxHeight: cap } : null) }}
         />
       )}
     </span>

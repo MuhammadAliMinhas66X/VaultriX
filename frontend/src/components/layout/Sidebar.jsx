@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Logo from '../Logo.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 
@@ -224,7 +224,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
   );
 }
 
-export function SidebarBody({ title, showLogo, items, activeId, footerItems, collapsed, onToggle, onNavigate, onClose, instant }) {
+export function SidebarBody({ title, showLogo, items, activeId, footerItems, collapsed, onToggle, onNavigate, instant }) {
   const { t } = useTranslation();
   const uid = useId();
 
@@ -240,16 +240,6 @@ export function SidebarBody({ title, showLogo, items, activeId, footerItems, col
             className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted outline-none transition hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 lg:flex"
           >
             {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={1.75} />}
-          </button>
-        )}
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('nav.closeMenu')}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted outline-none transition hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 lg:hidden"
-          >
-            <X className="h-[18px] w-[18px]" />
           </button>
         )}
       </div>

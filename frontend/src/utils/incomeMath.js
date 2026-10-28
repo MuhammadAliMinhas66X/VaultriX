@@ -9,7 +9,6 @@ export const summarize = (streams, rates) => {
   let gross = 0;
   let net = 0;
   let excluded = 0;
-  const places = new Map();
 
   streams.forEach((stream) => {
     if (stream.expectedAmount === null) return;
@@ -21,10 +20,6 @@ export const summarize = (streams, rates) => {
     }
     gross += grossBase;
     net += netBase;
-    const key = stream.destinationMethod === 'cash' ? 'cash' : `${stream.destinationMethod}:${stream.destinationName}`;
-    const place = places.get(key) || { key, method: stream.destinationMethod, name: stream.destinationName, value: 0 };
-    place.value += netBase;
-    places.set(key, place);
   });
 
   return {
@@ -32,7 +27,6 @@ export const summarize = (streams, rates) => {
     net,
     cuts: Math.max(0, gross - net),
     excluded,
-    places: [...places.values()].sort((x, y) => y.value - x.value),
   };
 };
 

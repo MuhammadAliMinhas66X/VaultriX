@@ -1,0 +1,5116 @@
+
+    
+        <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/png" href="https://www.jazzcash.com.pk/assets/images/icon_32x32.png">
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <!-- Apple devices -->
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    
+    
+    <link rel="canonical"
+        href="https://www.jazzcash.com.pk/favicon.svg" />
+    <!--Open Graph Meta Tags-->
+    <meta property="og:url" content="https://www.jazzcash.com.pk/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="JazzCash">
+    <meta property="og:description"
+        content="Send and receive money to and from your friends and family through our 80,000 + JazzCash Agents spread across Pakistan or through your own Mobile Account.">
+    <meta property="og:image" content="https://www.jazzcash.com.pk/assets/images/JC-Eng-Black.png">
+    <!--Open Graph Meta Tags-->
+
+    <!--Twitter Meta Tags-->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="jazzcash.com.pk">
+    <meta property="twitter:url" content="https://www.jazzcash.com.pk/">
+    <meta name="twitter:title" content="JazzCash">
+    <meta name="twitter:description"
+        content="Send and receive money to and from your friends and family through our 80,000 + JazzCash Agents spread across Pakistan or through your own Mobile Account.">
+    <meta name="twitter:image" content="https://www.jazzcash.com.pk/assets/images/JC-Eng-Black.png">
+    <!--Twitter Meta Tags-->
+
+    <link rel="stylesheet" href="https://www.jazzcash.com.pk/assets/fonts/stylesheet.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://www.jazzcash.com.pk/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://www.jazzcash.com.pk/assets/css/main-styler.css?v=1793187243">
+    <link rel="stylesheet" href="https://www.jazzcash.com.pk/assets/css/load-package.css?v=1793187243">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.jazzcash.com.pk/assets/css/darkmode-inner.css">
+
+    <!-- Facebook Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }
+            (window, document, 'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+
+        fbq('init', '2077239775863016');
+        fbq('track', 'PageView');
+    </script>
+
+    <noscript>
+        <img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=2077239775863016&ev=PageView&noscript=1" />
+    </noscript>
+    <!-- End Facebook Pixel Code -->
+
+    <!--Google Analytics (UA)-->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-41761552-13"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-41761552-13');
+    </script>
+    <!--Google Analytics (UA)-->
+
+    <!--Google Analytics (GA4)-->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6BX67FJ1XN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-6BX67FJ1XN');
+    </script>
+    <!--Google Analytics (GA4)-->
+
+    <!--Google Tag Manager-->
+    <script data-cfasync="false">
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    '//www.googletagmanager.com/gtm.' + 'js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-PMDFJP');
+    </script>
+    <!--Google Tag Manager-->
+
+    <!--Google Ads Conversion Tracking-->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-10779244468"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'AW-10779244468');
+    </script>
+    <!--Google Ads Conversion Tracking-->
+
+    <!--TikTok Pixel-->
+    <script>
+        !function (w, d, t) {
+            w.TiktokAnalyticsObject = t;
+            var ttq = w[t] = w[t] || [];
+            ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie"];
+            ttq.setAndDefer = function (t, e) {
+                t[e] = function () {
+                    t.push([e].concat(Array.prototype.slice.call(arguments, 0)))
+                }
+            };
+            for (var i = 0; i < ttq.methods.length; i++)
+                ttq.setAndDefer(ttq, ttq.methods[i]);
+
+            ttq.load = function (e, n) {
+                var i = "https://analytics.tiktok.com/i18n/pixel/events.js";
+                ttq._i = ttq._i || {};
+                ttq._i[e] = [];
+                ttq._i[e]._u = i;
+                ttq._t = ttq._t || {};
+                ttq._t[e] = +new Date;
+                ttq._o = ttq._o || {};
+                ttq._o[e] = n || {};
+                n = document.createElement("script");
+                n.type = "text/javascript";
+                n.async = !0;
+                n.src = i + "?sdkid=" + e + "&lib=" + t;
+                e = document.getElementsByTagName("script")[0];
+                e.parentNode.insertBefore(n, e);
+            };
+
+            ttq.load('CCK1CO3C77UE4ETHAUMG');
+            ttq.page();
+        }(window, document, 'ttq');
+    </script>
+    <!--TikTok Pixel-->
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "JazzCash",
+      "url": "https://www.jazzcash.com.pk/",
+      "logo": "https://www.jazzcash.com.pk/assets/images/JC-Eng-Black.png",
+      "sameAs": [
+        "https://www.facebook.com/JazzCash",
+        "https://x.com/JazzCash",
+        "https://www.instagram.com/jazzcashpk/",
+        "https://www.linkedin.com/company/jazzcash/",
+        "https://www.youtube.com/@JazzCash"
+      ]
+    }
+    </script>
+</head>
+
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PMDFJP" height="0" width="0"
+            style="display:none;visibility:hidden" aria-hidden="true"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+<style>
+    :root {
+
+        --body-bg: #ffffff;
+        --body-bg-dark: #000;
+
+
+    }
+
+    * {
+        transition:
+            background-color .3s,
+            color .3s,
+            border-color .3s;
+    }
+
+    body {
+        background: var(--body-bg);
+    }
+
+
+    .personal-drop-tp.bg-grey {
+        background-color: var(--color-white);
+    }
+
+    .personal-drop-tp.bg-grey-per {
+        background-color: var(--color-black);
+    }
+
+    /*Menu Personal-Business Btns Light Mode*/
+    .personal-drop-tp {
+        background: #fff;
+        transition: .3s ease;
+    }
+
+    .personal-drop-tp.inactive-menu {
+        background: #f2f2f2;
+    }
+
+    .personal-drop-tp>a {
+        color: #000;
+        text-decoration: none;
+        transition: .3s ease;
+    }
+
+    .personal-drop-tp>a.active-main-menu {
+        color: #000;
+        font-weight: 600;
+    }
+
+    /* Optional Hover */
+
+    .personal-drop-tp:hover {
+        background: #ececec;
+    }
+    .roles-list {
+    padding-right: 0 !important;
+}
+
+    @media (min-width:991px) and (max-width: 1024px) {
+        .desktop-search-btn {
+
+            padding: 10px 10px;
+            max-width: 75px;
+            min-width: 50px !important;
+        }
+
+        .desktop-search-btn span {
+            font-size: 11px;
+
+        }
+
+.testimonial-card {
+        min-height: 275px !important;
+    }
+
+    }
+@media (max-width: 991px) {
+    .custom-textarea {
+        line-height: 26px !important;
+
+    }
+        .careers-hero-gallery {
+        margin-top: 90px !important;
+    }
+    .testimonial-card {
+        min-height: 382px !important;
+    }
+    .roles-list {
+    padding-right: 0 !important;
+}
+}
+    /*Menu Personal-Business Btns Light Mode*/
+
+
+
+    html.dark-mode {
+        body {
+            background: var(--body-bg-dark);
+        }
+
+        .menu-box {
+            background-color: #464646;
+            border-color: #464646 !important;
+        }
+
+        .right-nav ul li a.active-right-nav-item,
+        .mobile-menu-bottom ul li a.active-right-nav-item {
+            color: var(--color-red) !important;
+        }
+
+        .menu-box a:hover:not(.menu-box a.active) {
+            background-color: transparent;
+        }
+
+        .tab-nav-bx .menu-box {
+            background-color: #fff !important;
+            border-color: #fff !important;
+        }
+
+        .careers-btn:hover {
+            background: linear-gradient(180deg, #C3090C 0%, #D06A2E 100%);
+        }
+
+        .timeline-item:not(:last-child)::after {
+            background-color: var(--color-white);
+
+        }
+
+        .corporate-profile {
+            background: radial-gradient(ellipse at center, #3a3a3a, #242424);
+            /* background: linear-gradient(180deg, #464646 0%, #000 100%); */
+        }
+
+        #jazzcash-women-account .menu-box {
+            background: transparent !important;
+        }
+
+        #money-transfer .menu-box {
+            background: transparent !important;
+        }
+
+        .request-a-quote span {
+            color: var(--color-white) !important;
+        }
+
+        .cp-heading .txt-black {
+            color: var(--color-white) !important;
+        }
+
+        .cp-intro-txt {
+            color: var(--color-white);
+
+        }
+
+        .cp-intro-txt a {
+            color: var(--color-white);
+        }
+
+        .cp-card {
+            background: var(--color-black) !important;
+        }
+
+        .cp-card-right {
+            background: var(--color-black) !important;
+        }
+
+        .cp-card-title {
+            color: var(--color-white);
+        }
+
+        .cp-card p {
+            color: var(--color-white);
+
+        }
+
+        .cp-enablers-list li {
+            color: var(--color-white);
+        }
+
+        .board-img {
+            background-color: transparent;
+        }
+
+        .testimonials-section {
+            background: radial-gradient(ellipse at center, #3a3a3a, #242424);
+        }
+
+        /* .menu-box .personal-drop-tp {
+            background-color: #fff;
+        } */
+
+        .active-main-menu {
+            color: var(--color-white) !important;
+        }
+
+        .menu-box .personal-drop-tp:hover {
+            background-color: var(--color-black) !important;
+            color: var(--color-white);
+        }
+
+        .menu-box .personal-drop-tp:hover>a {
+            color: var(--color-white) !important;
+        }
+
+        .right-nav ul li a {
+            color: var(--color-white) !important;
+        }
+
+        .right-nav ul li a:hover {
+            color: var(--color-red) !important;
+        }
+
+        .desktop-search-btn {
+            background-color: #fff;
+            color: var(--color-black);
+        }
+
+        .desktop-search-btn span {
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+
+        .desktop-search-btn img {
+            filter: brightness(100%) invert(0);
+
+        }
+
+        .lft-lv1-nav {
+            background: #464646;
+        }
+
+        .lft-lv1-nav ul li a {
+            color: var(--color-white);
+        }
+
+        .lft-lv1-nav ul li a:hover {
+            background-color: var(--color-black) !important;
+            color: var(--color-red) !important;
+        }
+
+        .rgt-lv2-nav {
+            background-color: var(--color-black);
+        }
+
+        .drp-cont-bx {
+            background: var(--color-black);
+        }
+
+        .rgt-lv2-nav ul li a {
+            color: var(--color-white);
+        }
+
+        .rgt-lv2-nav ul li a:hover {
+            color: var(--color-red);
+        }
+
+        .menu-box:has(.personal-drop-tp:hover) .personal-drop-tp:not(:hover) {
+            background-color: #464646 !important;
+            color: #fff !important;
+        }
+
+        .menu-box:has(.personal-drop-tp:hover) .personal-drop-tp:not(:hover)>a {
+            color: var(--color-white) !important;
+        }
+
+        .section-heading {
+            color: var(--color-white);
+        }
+
+
+        .cards-section .section-heading .txt-red {
+            color: #FFDE01 !important;
+        }
+
+        .get-debit-card-section p {
+            color: #fff;
+        }
+
+        .get-debit-card-section .black-button {
+            color: var(--color-black);
+            background-color: var(--color-white);
+        }
+
+        .get-debit-card-section .black-button:hover {
+            background-color: var(--color-red);
+            color: var(--color-white);
+        }
+
+        .send-receive-section p {
+            color: var(--color-white);
+        }
+
+        .merchant-num {
+            color: #fff;
+        }
+
+        .merchant-btn {
+            color: var(--color-white);
+
+        }
+
+        footer {
+            background-color: #212529;
+        }
+
+        .other-links a,
+        .contacts-bx a {
+            color: #FFFFFF !important;
+        }
+
+
+        footer .ftr-nav-bx ul li a {
+            color: #fff;
+        }
+
+        .copyrights-bx {
+            color: #fff;
+        }
+
+        .personal-drop-tp>a {
+            color: #fff;
+        }
+
+        /* .menu-box .personal-drop-tp{ background-color: #000 !important; color: #fff;} */
+
+        /* .personal-drop-tp.inactive-menu {
+            background: transparent !important;
+        } */
+
+        .search-overlay {
+            background-color: #464646;
+        }
+
+        .search-title {
+            color: #fff;
+
+        }
+
+        .popular-title {
+
+            color: #fff;
+
+        }
+
+        .send-receive-section .swiper-button-next,
+        .swiper-button-prev {
+            background-color: var(--color-white) !important;
+        }
+
+        /* .desktop-search-btn:hover, #mainHeader.no-shadow-border .desktop-search-btn span{ color:var(--color-white) ;}
+        .desktop-search-btn:hover a span{color:var(--color-white) !important} */
+        .close-search-btn {
+            color: #fff;
+        }
+
+        .payoneer-funds-bx {
+            background-image: url(../images/mobile-packages-postpaid-bg-black.png);
+
+        }
+
+        .payoneer-funds-bx h3 {
+            color: var(--color-white);
+
+        }
+
+        .payoneer-funds-bx ul li {
+            color: var(--color-white);
+
+        }
+
+        .tabs-heading span,
+        .red-h3 span {
+            color: var(--color-white) !important;
+        }
+
+        .partner-card {
+            background-color: #000;
+
+        }
+
+        .partner-label {
+            color: #fff;
+        }
+
+        /*Inner Page*/
+        .tabs li {
+            color: #fff;
+            transition: all 0.5s;
+        }
+
+        .tabs li:hover {
+            background: var(--color-red);
+        }
+
+        .col-sm-9.col-md-9.para-txt-section p {
+            color: var(--color-white);
+        }
+
+        .faqs .faq p {
+            color: var(--color-white);
+        }
+
+        /* .menu-box a:hover:not(.menu-box a.active) {
+    background-color: var(--color-light-grey);
+} */
+
+        /* .menu-box a:hover:not(.menu-box a.active) {
+    background-color: transparent !important;
+} */
+        .logoSwiper .comm-logo {
+
+            background: linear-gradient(to bottom, #ffffff 0%, #fff5f5 50%, #ffeaea 100%);
+        }
+
+        .menu-box .business-drop {
+            color: var(--color-white);
+        }
+
+        .mobile-packages .menu-box .personal-drop {
+            color: var(--color-white);
+
+        }
+
+        .sub-heading h4 {
+            color: var(--color-white);
+        }
+
+        .sub-heading p {
+            color: var(--color-white);
+        }
+
+        .contact-form .custom-input {
+            color: var(--color-white);
+        }
+
+        .custom-textarea {
+            color: var(--color-white);
+        }
+
+        #category+.select2-container .select2-selection__rendered,
+        #city+.select2-container .select2-selection__rendered {
+            color: var(--color-white) !important;
+        }
+
+        .comm-logo-bx .logoSwiper .swiper-button-next {
+            background-color: var(--color-white) !important;
+        }
+
+        .terms-conditions-plain h3 {
+            color: var(--color-red);
+        }
+
+        .terms-conditions-plain ul li {
+            color: var(--color-white);
+        }
+
+        .faq li {
+            color: var(--color-white);
+        }
+
+        .faq {
+            color: var(--color-white);
+        }
+
+        .real-people-section p {
+            color: var(--color-white);
+        }
+
+        .custom-insurance-table {
+            background-color: var(--color-black) !important;
+        }
+
+        .custom-insurance-table td {
+            color: var(--color-white) !important;
+        }
+
+        .custom-insurance-table tr.table-total-row td {
+            color: var(--color-black) !important;
+        }
+
+        .disclaimer li {
+            color: var(--color-white);
+        }
+
+        .disclaimer p {
+            color: var(--color-white);
+        }
+
+        .request-quote-form .custom-input,
+        .request-quote-form .custom-select {
+            color: var(--color-white);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #fff !important;
+        }
+
+        .careers-hero-heading {
+            color: var(--color-white) !important;
+
+        }
+
+        .careers-hero-subheading {
+            color: var(--color-white) !important;
+        }
+
+        .careers-hero-txt {
+            color: var(--color-white);
+
+        }
+
+        .zigzag-txt {
+            color: var(--color-white);
+        }
+
+        .uniqueness-subtxt {
+            color: var(--color-white);
+
+        }
+
+        .testimonials-section .section-heading {
+            color: var(--color-white);
+        }
+
+        .testimonial-card {
+            background-color: var(--body-bg-dark);
+        }
+
+        .testimonial-role {
+            color: var(--color-white);
+
+        }
+
+        .testimonial-quote {
+            color: var(--color-white);
+
+        }
+
+        .roles-filter-input {
+            color: var(--color-white);
+            background-color: var(--color-black);
+            border: 1px solid #fff;
+
+        }
+
+        .roles-filter-select {
+            border: 1px solid #fff;
+            color: var(--color-white);
+            background-color: var(--color-black);
+
+        }
+
+        .roles-select-wrap::after {
+            filter: brightness(0) invert(1);
+        }
+
+        .role-meta {
+            color: var(--color-white);
+        }
+
+        .help-heading {
+            color: var(--color-white);
+        }
+
+        .job-content-html p {
+            color: var(--color-white);
+        }
+
+        .job-content-html p>strong {
+            color: var(--color-white);
+        }
+
+        .job-content-html .black-heading,
+        .job-content-html h1,
+        .job-content-html h2,
+        .job-content-html h3,
+        .job-content-html h5,
+        .job-content-html h6 {
+            color: var(--color-white) !important;
+        }
+
+        .job-does .job-content-html li {
+            color: var(--color-white) !important;
+        }
+
+        .job-content-html li {
+            color: var(--color-white);
+        }
+
+        .job-red-heading .red-heading {
+            color: var(--color-red);
+        }
+
+        .gradient-icon-txt-bx {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .logoSwiper .comm-logo {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+            /* background: linear-gradient(to bottom, #ffffff 0%, #fff5f5 50%, #ffeaea 100%); */
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(180deg, #C3090C 0%, #D06A2E 100%);
+        }
+
+        .job-info-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .helpline-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .channel-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .regulatory-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .office-details-box {
+            background: linear-gradient(180deg, #ffffff 0%, #f2f2f2 60%, #e6e6e6 100%);
+        }
+
+        .regulatory-wrapper {
+            background: black;
+        }
+
+        .contact-help-section p {
+            color: var(--color-white);
+        }
+
+        .custom-radio-label:hover {
+            color: #fff;
+        }
+
+        .tc-section .tc-content p,
+        li {
+            color: var(--color-white);
+        }
+
+        .tc-section .tc-content {
+            color: white;
+        }
+
+        .tc-content .custom-insurance-table tr:last-child td {
+            border-right: 1px solid #D9D8D8 !important;
+            border-bottom: 1px solid #D9D8D8 !important;
+        }
+
+        .tc-content .custom-insurance-table td:last-child {
+            border-right: 1px solid #D9D8D8 !important;
+            border-bottom: 1px solid #D9D8D8 !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+    color: #fff !important;
+    background-color: #000 !important;
+}
+.soc-content p {
+    color: var(--color-white) !important;
+
+}
+
+        /*Inner Page*/
+
+
+        @media (min-width:991px) and (max-width: 1024px) {
+            .desktop-search-btn {
+
+                padding: 10px 10px;
+                max-width: 75px;
+                min-width: 50px !important;
+            }
+
+            .desktop-search-btn span {
+                font-size: 11px;
+
+            }
+        }
+
+    }
+
+
+
+
+
+
+    /* ============================
+   DARK MODE
+============================ */
+
+    .dark-mode .personal-drop-tp {
+        background: #1d1d1d;
+    }
+
+    .dark-mode .personal-drop-tp.inactive-menu {
+        background: #353535;
+    }
+
+    .dark-mode .personal-drop-tp>a {
+        color: #fff;
+    }
+
+    .dark-mode .personal-drop-tp>a.active-main-menu {
+        color: #fff;
+    }
+
+    .dark-mode .personal-drop-tp:hover {
+        background: #444;
+    }
+
+    /* Arrow Icon (optional) */
+
+    .dark-mode .personal-drop-tp span img {
+        filter: brightness(0) invert(1);
+    }
+
+    .dark-mode .personal-drop-tp.inactive-menu {
+        background: transparent;
+    }
+
+
+
+    /* ============================
+   DARK MODE
+============================ */
+
+    @media (max-width: 991px) {
+
+        .themeToggle.theme-btn img.theme-image {
+            min-height: 22px;
+        }
+
+        html.dark-mode {
+            .drk-white {
+                color: var(--color-white);
+            }
+
+            a.drk-white img {
+                filter: brightness(0) invert(1);
+            }
+
+            .sendReceiveSwiper .swiper-button-next {
+                background-color: white;
+            }
+
+            .sendReceiveSwiper .swiper-button-prev {
+                background-color: white;
+            }
+
+            .swiper-button-next.testimonials-next-business {
+                background: white;
+            }
+
+            .swiper-button-prev.testimonials-prev-business {
+                background: white;
+            }
+
+            footer .accordion-header {
+                color: #fff;
+            }
+
+            footer .accordion-content ul li a {
+                color: #fff;
+            }
+
+            .menu-level {
+                background: #000;
+
+            }
+
+            .mob-show .menu-box .active-main-menu {
+                background-color: var(--color-black) !important;
+            }
+
+            .menu-box .business-drop {
+                color: var(--color-white);
+            }
+
+            .mobile-menu-bx ul li a {
+                color: var(--color-white);
+            }
+
+            .back-btn {
+                color: #fff;
+            }
+
+            .level-1 .mobile-menu-bottom {
+                background: var(--color-black);
+            }
+
+            a.personal-drop {
+                color: var(--color-white);
+            }
+
+            .menu-box a:hover:not(.menu-box a.active) {
+                background-color: black !important;
+            }
+                
+        }
+
+
+    }
+</style>
+<header id="mainHeader">
+    
+    
+    
+    
+    <!-- <div id="promoTicker" class="promo-ticker-container">
+                        <div class="container">
+                            <div class="promo-ticker-bar">
+                                <div class="promo-ticker-marquee-box"><div class="promo-ticker-marquee-text">Lorem Ipsum is simply dummy text of the printing typesetting Lorem Ipsum has been the industry's standard</div></div>
+                                
+                                    <div class="promo-ticker-actions">
+                                        <a href="#" class="promo-ticker-btn" target="_self">Learn More</a>
+                                        <span class="promo-ticker-separator"></span>
+                                        <button type="button" class="promo-ticker-close" onclick="closePromoTicker()" aria-label="Close Ticker">&times;</button>
+                                    </div>
+                                
+                            </div>
+                        </div>
+                    </div> -->
+    
+    
+    
+    
+    <div class="container desk-show">
+        <div class="row">
+            <div class="col-sm-1 col-md-1 col-xl-1">
+
+
+                
+                <figure><a href="https://www.jazzcash.com.pk/">
+                        <!-- <img src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg" alt="JazzCash" /> -->
+                        <img class="theme-image" src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                            data-light="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                            data-dark="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80-dark.svg" alt="Logo">
+
+                    </a>
+                </figure>
+                
+
+            </div>
+            <div class="col-sm-6 col-md-6 col-xl-6">
+                <div class="menu-box">
+
+                    <div class="personal-drop-tp ">
+                        <a class="active-main-menu" href="https://www.jazzcash.com.pk/">
+                            PERSONAL
+                        </a>
+
+                        <span>
+                            <img src="https://www.jazzcash.com.pk/assets/images/arrow-down.png" alt="Arrow Down">
+                        </span>
+
+                        <div class="drop-down">
+                            <div class="drp-cont-bx hover-wrapper js-hover">
+                                <style>
+	.active-menu-item{
+		color: var(--color-red) !important;
+	}
+</style>
+<div class="lft-lv1-nav"><ul><li class="trigger"><a class="" 
+                    href="https://www.jazzcash.com.pk/store-money/nextgen-account">STORE MONEY<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-2"><a class="" 
+                    href="https://www.jazzcash.com.pk/move-money/corporate-payment">MOVE MONEY<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-3"><a class="" 
+                    href="https://www.jazzcash.com.pk/grow-money/savings-plan">GROW MONEY<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-4"><a class="" 
+                    href="https://www.jazzcash.com.pk/borrow-money/readycash-loan">Borrow Money<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-5"><a class="" 
+                    href="https://www.jazzcash.com.pk/spend-money/marketplace">Spend Money<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-6"><a class="" 
+                    href="https://www.jazzcash.com.pk/vibes/gift-hub">Vibes<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li></ul></div><div class="rgt-lv2-nav hover-div"><ul><h2 class="d-nav-heading ">STORE MONEY</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/nextgen-account">NextGen Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/create-account">Create Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/freelance-digital-account">Freelance Digital Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/digital-account">Digital Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/asaan-digital-remittance-account">Asaan Digital Remittance Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/asaan-digital-account">Asaan Digital Account</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/invite">Invite</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/store-money/jazzcash-women-account">JazzCash Women Account</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-2"><ul><h2 class="d-nav-heading ">MOVE MONEY</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/corporate-payment">Corporate Payments</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/yeylo">Yeylo</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/tap-pay">Tap</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/load-packages">Loads & Packages</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/govt-payment">Govt. Payment</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/international-remittance">International Remittance</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/zakat-donations">Zakat & Donations</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/cards">Debit Cards</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/bill-payments">Bill Payment</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/move-money/money-transfer">Money Transfer</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-3"><ul><h2 class="d-nav-heading ">GROW MONEY</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/grow-money/savings-plan">Savings Plan</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/grow-money/salaam-investment">Salaam Investment</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/grow-money/insurance">Insurance</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/grow-money/k-trade">K-Trade</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/grow-money/market-treasury-bills">MARKET TREASURY BILLS</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-4"><ul><h2 class="d-nav-heading ">Borrow Money</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/borrow-money/readycash-loan">ReadyCash loan</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/borrow-money/ready-load">ReadyLoad</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-5"><ul><h2 class="d-nav-heading ">Spend Money</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/spend-money/marketplace">Marketplace</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-6"><ul><h2 class="d-nav-heading ">Vibes</h2><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/vibes/gift-hub">GiftHub</a>
+                      </li><li>
+                        <a class="" 
+                           href="https://www.jazzcash.com.pk/vibes/reward-hub">Reward Hub</a>
+                      </li></ul></div>                            </div>
+                        </div>
+                    </div>
+
+                    <div class="personal-drop-tp inactive-menu">
+                        <a class="" href="https://www.jazzcash.com.pk/business">
+                            BUSINESS
+                        </a>
+
+                        <span>
+                            <img src="https://www.jazzcash.com.pk/assets/images/arrow-down.png" alt="Arrow Down">
+                        </span>
+
+                        <div class="drop-down">
+                            <div class="drp-cont-bx hover-wrapper js-hover">
+                                <style>
+	.active-menu-item{
+		color: var(--color-red) !important;
+	}
+</style>
+
+<div class="lft-lv1-nav"><ul><li class="trigger"><a class="" 
+                    href="https://www.jazzcash.com.pk/business/account/register-your-account">Account<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-2"><a class="" 
+                    href="https://www.jazzcash.com.pk/business/accept-payments/qr-raast-payments">Accept Payments<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-3"><a class="" 
+                    href="https://www.jazzcash.com.pk/business/business-solutions/supplier-payments">Business Solutions<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li><li class="trigger-4"><a class="" 
+                    href="https://www.jazzcash.com.pk/business/ad-tech-solutions/adtech">Ad Tech Solutions<span><img src="https://www.jazzcash.com.pk/assets/images/arrow-right.png" alt="Arrow Right"></span>
+                  </a></li></ul></div><div class="rgt-lv2-nav hover-div"><ul><h2 class="d-nav-heading ">Account</h2><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/account/register-your-account">Register your account</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/account/basic-services">Basic Services</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/account/merchant-loyalty">Merchant Loyalty</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-2"><ul><h2 class="d-nav-heading ">Accept Payments</h2><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/accept-payments/qr-raast-payments">QR / Raast Payments</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/accept-payments/payment-gateway">Payment Gateway</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/accept-payments/tap-on-phone">Tap on Phone</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-3"><ul><h2 class="d-nav-heading ">Business Solutions</h2><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/supplier-payments">Supplier Payments</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/salary-disbursement">Salary Disbursement</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/merchant-lending">Merchant Lending</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/welfare-disbursements">Welfare Disbursements</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/loans">Loans</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/business-solutions/digital-dukaan">Digital Dukaan</a>
+                      </li></ul></div><div class="rgt-lv2-nav hover-div-4"><ul><h2 class="d-nav-heading ">Ad Tech Solutions</h2><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/ad-tech-solutions/adtech">Adtech</a>
+                      </li><li>
+                        <a class=""
+                           href="https://www.jazzcash.com.pk/business/ad-tech-solutions/request-a-quote-for-ad-tech-solutions">Request a quote for Ad Tech Solutions</a>
+                      </li></ul></div>                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-sm-2 col-md-3 col-xl-3">
+                <div class="right-nav">
+                    <ul>
+                        <li><a href="https://www.jazzcash.com.pk/about-us" >About Us</a></li>
+                        <li><a href="https://www.jazzcash.com.pk/careers" >Careers</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-sm-3 col-md-2 col-xl-2">
+                <div class="right-header-box">
+                    <ul>
+                        <!-- <li class="d-none"> <a href="#"> <img src="https://www.jazzcash.com.pk/assets/svgs/AAA.svg" /> </a> </li>
+                        <li class="d-none"><a href="#"><img src="https://www.jazzcash.com.pk/assets/svgs/vs.svg" /></a></li> -->
+                        <li class="d-block">
+                            <a href="#" class="themeToggle theme-btn">
+                                <img class="theme-image" src="https://www.jazzcash.com.pk/assets/svgs/sun.svg"
+                                    data-light="https://www.jazzcash.com.pk/assets/svgs/sun.svg"
+                                    data-dark="https://www.jazzcash.com.pk/assets/svgs/moon-dark.svg" alt="">
+
+
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" onclick="toggleSearch()" class="desktop-search-btn">
+                                <span>Search</span>
+                                <img src="https://www.jazzcash.com.pk/assets/svgs/search-mag.svg" alt="Search" />
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container mob-show">
+        <div class="row">
+            <div class="col-3">
+                
+                <figure><a href="https://www.jazzcash.com.pk/"><img class="theme-image img-fluid"
+                            src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                            data-light="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                            data-dark="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80-dark.svg" alt=""></a></figure>
+                
+            </div>
+            <div class="col-9">
+                <div class="right-header-box">
+                    <ul>
+                        <!-- <li class="d-none"> <a href="#"> <img src="https://www.jazzcash.com.pk/assets/svgs/AAA.svg" /> </a> </li>
+                        <li class="d-none"><a href="#"><img src="https://www.jazzcash.com.pk/assets/svgs/vs.svg" /></a></li> -->
+                        <li>
+                            <a href="#" class="themeToggle theme-btn">
+                                <img class="theme-image" src="https://www.jazzcash.com.pk/assets/svgs/sun.svg"
+                                    data-light="https://www.jazzcash.com.pk/assets/svgs/sun.svg"
+                                    data-dark="https://www.jazzcash.com.pk/assets/svgs/moon-dark.svg" alt="">
+
+
+                            </a>
+                        </li>
+                        <li><a class="drk-white" href="javascript:void(0)" onclick="toggleSearch()"><img
+                                    src="https://www.jazzcash.com.pk/assets/svgs/search-hd.svg" /></a></li>
+                        <li><span class="drk-white" style="font-size:30px;cursor:pointer"
+                                onClick="openMobileNav()">&#9776;</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!--Mobile Menu-->
+<div id="myNav" class="overlay mob-show">
+    <!-- MAIN MENU -->
+    <div class="menu-level level-1"> <a href="javascript:void(0)" class="closebtn" onClick="closeNav()">&times;</a>
+        <div class="overlay-content">
+            <div class="menu-box">
+                <a class="personal-drop active-main-menu" href="javascript:void(0)"
+                    onClick="switchMobileMenu('personal')">PERSONAL</a>
+                <a class="business-drop " href="javascript:void(0)"
+                    onClick="switchMobileMenu('business')">BUSINESS</a>
+            </div>
+            <div class="mobile-menu-bx mob-menu-section" data-menu-type="personal" >
+                <ul><li><a href="https://www.jazzcash.com.pk/store-money/nextgen-account">STORE MONEY <span class="arrow" data-menu="personal-store-money"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/move-money/corporate-payment">MOVE MONEY <span class="arrow" data-menu="personal-move-money"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/grow-money/savings-plan">GROW MONEY <span class="arrow" data-menu="personal-grow-money"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/borrow-money/readycash-loan">BORROW MONEY <span class="arrow" data-menu="personal-borrow-money"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/spend-money/marketplace">SPEND MONEY <span class="arrow" data-menu="personal-spend-money"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/vibes/gift-hub">VIBES <span class="arrow" data-menu="personal-vibes"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li></ul>            </div>
+            <div class="mobile-menu-bx mob-menu-section" data-menu-type="business" style="display:none" >
+                <ul><li><a href="https://www.jazzcash.com.pk/business/account/register-your-account">ACCOUNT <span class="arrow" data-menu="business-account"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/business/accept-payments/qr-raast-payments">ACCEPT PAYMENTS <span class="arrow" data-menu="business-accept-payments"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/business/business-solutions/supplier-payments">BUSINESS SOLUTIONS <span class="arrow" data-menu="business-business-solutions"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li><li><a href="https://www.jazzcash.com.pk/business/ad-tech-solutions/adtech">AD TECH SOLUTIONS <span class="arrow" data-menu="business-ad-tech-solutions"><img src="https://www.jazzcash.com.pk/assets/svgs/right-arrow-nav.svg" alt="Arrow Right" /></span></a></li></ul>            </div>
+        </div>
+        <!-- Bottom menu links -->
+        <!-- Personal Bottom Menu -->
+        <div class="mobile-menu-bx mobile-menu-bottom mob-menu-section bottom-menu-personal" data-menu-type="personal">
+            <ul>
+                <li><a href="https://www.jazzcash.com.pk/">Home</a></li>
+                <li><a href="https://www.jazzcash.com.pk/about-us" >About
+                        Us</a></li>
+                <li><a href="https://www.jazzcash.com.pk/careers" >Careers</a></li>
+            </ul>
+        </div>
+        <!-- Business Bottom Menu -->
+        <div class="mobile-menu-bx mobile-menu-bottom mob-menu-section bottom-menu-business" data-menu-type="business">
+            <ul>
+                <li><a href="https://www.jazzcash.com.pk/business">Home</a></li>
+                <li><a href="https://www.jazzcash.com.pk/about-us" >About
+                        Us</a></li>
+                <li><a href="https://www.jazzcash.com.pk/careers" >Careers</a></li>
+            </ul>
+        </div>
+    </div>
+    <!-- SUB MENU -->
+    <div class="menu-level level-2">
+        <div class="submenu-header">
+            <span class="back-btn" onClick="closeSubMenu()">
+                <span><img src="https://www.jazzcash.com.pk/assets/svgs/lft-arrow-nav.svg" class="arrow-left" alt="Arrow Left" /></span>
+                Back
+            </span>
+            <span class="closebtn" onClick="closeNav()">&times;</span>
+        </div>
+        <div class="mobile-menu-bx mob-menu-section" data-menu-type="personal" >
+            <ul class="submenu" id="personal-store-money"><li><a class="color-red" href="https://www.jazzcash.com.pk/store-money/nextgen-account">NextGen Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/create-account">Create Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/freelance-digital-account">Freelance Digital Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/digital-account">Digital Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/asaan-digital-remittance-account">Asaan Digital Remittance Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/asaan-digital-account">Asaan Digital Account</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/invite">Invite</a></li><li><a class="" href="https://www.jazzcash.com.pk/store-money/jazzcash-women-account">JazzCash Women Account</a></li></ul><ul class="submenu" id="personal-move-money"><li><a class="color-red" href="https://www.jazzcash.com.pk/move-money/corporate-payment">Corporate Payments</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/yeylo">Yeylo</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/tap-pay">Tap</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/load-packages">Loads & Packages</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/govt-payment">Govt. Payment</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/international-remittance">International Remittance</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/zakat-donations">Zakat & Donations</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/cards">Debit Cards</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/bill-payments">Bill Payment</a></li><li><a class="" href="https://www.jazzcash.com.pk/move-money/money-transfer">Money Transfer</a></li></ul><ul class="submenu" id="personal-grow-money"><li><a class="color-red" href="https://www.jazzcash.com.pk/grow-money/savings-plan">Savings Plan</a></li><li><a class="" href="https://www.jazzcash.com.pk/grow-money/salaam-investment">Salaam Investment</a></li><li><a class="" href="https://www.jazzcash.com.pk/grow-money/insurance">Insurance</a></li><li><a class="" href="https://www.jazzcash.com.pk/grow-money/k-trade">K-Trade</a></li><li><a class="" href="https://www.jazzcash.com.pk/grow-money/market-treasury-bills">MARKET TREASURY BILLS</a></li></ul><ul class="submenu" id="personal-borrow-money"><li><a class="color-red" href="https://www.jazzcash.com.pk/borrow-money/readycash-loan">ReadyCash loan</a></li><li><a class="" href="https://www.jazzcash.com.pk/borrow-money/ready-load">ReadyLoad</a></li></ul><ul class="submenu" id="personal-spend-money"><li><a class="color-red" href="https://www.jazzcash.com.pk/spend-money/marketplace">Marketplace</a></li></ul><ul class="submenu" id="personal-vibes"><li><a class="color-red" href="https://www.jazzcash.com.pk/vibes/gift-hub">GiftHub</a></li><li><a class="" href="https://www.jazzcash.com.pk/vibes/reward-hub">Reward Hub</a></li></ul>        </div>
+        <div class="mobile-menu-bx mob-menu-section" data-menu-type="business" style="display:none" >
+            <ul class="submenu" id="business-account"><li><a class="color-red" href="https://www.jazzcash.com.pk/business/account/register-your-account">Register your account</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/account/basic-services">Basic Services</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/account/merchant-loyalty">Merchant Loyalty</a></li></ul><ul class="submenu" id="business-accept-payments"><li><a class="color-red" href="https://www.jazzcash.com.pk/business/accept-payments/qr-raast-payments">QR / Raast Payments</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/accept-payments/payment-gateway">Payment Gateway</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/accept-payments/tap-on-phone">Tap on Phone</a></li></ul><ul class="submenu" id="business-business-solutions"><li><a class="color-red" href="https://www.jazzcash.com.pk/business/business-solutions/supplier-payments">Supplier Payments</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/business-solutions/salary-disbursement">Salary Disbursement</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/business-solutions/merchant-lending">Merchant Lending</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/business-solutions/welfare-disbursements">Welfare Disbursements</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/business-solutions/loans">Loans</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/business-solutions/digital-dukaan">Digital Dukaan</a></li></ul><ul class="submenu" id="business-ad-tech-solutions"><li><a class="color-red" href="https://www.jazzcash.com.pk/business/ad-tech-solutions/adtech">Adtech</a></li><li><a class="" href="https://www.jazzcash.com.pk/business/ad-tech-solutions/request-a-quote-for-ad-tech-solutions">Request a quote for Ad Tech Solutions</a></li></ul>        </div>
+    </div>
+</div>
+<!--Mobile Menu-->
+<!-- search  -->
+<div id="fullscreenSearch" class="search-overlay">
+    <span class="close-search-btn" onclick="closeSearch()">&times;</span>
+
+    <div class="search-overlay-content mt-5">
+        <div id="inlineVoicePanel" class="inline-voice-container">
+            <div class="voice-pulse-ring"></div>
+            <div class="voice-pulse-ring"></div>
+            <div class="voice-pulse-ring"></div>
+            <div class="voice-mic-circle" onclick="toggleVoiceSearch()">
+                <svg class="mic-svg-icon" viewBox="0 0 24 24">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 19v3M8 22h8" />
+                </svg>
+            </div>
+        </div>
+
+        <h2 class="search-title" id="searchMainTitle">
+            HOW CAN <span class="txt-red">WE HELP</span> YOU TODAY?
+        </h2>
+
+        <div class="search-bar-container" id="searchBarWrapper">
+            <input type="text" placeholder="SEARCH" class="search-input" id="mainSearchInput"
+                oninput="handleSearchInput(this.value)" autocomplete="off" />
+            <div class="btn-grouping gap-3">
+                <button type="button" class="clear-search-btn" id="clearSearchInputBtn" onclick="clearSearchField()">
+                    <i class="fa-solid fa-x"></i>
+                </button>
+
+                <button class="voice-search-btn" onclick="toggleVoiceSearch()">
+                    <svg class="mic-svg-icon" viewBox="0 0 24 24">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 19v3M8 22h8" />
+                    </svg>
+                </button>
+                <button class="search-submit-btn"><i class="fa fa-search"></i></button>
+            </div>
+            <div class="search-suggestions-box" id="suggestionsBox"></div>
+        </div>
+
+        <div class="popular-searches-box">
+            <p class="popular-title">Popular searches</p>
+            <div class="tags-container">
+                
+                <a href="https://www.jazzcash.com.pk/careers" class="search-tag" target="_self"><i class="fa fa-search"></i> JazzCash Careers</a>
+                
+                
+                <a href="https://www.jazzcash.com.pk/agent-locator" class="search-tag" target="_self"><i class="fa fa-search"></i> Agent & Merchant Locator</a>
+                
+                
+                <a href="https://www.jazzcash.com.pk/about-us" class="search-tag" target="_self"><i class="fa fa-search"></i> About us</a>
+                
+                
+                <a href="https://www.jazzcash.com.pk/news" class="search-tag" target="_self"><i class="fa fa-search"></i> News</a>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+<!--Dark/Light Mode-->
+<script>
+    (function () {
+
+        const html = document.documentElement;
+
+        function updateTheme() {
+
+            const isDark = html.classList.contains("dark-mode");
+
+            // Update Toggle Icons
+            document.querySelectorAll(".themeIcon").forEach(function (icon) {
+                icon.src = isDark ? "images/sun.svg" : "images/moon.svg";
+            });
+
+            // Update Theme Images
+            document.querySelectorAll(".theme-image").forEach(function (img) {
+
+                const newSrc = isDark ? img.dataset.dark : img.dataset.light;
+
+                if (newSrc) {
+                    img.setAttribute("src", newSrc);
+                }
+
+            });
+
+        }
+
+        function applyTheme(theme) {
+
+            if (theme === "dark") {html.classList.add("dark-mode");} else {html.classList.remove("dark-mode");}
+
+            localStorage.setItem("theme", theme);
+
+            // Run multiple times to catch late-loaded images/includes
+            updateTheme();
+
+            requestAnimationFrame(updateTheme);
+
+            setTimeout(updateTheme, 100);
+
+            setTimeout(updateTheme, 300);
+
+        }
+
+        const savedTheme = localStorage.getItem("theme") || "light";
+
+        // First Run
+        applyTheme(savedTheme);
+
+        // DOM Ready
+        document.addEventListener("DOMContentLoaded", function () {applyTheme(savedTheme);});
+
+        // All Images Loaded
+        window.addEventListener("load", function () {applyTheme(savedTheme);});
+
+        // Desktop + Mobile Buttons
+        document.addEventListener("click", function (e) {
+
+            const toggle = e.target.closest(".themeToggle");
+
+            if (!toggle) return;
+
+            e.preventDefault();
+
+            const theme = html.classList.contains("dark-mode")
+                ? "light"
+                : "dark";
+
+            applyTheme(theme);
+
+        });
+
+    })();
+</script>
+<style>
+    .section-notfound{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 150px 0;
+    }
+    @media(max-width:768px){
+           .section-notfound{
+            padding: 100px 0;
+           }
+    }
+      @media(max-width:500px){
+           .section-notfound{
+            padding: 60px 0;
+           }
+    }
+    .notfound-content{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap:25px;
+        flex-direction: column;
+    }
+    .red-color{
+      color:  var(--color-red);
+    }
+    .notfound-content{
+        text-decoration: none;
+    }
+    .notfound-content p{
+        max-width: 550px;
+        text-align: center;
+        font-family: var(--open-sans-regular);
+    }
+    .notfound-content{
+        text-align: center;
+    }
+</style>
+<section class="section-notfound">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="notfound-content">
+                <img src="https://www.jazzcash.com.pk/assets/svgs/Frame-404.svg" alt="404 Error"/>
+                <h2 class="section-heading text-center"><span class="red-color">404</span> Page Not Found</h2>
+                
+                <p>
+                    The page you are looking for doesn’t exist or another error occurred. Go back, or head over to <a href="https://www.jazzcash.com.pk/" class="red-color" >Home</a>
+                </p>        
+            </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+<footer>
+
+
+
+  <div class="container">
+
+
+
+    <div class="row">
+
+
+
+      <div class="col-12 col-sm-12 col-md-12 col-lg-3">
+
+
+
+        <div class="contacts-bx">
+
+
+
+          <div class="row">
+
+            
+
+            <div class="col-sm-6 col-md-4 col-lg-6 col-6">
+
+              <h6 class="ftr-cont-heading txt-red">Jazz Customer <br>
+
+                Helpline</h6>
+
+              <p><a href="tel:4444" target="_blank">4444</a></p>
+
+            </div>
+
+            
+
+
+
+            
+
+            <div class="col-sm-6 col-md-4 col-lg-6 col-6">
+
+              <h6 class="ftr-cont-heading txt-red">Retailers Customer <br>
+
+                Helpline</h6>
+
+              <p><a href="tel:1344" target="_blank">1344</a></p>
+
+            </div>
+
+            <div class="col-sm-6 col-md-4 col-lg-6 col-6">
+
+              <h6 class="ftr-cont-heading txt-red">UAN Customer<br>Helpline</h6>
+
+              <p><a href="tel:111124444" target="_blank">111-124-444</a></p>
+
+            </div>
+
+            
+
+            <div class="col-sm-6 col-md-4 col-lg-6 col-6">
+
+              <h6 class="ftr-cont-heading txt-red">WhatsApp Number </h6>
+
+              <p><a href="https://wa.me/923254444786" target="_blank">0325-4444-786</a></p>
+
+            </div>
+
+            <div class="col-sm-6 col-md-4 col-lg-6 col-6 other-links">
+
+              <h6 class="ftr-cont-heading txt-red">Compliance</h6>
+
+              <a href="https://www.jazzcash.com.pk/schedule-of-charges">Schedule of Charges</a> <a
+                href="https://www.jazzcash.com.pk/tc">Terms &amp; Conditions</a> <a
+                href="https://www.jazzcash.com.pk/assets/documents/JazzCash-Privacy-Notice-sep-2026.pdf"
+                target="_blank">Privacy
+
+
+
+                Policy</a>
+
+            </div>
+
+          </div>
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+      <div class="col-sm-1 col-md-1"></div>
+
+
+
+      
+
+
+
+      <div class="col-sm-8 col-md-8 desk-show">
+
+
+
+        <div class="ftr-nav-bx"><ul><h6 class="ftr-nav-heading txt-red"> STORE MONEY</h6><li><a href="https://www.jazzcash.com.pk/store-money/nextgen-account"> NextGen Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/create-account"> Create Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/freelance-digital-account"> Freelance Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/digital-account"> Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/asaan-digital-remittance-account"> Asaan Digital Remittance Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/asaan-digital-account"> Asaan Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/invite"> Invite</a></li><li><a href="https://www.jazzcash.com.pk/store-money/jazzcash-women-account"> JazzCash Women Account</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> MOVE MONEY</h6><li><a href="https://www.jazzcash.com.pk/move-money/corporate-payment"> Corporate Payments</a></li><li><a href="https://www.jazzcash.com.pk/move-money/yeylo"> Yeylo</a></li><li><a href="https://www.jazzcash.com.pk/move-money/tap-pay"> Tap</a></li><li><a href="https://www.jazzcash.com.pk/move-money/load-packages"> Loads & Packages</a></li><li><a href="https://www.jazzcash.com.pk/move-money/govt-payment"> Govt. Payment</a></li><li><a href="https://www.jazzcash.com.pk/move-money/international-remittance"> International Remittance</a></li><li><a href="https://www.jazzcash.com.pk/move-money/zakat-donations"> Zakat & Donations</a></li><li><a href="https://www.jazzcash.com.pk/move-money/cards"> Debit Cards</a></li><li><a href="https://www.jazzcash.com.pk/move-money/bill-payments"> Bill Payment</a></li><li><a href="https://www.jazzcash.com.pk/move-money/money-transfer"> Money Transfer</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> GROW MONEY</h6><li><a href="https://www.jazzcash.com.pk/grow-money/savings-plan"> Savings Plan</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/salaam-investment"> Salaam Investment</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/insurance"> Insurance</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/k-trade"> K-Trade</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/market-treasury-bills"> Market Treasury Bills</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> VIBES</h6><li><a href="https://www.jazzcash.com.pk/vibes/gift-hub"> GiftHub</a></li><li><a href="https://www.jazzcash.com.pk/vibes/reward-hub"> Reward Hub</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> MEDIA HUB</h6><li><a href="https://www.jazzcash.com.pk/news"> News</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> JOIN US</h6><li><a href="https://www.jazzcash.com.pk/careers"> Careers</a></li><li><a href="https://www.jazzcash.com.pk/contact-us"> Contact Us</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> BORROW MONEY</h6><li><a href="https://www.jazzcash.com.pk/borrow-money/readycash-loan"> ReadyCash loan</a></li><li><a href="https://www.jazzcash.com.pk/borrow-money/ready-load"> ReadyLoad</a></li></ul><ul><h6 class="ftr-nav-heading txt-red"> SPEND MONEY</h6><li><a href="https://www.jazzcash.com.pk/spend-money/marketplace"> Marketplace</a></li></ul>  </div>
+
+
+
+      </div>
+
+
+      <div class="col-sm-12 col-md-12 p-0 mob-show mt-4"><div class="accordion"><div class="accordion-header">STORE MONEY <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/store-money/nextgen-account">NextGen Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/create-account">Create Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/freelance-digital-account">Freelance Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/digital-account">Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/asaan-digital-remittance-account">Asaan Digital Remittance Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/asaan-digital-account">Asaan Digital Account</a></li><li><a href="https://www.jazzcash.com.pk/store-money/invite">Invite</a></li><li><a href="https://www.jazzcash.com.pk/store-money/jazzcash-women-account">JazzCash Women Account</a></li></ul></div></div><div class="accordion"><div class="accordion-header">MOVE MONEY <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/move-money/corporate-payment">Corporate Payments</a></li><li><a href="https://www.jazzcash.com.pk/move-money/yeylo">Yeylo</a></li><li><a href="https://www.jazzcash.com.pk/move-money/tap-pay">Tap</a></li><li><a href="https://www.jazzcash.com.pk/move-money/load-packages">Loads & Packages</a></li><li><a href="https://www.jazzcash.com.pk/move-money/govt-payment">Govt. Payment</a></li><li><a href="https://www.jazzcash.com.pk/move-money/international-remittance">International Remittance</a></li><li><a href="https://www.jazzcash.com.pk/move-money/zakat-donations">Zakat & Donations</a></li><li><a href="https://www.jazzcash.com.pk/move-money/cards">Debit Cards</a></li><li><a href="https://www.jazzcash.com.pk/move-money/bill-payments">Bill Payment</a></li><li><a href="https://www.jazzcash.com.pk/move-money/money-transfer">Money Transfer</a></li></ul></div></div><div class="accordion"><div class="accordion-header">GROW MONEY <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/grow-money/savings-plan">Savings Plan</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/salaam-investment">Salaam Investment</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/insurance">Insurance</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/k-trade">K-Trade</a></li><li><a href="https://www.jazzcash.com.pk/grow-money/market-treasury-bills">Market Treasury Bills</a></li></ul></div></div><div class="accordion"><div class="accordion-header">VIBES <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/vibes/gift-hub">GiftHub</a></li><li><a href="https://www.jazzcash.com.pk/vibes/reward-hub">Reward Hub</a></li></ul></div></div><div class="accordion"><div class="accordion-header">MEDIA HUB <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/news">News</a></li></ul></div></div><div class="accordion"><div class="accordion-header">JOIN US <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/careers">Careers</a></li><li><a href="https://www.jazzcash.com.pk/contact-us">Contact Us</a></li></ul></div></div><div class="accordion"><div class="accordion-header">BORROW MONEY <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/borrow-money/readycash-loan">ReadyCash loan</a></li><li><a href="https://www.jazzcash.com.pk/borrow-money/ready-load">ReadyLoad</a></li></ul></div></div><div class="accordion"><div class="accordion-header">SPEND MONEY <span class="icon"></span></div><div class="accordion-content"><ul><li><a href="https://www.jazzcash.com.pk/spend-money/marketplace">Marketplace</a></li></ul></div></div></div>
+
+
+      
+
+
+
+    </div>
+
+
+
+    <div class="row mt-5 desk-show">
+
+
+
+      <div class="col-sm-7 col-md-7">
+
+
+
+        
+
+
+
+        <div class="ftr-logo-bx"> <a href="https://www.jazzcash.com.pk/">
+
+            <!-- <img src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                alt="JazzCash" /> -->
+
+            <img class="theme-image img-fluid" src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+              data-light="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+              data-dark="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80-dark.svg" alt="">
+
+
+
+          </a> </div>
+
+
+
+        
+
+
+
+      </div>
+
+
+
+      <div class="col-sm-5 col-md-5">
+
+
+
+        <div class="raast-follow-bx">
+
+
+
+          <div class="raast-logo">
+            <a href="javascript:void(0);"><img src="https://www.jazzcash.com.pk/assets/svgs/Raast-icon-2.svg" alt="JazzCash" /></a>
+
+
+
+          </div>
+
+
+
+          <div class="follow-us-bx">
+
+
+
+            <h6 class="follow-heading txt-red">Follow Us On:</h6>
+
+
+
+            <ul>
+
+
+
+              <li><a href="https://web.facebook.com/JazzCash" target="_blank"><img
+                    src="https://www.jazzcash.com.pk/assets/svgs/fb-icon-2.svg" alt="Facebook" /></a></li>
+
+
+
+              <li><a href="https://x.com/JazzCash" target="_blank"><img src="https://www.jazzcash.com.pk/assets/svgs/X-icon-2.svg"
+                    alt="Twitter X" /></a></li>
+
+
+
+              <li><a href="https://www.linkedin.com/company/jazzcash/" target="_blank"><img
+                    src="https://www.jazzcash.com.pk/assets/svgs/linkedin-icon-2.svg" alt="Linkedin" /></a></li>
+
+
+
+              <li><a href=" https://www.instagram.com/jazzcashpk/" target="_blank"><img
+                    src="https://www.jazzcash.com.pk/assets/svgs/insta-icon-2.svg" alt="Instagram" /></a></li>
+
+
+
+              <li><a href="https://www.youtube.com/@JazzCash" target="_blank"><img
+                    src="https://www.jazzcash.com.pk/assets/svgs/yt-icon-2.svg" alt="youtube" /></a></li>
+
+
+
+              <li><a href=" https://www.tiktok.com/@jazzcashpk" target="_blank"><img
+                    src="https://www.jazzcash.com.pk/assets/svgs/tiktok-icon-2.svg" alt="tiktok" /></a></li>
+
+
+
+            </ul>
+
+
+
+          </div>
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <div class="mt-5 mob-show">
+
+
+
+      <div class="row">
+
+
+
+        <div class="col-3">
+
+
+
+          
+
+
+
+          <div class="ftr-logo-bx"> <a href="https://www.jazzcash.com.pk/"><img class="theme-image img-fluid"
+                src="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                data-light="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80.svg"
+                data-dark="https://www.jazzcash.com.pk/assets/svgs/JazzCash-logo-hd-80-dark.svg" alt=""></a> </div>
+
+
+
+          
+
+
+
+        </div>
+
+
+
+        <div class="col-6">
+
+
+
+          <div class="raast-follow-bx">
+
+
+
+            <div class="follow-us-bx">
+
+
+
+              <h6 class="follow-heading txt-red">Follow Us On:</h6>
+
+
+
+              <ul>
+
+
+
+                <li><a href="https://web.facebook.com/JazzCash" target="_blank"><img
+                      src="https://www.jazzcash.com.pk/assets/svgs/fb-icon-2.svg" alt="Facebook" /></a></li>
+
+
+
+                <li><a href="https://x.com/JazzCash" target="_blank"><img src="https://www.jazzcash.com.pk/assets/svgs/X-icon-2.svg"
+                      alt="Twitter X" /></a></li>
+
+
+
+                <li><a href="https://www.linkedin.com/company/jazzcash/" target="_blank"><img
+                      src="https://www.jazzcash.com.pk/assets/svgs/linkedin-icon-2.svg" alt="Linkedin" /></a></li>
+
+
+
+                <li><a href=" https://www.instagram.com/jazzcashpk/" target="_blank"><img
+                      src="https://www.jazzcash.com.pk/assets/svgs/insta-icon-2.svg" alt="Instagram" /></a></li>
+
+
+
+                <li><a href="https://www.youtube.com/@JazzCash" target="_blank"><img
+                      src="https://www.jazzcash.com.pk/assets/svgs/yt-icon-2.svg" alt="youtube" /></a></li>
+
+
+
+                <li><a href=" https://www.tiktok.com/@jazzcashpk" target="_blank"><img
+                      src="https://www.jazzcash.com.pk/assets/svgs/tiktok-icon-2.svg" alt="tiktok" /></a></li>
+
+
+              </ul>
+
+
+
+            </div>
+
+
+
+          </div>
+
+
+
+        </div>
+
+
+
+        <div class="col-3">
+
+
+
+          <div class="ftr-logo-bx"> <a href="javascript:void(0);"><img src="https://www.jazzcash.com.pk/assets/svgs/Raast-icon-2.svg"
+                alt="Raast" /></a> </div>
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <div class="row">
+
+
+
+      <div class="col-md-12 col-sm-12">
+
+
+
+        <div class="copyrights-bx"> Copyrights <span id="current_year"></span> JazzCash. All Rights Reserved. </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+  </div>
+
+
+
+</footer>
+
+
+
+<script src="https://www.jazzcash.com.pk/assets/js/bootstrap.min.js"></script>
+
+
+
+<!-- Swiper JS -->
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+
+
+
+<!--Header Inner JS-->
+
+
+
+<script>
+
+
+
+  document.getElementById('current_year').textContent = new Date().getFullYear();
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  function closePromoTicker() {
+
+
+
+    var ticker = document.getElementById("promoTicker");
+
+
+
+    if (ticker) {
+
+
+
+      ticker.style.display = "none";
+
+
+
+      var searchOverlay = document.getElementById("fullscreenSearch");
+
+
+
+      if (searchOverlay && searchOverlay.classList.contains("show")) {
+
+
+
+        var dimensions = getCalculatedHeight();
+
+
+
+        searchOverlay.style.top = dimensions.top;
+
+
+
+        searchOverlay.style.height = dimensions.height;
+
+
+
+      }
+
+
+
+    }
+
+
+
+  }
+
+
+
+  var isTransitioning = false;
+
+
+
+  var recognition;
+
+
+
+  var isListening = false;
+
+
+
+  var originalTitle = "HOW CAN <span class='txt-red'>WE HELP</span> YOU TODAY?";
+
+
+
+
+
+
+
+  var SEARCH_MIN_LENGTH = 3;
+
+
+
+  var SEARCH_JSON_URL = "/assets/js/search-site.json";
+
+
+
+  var searchIndex = null;
+
+
+
+  var searchIndexPromise = null;
+
+
+
+  var searchDebounceTimer = null;
+
+
+
+
+
+
+
+  function escapeHtml(str) {
+
+
+
+    return String(str || "")
+
+
+
+      .replace(/&/g, "&amp;")
+
+
+
+      .replace(/</g, "&lt;")
+
+
+
+      .replace(/>/g, "&gt;")
+
+
+
+      .replace(/"/g, "&quot;");
+
+
+
+  }
+
+
+
+
+
+
+
+  function loadSearchIndex() {
+
+
+
+    if (searchIndex) {
+
+
+
+      return Promise.resolve(searchIndex);
+
+
+
+    }
+
+
+
+
+
+
+
+    if (searchIndexPromise) {
+
+
+
+      return searchIndexPromise;
+
+
+
+    }
+
+
+
+
+
+
+
+    searchIndexPromise = fetch(SEARCH_JSON_URL)
+
+
+
+      .then(function (response) {
+
+
+
+        if (!response.ok) {
+
+
+
+          throw new Error("Failed to load search data");
+
+
+
+        }
+
+
+
+        return response.json();
+
+
+
+      })
+
+
+
+      .then(function (data) {
+
+
+
+        searchIndex = Array.isArray(data) ? data : [];
+
+
+
+        return searchIndex;
+
+
+
+      })
+
+
+
+      .catch(function (error) {
+
+
+
+        console.error("Search index error:", error);
+
+
+
+        searchIndex = [];
+
+
+
+        searchIndexPromise = null;
+
+
+
+        return searchIndex;
+
+
+
+      });
+
+
+
+
+
+
+
+    return searchIndexPromise;
+
+
+
+  }
+
+
+
+
+
+
+
+  function filterSearchResults(query, data) {
+
+
+
+    var normalizedQuery = query.toLowerCase();
+
+
+
+
+
+
+
+    return data.filter(function (item) {
+
+
+
+      var title = (item.title || "").toLowerCase();
+
+
+
+      var name = (item.name || "").toLowerCase();
+
+
+
+      return (
+
+
+
+        title.indexOf(normalizedQuery) !== -1 ||
+
+
+
+        name.indexOf(normalizedQuery) !== -1
+
+
+
+      );
+
+
+
+    });
+
+
+
+  }
+
+
+
+
+
+
+
+  function renderSuggestions(items, showEmptyState) {
+
+
+
+    var box = document.getElementById("suggestionsBox");
+
+
+
+    var wrapper = document.getElementById("searchBarWrapper");
+
+
+
+
+
+
+
+    if (!box || !wrapper) {return;}
+
+
+
+
+
+
+
+    if (!items.length) {
+
+
+
+      if (showEmptyState) {showNoResults();} else {closeSuggestions();}
+
+
+
+      return;
+
+
+
+    }
+
+
+
+
+
+
+
+    var html = "";
+
+
+
+    items.forEach(function (item) {
+
+
+
+      var title = escapeHtml(item.title || "");
+
+
+
+      var url = escapeHtml(item.url || "#");
+
+
+
+      var target = item.target === "_blank" ? "_blank" : "_self";
+
+
+
+      var targetAttr =
+
+
+
+        target === "_blank"
+
+
+
+          ? ' target="_blank" rel="noopener noreferrer"'
+
+
+
+          : "";
+
+
+
+
+
+
+
+      html +=
+
+
+
+        '<a href="' +
+
+
+
+        url +
+
+
+
+        '"' +
+
+
+
+        targetAttr +
+
+
+
+        ' class="suggestion-item">' +
+
+
+
+        '<i class="fa fa-search"></i>' +
+
+
+
+        "<span>" +
+
+
+
+        title +
+
+
+
+        "</span>" +
+
+
+
+        "</a>";
+
+
+
+    });
+
+
+
+
+
+
+
+    box.innerHTML = html;
+
+
+
+    box.scrollTop = 0;
+
+
+
+
+
+
+
+    if (items.length > 5) {
+
+
+
+      box.style.height = "240px";
+
+
+
+    } else {
+
+
+
+      box.style.height = items.length * 56 + "px";
+
+
+
+    }
+
+
+
+
+
+
+
+    wrapper.classList.add("has-suggestions");
+
+
+
+    box.classList.add("animated-open");
+
+
+
+  }
+
+
+
+
+
+
+
+  function showNoResults() {
+
+
+
+    var box = document.getElementById("suggestionsBox");
+
+
+
+    var wrapper = document.getElementById("searchBarWrapper");
+
+
+
+
+
+
+
+    if (!box || !wrapper) {return;}
+
+
+
+
+
+
+
+    box.innerHTML =
+
+
+
+      '<div class="suggestion-item suggestion-item--empty" style="opacity:1;transform:none;">' +
+
+
+
+      '<i class="fa fa-info-circle"></i>' +
+
+
+
+      "<span>No record found</span>" +
+
+
+
+      "</div>";
+
+
+
+    box.style.height = "56px";
+
+
+
+    wrapper.classList.add("has-suggestions");
+
+
+
+    box.classList.add("animated-open");
+
+
+
+  }
+
+
+
+
+
+
+
+  function showSearchLoading() {
+
+
+
+    var box = document.getElementById("suggestionsBox");
+
+
+
+    var wrapper = document.getElementById("searchBarWrapper");
+
+
+
+
+
+
+
+    if (!box || !wrapper) {return;}
+
+
+
+
+
+
+
+    box.innerHTML =
+
+
+
+      '<div class="suggestion-item" style="opacity:1;transform:none;cursor:default;">' +
+
+
+
+      '<i class="fa fa-spinner fa-spin"></i>' +
+
+
+
+      "<span>Searching...</span>" +
+
+
+
+      "</div>";
+
+
+
+    box.style.height = "56px";
+
+
+
+    wrapper.classList.add("has-suggestions");
+
+
+
+    box.classList.add("animated-open");
+
+
+
+  }
+
+
+
+
+
+
+
+  if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+
+
+
+    var SpeechRecognition =
+
+
+
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+
+
+    recognition = new SpeechRecognition();
+
+
+
+    recognition.continuous = false;
+
+
+
+    recognition.interimResults = false;
+
+
+
+    recognition.lang = "en-US";
+
+
+
+
+
+
+
+    recognition.onstart = function () {
+
+
+
+      if (isTransitioning) return;
+
+
+
+      isListening = true;
+
+
+
+      closeSuggestions();
+
+
+
+      var voicePanel = document.getElementById("inlineVoicePanel");
+
+
+
+      var titleEl = document.getElementById("searchMainTitle");
+
+
+
+      var inputEl = document.getElementById("mainSearchInput");
+
+
+
+      var clearBtn = document.getElementById("clearSearchInputBtn");
+
+
+
+
+
+
+
+      if (voicePanel) voicePanel.classList.add("active");
+
+
+
+      if (titleEl) titleEl.innerText = "LISTENING...";
+
+
+
+      if (clearBtn) clearBtn.style.display = "none"; // Hide clear button when listening
+
+
+
+      if (inputEl) {
+
+
+
+        inputEl.disabled = true;
+
+
+
+        inputEl.placeholder = "Listening to your voice...";
+
+
+
+      }
+
+
+
+    };
+
+
+
+
+
+
+
+    recognition.onerror = function (event) {
+
+
+
+      if (event && event.error) {
+
+
+
+        console.warn("Voice search error:", event.error);
+
+
+
+      }
+
+
+
+      var inputEl = document.getElementById("mainSearchInput");
+
+
+
+      if (inputEl) {
+
+
+
+        if (event && event.error === "not-allowed") {
+
+
+
+          inputEl.placeholder = "Microphone access denied — allow mic in browser settings";
+
+
+
+        } else if (event && event.error === "network") {
+
+
+
+          inputEl.placeholder = "Voice search unavailable — please use Google Chrome";
+
+
+
+        }
+
+
+
+      }
+
+
+
+      resetVoiceUI();
+
+
+
+    };
+
+
+
+    recognition.onend = function () {resetVoiceUI();};
+
+
+
+
+
+
+
+    recognition.onresult = function (event) {
+
+
+
+      if (isTransitioning) return;
+
+
+
+      var transcript = event.results[0][0].transcript;
+
+
+
+      var searchInput = document.getElementById("mainSearchInput");
+
+
+
+      if (searchInput) {
+
+
+
+        searchInput.value = transcript;
+
+
+
+        handleSearchInput(transcript);
+
+
+
+      }
+
+
+
+      resetVoiceUI();
+
+
+
+    };
+
+
+
+  }
+
+
+
+
+
+
+
+  function toggleVoiceSearch() {
+
+
+
+    if (!recognition || isTransitioning) return;
+
+
+
+    if (!isListening) {
+
+
+
+      try {recognition.start();} catch (e) {
+
+
+
+        console.log("Speech block loop.");
+
+
+
+      }
+
+
+
+    } else {recognition.stop();}
+
+
+
+  }
+
+
+
+
+
+
+
+  function resetVoiceUI() {
+
+
+
+    isListening = false;
+
+
+
+    var voicePanel = document.getElementById("inlineVoicePanel");
+
+
+
+    var titleEl = document.getElementById("searchMainTitle");
+
+
+
+    var inputEl = document.getElementById("mainSearchInput");
+
+
+
+
+
+
+
+    if (voicePanel) voicePanel.classList.remove("active");
+
+
+
+    if (titleEl) titleEl.innerHTML = originalTitle;
+
+
+
+
+
+
+
+    if (inputEl) {
+
+
+
+      inputEl.disabled = false;
+
+
+
+      inputEl.placeholder = "SEARCH";
+
+
+
+
+
+
+
+      // Update clear button visibility based on layout recovery state
+
+
+
+      toggleClearButtonVisibility(inputEl.value);
+
+
+
+
+
+
+
+      var searchOverlay = document.getElementById("fullscreenSearch");
+
+
+
+      if (
+
+
+
+        searchOverlay &&
+
+
+
+        searchOverlay.classList.contains("show") &&
+
+
+
+        !isTransitioning
+
+
+
+      ) {inputEl.focus();}
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  function toggleClearButtonVisibility(val) {
+
+
+
+    var clearBtn = document.getElementById("clearSearchInputBtn");
+
+
+
+    if (clearBtn) {
+
+
+
+      if (val.trim().length > 0 && !isListening) {
+
+
+
+        clearBtn.style.display = "block";
+
+
+
+      } else {
+
+
+
+        clearBtn.style.display = "none";
+
+
+
+      }
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  function clearSearchField() {
+
+
+
+    if (isTransitioning) return;
+
+
+
+
+
+
+
+    var inputEl = document.getElementById("mainSearchInput");
+
+
+
+    if (inputEl) {
+
+
+
+      inputEl.value = "";
+
+
+
+      toggleClearButtonVisibility("");
+
+
+
+      closeSuggestions();
+
+
+
+      inputEl.focus();
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  function handleSearchInput(val) {
+
+
+
+    if (isTransitioning) return;
+
+
+
+
+
+
+
+    toggleClearButtonVisibility(val);
+
+
+
+
+
+
+
+    var query = val.trim();
+
+
+
+
+
+
+
+    if (searchDebounceTimer) {clearTimeout(searchDebounceTimer);}
+
+
+
+
+
+
+
+    if (!query || query.length < SEARCH_MIN_LENGTH) {
+
+
+
+      closeSuggestions();
+
+
+
+      return;
+
+
+
+    }
+
+
+
+
+
+
+
+    if (!searchIndex) {showSearchLoading();}
+
+
+
+
+
+
+
+    searchDebounceTimer = setTimeout(function () {
+
+
+
+      var inputEl = document.getElementById("mainSearchInput");
+
+
+
+      var currentQuery = inputEl ? inputEl.value.trim() : "";
+
+
+
+
+
+
+
+      if (!currentQuery || currentQuery.length < SEARCH_MIN_LENGTH) {
+
+
+
+        closeSuggestions();
+
+
+
+        return;
+
+
+
+      }
+
+
+
+
+
+
+
+      loadSearchIndex().then(function (data) {
+
+
+
+        var latestQuery = inputEl ? inputEl.value.trim() : "";
+
+
+
+
+
+
+
+        if (latestQuery !== currentQuery) {return;}
+
+
+
+
+
+
+
+        renderSuggestions(filterSearchResults(latestQuery, data), true);
+
+
+
+      });
+
+
+
+    }, 250);
+
+
+
+  }
+
+
+
+
+
+
+
+  function closeSuggestions() {
+
+
+
+    var box = document.getElementById("suggestionsBox");
+
+
+
+    var wrapper = document.getElementById("searchBarWrapper");
+
+
+
+
+
+
+
+    if (box && wrapper) {
+
+
+
+      box.classList.remove("animated-open");
+
+
+
+      wrapper.classList.remove("has-suggestions");
+
+
+
+      box.style.height = "0px";
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  function getCalculatedHeight() {
+
+
+
+    var mainHeader = document.getElementById("mainHeader");
+
+
+
+    if (mainHeader) {
+
+
+
+      var headerHeight = mainHeader.offsetHeight;
+
+
+
+      return {
+
+
+
+        top: headerHeight - 5 + "px",
+
+
+
+        height: "calc(100vh - " + (headerHeight - 5) + "px)",
+
+
+
+      };
+
+
+
+    }
+
+
+
+    return { top: "80px", height: "100vh" };
+
+
+
+  }
+
+
+
+
+
+
+
+  function openMobileNav() {
+
+
+
+    closeSearch(true);
+
+
+
+    if (typeof openNav === "function") {openNav();}
+
+
+
+  }
+
+
+
+
+
+
+
+  function toggleSearch() {
+
+
+
+    if (isTransitioning) return;
+
+
+
+
+
+
+
+    var searchOverlay = document.getElementById("fullscreenSearch");
+
+
+
+    var mainHeader = document.getElementById("mainHeader");
+
+
+
+    var inputEl = document.getElementById("mainSearchInput");
+
+
+
+
+
+
+
+    if (!searchOverlay.classList.contains("show")) {
+
+
+
+      isTransitioning = true;
+
+
+
+      if (typeof closeNav === "function") {closeNav();}
+
+
+
+      if (inputEl) inputEl.value = "";
+
+
+
+      toggleClearButtonVisibility("");
+
+
+
+      closeSuggestions();
+
+
+
+
+
+
+
+      var dimensions = getCalculatedHeight();
+
+
+
+      searchOverlay.style.top = dimensions.top;
+
+
+
+      searchOverlay.style.height = dimensions.height;
+
+
+
+
+
+
+
+      mainHeader.classList.add("no-shadow-border");
+
+
+
+      searchOverlay.classList.add("show");
+
+
+
+      document.body.style.overflow = "hidden";
+
+
+
+
+
+
+
+      setTimeout(function () {
+
+
+
+        isTransitioning = false;
+
+
+
+        if (inputEl) inputEl.focus();
+
+
+
+      }, 800);
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  function closeSearch(force) {
+
+
+
+    if (isTransitioning && !force) return;
+
+
+
+
+
+
+
+    var searchOverlay = document.getElementById("fullscreenSearch");
+
+
+
+    var mainHeader = document.getElementById("mainHeader");
+
+
+
+
+
+
+
+    if (searchOverlay.classList.contains("show")) {
+
+
+
+      isTransitioning = true;
+
+
+
+
+
+
+
+      if (recognition && isListening) {recognition.stop();}
+
+
+
+      resetVoiceUI();
+
+
+
+      closeSuggestions();
+
+
+
+
+
+
+
+      if (document.getElementById("mainSearchInput")) {
+
+
+
+        document.getElementById("mainSearchInput").value = "";
+
+
+
+        toggleClearButtonVisibility("");
+
+
+
+      }
+
+
+
+
+
+
+
+      searchOverlay.style.height = "0";
+
+
+
+      searchOverlay.classList.remove("show");
+
+
+
+      document.body.style.overflow = "";
+
+
+
+
+
+
+
+      setTimeout(function () {
+
+
+
+        mainHeader.classList.remove("no-shadow-border");
+
+
+
+        isTransitioning = false;
+
+
+
+      }, 800);
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  document.addEventListener("click", function (event) {
+
+
+
+    var wrapper = document.getElementById("searchBarWrapper");
+
+
+
+    if (wrapper && !wrapper.contains(event.target)) {closeSuggestions();}
+
+
+
+  });
+
+
+
+
+
+
+
+  window.addEventListener("resize", function () {
+
+
+
+    var searchOverlay = document.getElementById("fullscreenSearch");
+
+
+
+    if (searchOverlay && searchOverlay.classList.contains("show")) {
+
+
+
+      var dimensions = getCalculatedHeight();
+
+
+
+      searchOverlay.style.top = dimensions.top;
+
+
+
+      searchOverlay.style.height = dimensions.height;
+
+
+
+    }
+
+
+
+  });
+
+
+
+  document.addEventListener("click", function (event) {
+
+
+
+    var targetLink = event.target.closest(".mobile-nav ul li:first-child a");
+
+
+
+
+
+
+
+    if (targetLink) {
+
+
+
+      event.preventDefault();
+
+
+
+
+
+
+
+      toggleSearch();
+
+
+
+    }
+
+
+
+  });
+
+
+
+
+
+
+
+  function switchMobileMenu(type) {
+
+
+
+    var isPersonal = type === "personal";
+
+
+
+    var nav = document.getElementById("myNav");
+
+
+
+
+
+
+
+    document.querySelectorAll(".mob-menu-section").forEach(function (section) {
+
+
+
+      var sectionType = section.getAttribute("data-menu-type");
+
+
+
+      section.style.display = sectionType === type ? "" : "none";
+
+
+
+    });
+
+
+
+
+
+
+
+    var personalTab = document.querySelector("#myNav .personal-drop");
+
+
+
+    var businessTab = document.querySelector("#myNav .business-drop");
+
+
+
+
+
+
+
+    if (personalTab) {
+
+
+
+      personalTab.classList.toggle("active-main-menu", isPersonal);
+
+
+
+    }
+
+
+
+    if (businessTab) {
+
+
+
+      businessTab.classList.toggle("active-main-menu", !isPersonal);
+
+
+
+    }
+
+
+
+
+
+
+
+    if (nav && typeof closeSubMenu === "function") {closeSubMenu();} else if (nav) {
+
+
+
+      nav.classList.remove("submenu-open");
+
+
+
+      var level1 = nav.querySelector(".menu-level.level-1");
+
+
+
+      var level2 = nav.querySelector(".menu-level.level-2");
+
+
+
+      if (level1) level1.style.display = "";
+
+
+
+      if (level2) level2.style.display = "none";
+
+
+
+      nav.querySelectorAll(".submenu").forEach(function (sub) {
+
+
+
+        sub.style.display = "none";
+
+
+
+      });
+
+
+
+    }
+
+
+
+  }
+
+
+
+</script>
+
+
+
+<!-- Tabs Changing Script -->
+
+
+
+<script>
+
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+
+
+
+
+
+
+    function initTabs(section) {
+
+
+
+      const tabs = section.querySelectorAll('.tabs-content .tabs');
+
+
+
+      const tabButtons = section.querySelectorAll('.menu-box [data-tab]');
+
+
+
+
+
+
+
+      function activateTab(tabName) {
+
+
+
+
+
+
+
+        tabs.forEach(tab => {
+
+
+
+          if (tab.getAttribute('data-tab') === tabName) {tab.classList.add('active');} else {tab.classList.remove('active');}
+
+
+
+        });
+
+
+
+
+
+
+
+        tabButtons.forEach(btn => {
+
+
+
+          btn.classList.toggle(
+
+
+
+            'active',
+
+
+
+            btn.getAttribute('data-tab') === tabName
+
+
+
+          );
+
+
+
+        });
+
+
+
+      }
+
+
+
+
+
+
+
+      // Default first tab active
+
+
+
+      if (tabButtons.length > 0) {activateTab(tabButtons[0].getAttribute('data-tab'));}
+
+
+
+
+
+
+
+      tabButtons.forEach(btn => {
+
+
+
+        btn.addEventListener('click', (e) => {
+
+
+
+          e.preventDefault();
+
+
+
+          const tabName = btn.getAttribute('data-tab');
+
+
+
+          activateTab(tabName);
+
+
+
+        });
+
+
+
+      });
+
+
+
+    }
+
+
+
+
+
+
+
+    document.querySelectorAll('.tab-section').forEach(section => {initTabs(section);});
+
+
+
+
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<!-- Mobile Packages Script -->
+
+
+
+<script>
+
+
+
+  const mobilePackageSwiper = new Swiper('.mobPackageSwiper', {
+
+
+
+    slidesPerView: 1,
+
+
+
+    spaceBetween: 10,
+
+
+
+    loop: false,
+
+
+
+    autoplay: false,
+
+
+
+    pagination: {
+
+
+
+      el: '.swiper-pagination',
+
+
+
+      clickable: true,
+
+
+
+    },
+
+
+
+    navigation: {
+
+
+
+      nextEl: '.swiper-button-next',
+
+
+
+      prevEl: '.swiper-button-prev',
+
+
+
+    },
+
+
+
+  });
+
+
+
+
+
+
+
+</script>
+
+
+
+<!-- Initialize Swiper -->
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".mbSwiper", {
+
+
+
+    autoplay: {
+
+
+
+      delay: 5000,
+
+
+
+    },
+
+
+
+    navigation: {
+
+
+
+      nextEl: ".swiper-button-next",
+
+
+
+      prevEl: ".swiper-button-prev",
+
+
+
+    },
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".cardSwiper", {
+
+
+
+    spaceBetween: 15,
+
+
+
+    slidesPerView: 6, // default (desktop)
+
+
+
+
+
+
+
+    breakpoints: {
+
+
+
+      // mobile
+
+
+
+      0: {
+
+
+
+        slidesPerView: 1.6,
+
+
+
+      },
+
+
+
+      // small tablets
+
+
+
+
+
+
+
+      376: {
+
+
+
+        slidesPerView: 1.8,
+
+
+
+      },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      576: {
+
+
+
+        slidesPerView: 2.5,
+
+
+
+      },
+
+
+
+      // tablets
+
+
+
+      768: {
+
+
+
+        slidesPerView: 4,
+
+
+
+      },
+
+
+
+      // desktop
+
+
+
+      1024: {
+
+
+
+        slidesPerView: 6,
+
+
+
+      }
+
+
+
+    }
+
+
+
+  });
+
+
+
+</script>
+
+
+
+
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".cardSwiper-business", {
+
+
+
+    spaceBetween: 15,
+
+
+
+    slidesPerView: 5, // default (desktop)
+
+
+
+
+
+
+
+    breakpoints: {
+
+
+
+      // mobile
+
+
+
+      0: {
+
+
+
+        slidesPerView: 1.6,
+
+
+
+      },
+
+
+
+      // small tablets
+
+
+
+
+
+
+
+      376: {
+
+
+
+        slidesPerView: 1.8,
+
+
+
+      },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      576: {
+
+
+
+        slidesPerView: 2.5,
+
+
+
+      },
+
+
+
+      // tablets
+
+
+
+      768: {
+
+
+
+        slidesPerView: 3.5,
+
+
+
+      },
+
+
+
+      // desktop
+
+
+
+      1024: {
+
+
+
+        slidesPerView: 5,
+
+
+
+      }
+
+
+
+    }
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".sendReceiveSwiper", {
+
+
+
+    spaceBetween: 40,
+
+
+
+    slidesPerView: 1.8, // desktop default
+
+
+
+
+
+
+
+    breakpoints: {
+
+
+
+      // mobile
+
+
+
+      0: {
+
+
+
+        slidesPerView: 1.2,
+
+
+
+        spaceBetween: 20,
+
+
+
+      },
+
+
+
+      // tablets
+
+
+
+      768: {
+
+
+
+        slidesPerView: 1.4,
+
+
+
+        spaceBetween: 30,
+
+
+
+      },
+
+
+
+      // desktop
+
+
+
+      1024: {
+
+
+
+        slidesPerView: 1.8,
+
+
+
+        spaceBetween: 40,
+
+
+
+      }
+
+
+
+    },
+
+
+
+
+
+
+
+    navigation: {
+
+
+
+      nextEl: ".swiper-button-next",
+
+
+
+      prevEl: ".swiper-button-prev",
+
+
+
+    },
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".realPeopleSwiper", {
+
+
+
+    spaceBetween: 40,
+
+
+
+    slidesPerView: 3, // default (desktop)
+
+
+
+    centeredSlides: false, // default OFF
+
+
+
+
+
+
+
+    breakpoints: {
+
+
+
+      // mobile
+
+
+
+      0: {
+
+
+
+        slidesPerView: 1.2,
+
+
+
+        spaceBetween: 15,
+
+
+
+        centeredSlides: true,
+
+
+
+      },
+
+
+
+      // tablets
+
+
+
+      768: {
+
+
+
+        slidesPerView: 1.4,
+
+
+
+        spaceBetween: 30,
+
+
+
+        centeredSlides: false,
+
+
+
+      },
+
+
+
+      // desktop
+
+
+
+      1024: {
+
+
+
+        slidesPerView: 3,
+
+
+
+        spaceBetween: 40,
+
+
+
+        centeredSlides: false,
+
+
+
+      }
+
+
+
+    },
+
+
+
+
+
+
+
+    navigation: {
+
+
+
+      nextEl: ".swiper-button-next",
+
+
+
+      prevEl: ".swiper-button-prev",
+
+
+
+    },
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  var swiper = new Swiper(".logoSwiper", {
+
+
+
+    spaceBetween: 30,
+
+
+
+    slidesPerView: 5, // default (desktop)
+
+
+
+    centerInsufficientSlides: true,
+
+
+
+    autoplay: {
+
+
+
+      delay: 2500,
+
+
+
+      disableOnInteraction: false,
+
+
+
+    },
+
+
+
+
+
+
+
+    breakpoints: {
+
+
+
+      // mobile
+
+
+
+      0: {
+
+
+
+        slidesPerView: 2.5,
+
+
+
+        spaceBetween: 10,
+
+
+
+      },
+
+
+
+      // small tablets
+
+
+
+
+
+
+
+      376: {
+
+
+
+        slidesPerView: 2.5,
+
+
+
+        spaceBetween: 10,
+
+
+
+      },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      576: {
+
+
+
+        slidesPerView: 2.5,
+
+
+
+      },
+
+
+
+      // tablets
+
+
+
+      768: {
+
+
+
+        slidesPerView: 4,
+
+
+
+      },
+
+
+
+      // desktop
+
+
+
+      1024: {
+
+
+
+        slidesPerView: 6,
+
+
+
+        spaceBetween: 30,
+
+
+
+      }
+
+
+
+    },
+
+
+
+    navigation: {
+
+
+
+      nextEl: ".swiper-button-next",
+
+
+
+      prevEl: ".swiper-button-prev",
+
+
+
+    },
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  const accordions = document.querySelectorAll(".accordion");
+
+
+
+
+
+
+
+  accordions.forEach(accordion => {
+
+
+
+    const header = accordion.querySelector(".accordion-header");
+
+
+
+    const content = accordion.querySelector(".accordion-content");
+
+
+
+
+
+
+
+    header.addEventListener("click", () => {
+
+
+
+      // Close all others
+
+
+
+      accordions.forEach(item => {
+
+
+
+        if (item !== accordion) {
+
+
+
+          item.classList.remove("active");
+
+
+
+          item.querySelector(".accordion-content").style.maxHeight = null;
+
+
+
+        }
+
+
+
+      });
+
+
+
+
+
+
+
+      // Toggle current
+
+
+
+      if (accordion.classList.contains("active")) {
+
+
+
+        accordion.classList.remove("active");
+
+
+
+        content.style.maxHeight = null;
+
+
+
+      } else {
+
+
+
+        accordion.classList.add("active");
+
+
+
+        content.style.maxHeight = content.scrollHeight + "px";
+
+
+
+      }
+
+
+
+    });
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  function openNav() {
+
+
+
+    document.getElementById("myNav").style.width = "100%";
+
+
+
+  }
+
+
+
+  function closeNav() {
+
+
+
+    document.getElementById("myNav").style.width = "0";
+
+
+
+    document.querySelector(".level-2").classList.remove("active");
+
+
+
+  }
+
+
+
+  function closeSubMenu() {document.querySelector(".level-2").classList.remove("active");}
+
+
+
+  // Dynamic submenu open
+
+
+
+  document.querySelectorAll(".arrow").forEach(function (el) {
+
+
+
+    el.addEventListener("click", function (e) {
+
+
+
+      e.preventDefault();
+
+
+
+      e.stopPropagation();
+
+
+
+
+
+
+
+      let menuId = this.getAttribute("data-menu");
+
+
+
+
+
+
+
+      document.querySelector(".level-2").classList.add("active");
+
+
+
+
+
+
+
+      document.querySelectorAll(".submenu").forEach(function (menu) {
+
+
+
+        menu.style.display = "none";
+
+
+
+      });
+
+
+
+
+
+
+
+      document.getElementById(menuId).style.display = "block";
+
+
+
+    });
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+
+
+<script>
+
+
+
+  AOS.init();
+  window.addEventListener('load', function () {AOS.refresh();});
+
+
+</script>
+
+
+
+<script>
+
+
+
+  document.querySelectorAll('.js-hover').forEach(wrapper => {
+
+
+
+    // Select all list items in the left-nav list
+
+
+
+    const listItems = wrapper.querySelectorAll('.lft-lv1-nav ul li');
+
+
+
+    let activeDiv = null;
+
+
+
+    listItems.forEach(item => {
+
+
+
+      item.addEventListener('mouseenter', () => {
+
+
+
+        // pehle sab hover divs hide
+
+
+
+        wrapper.querySelectorAll('[class*="hover-div"]').forEach(div => {div.classList.remove('active');});
+
+
+
+        // trigger ka class find karo (trigger ya trigger-2 etc)
+
+
+
+        let triggerClass = [...item.classList].find(c => c.startsWith('trigger'));
+
+
+
+        if (!triggerClass) {
+
+
+
+          activeDiv = null;
+
+
+
+          return;
+
+
+
+        }
+
+
+
+        // suffix nikaalo
+
+
+
+        let suffix = triggerClass.split('-')[1] || '';
+
+
+
+        // matching hover-div class banao
+
+
+
+        let targetClass = suffix ? `hover-div-${suffix}` : 'hover-div';
+
+
+
+        let targetDiv = wrapper.querySelector(`.${targetClass}`);
+
+
+
+        if (targetDiv) {
+
+
+
+          targetDiv.classList.add('active');
+
+
+
+          activeDiv = targetDiv;
+
+
+
+        }
+
+
+
+      });
+
+
+
+    });
+
+
+
+
+
+
+
+    wrapper.addEventListener('mouseleave', () => {
+
+
+
+      if (activeDiv) {
+
+
+
+        activeDiv.classList.remove('active');
+
+
+
+        activeDiv = null;
+
+
+
+      }
+
+
+
+    });
+
+
+
+
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script>
+
+
+
+  const tabs = document.querySelectorAll('.tabs li');
+
+
+
+  const panes = document.querySelectorAll('.tab-pane');
+
+
+
+
+
+
+
+  tabs.forEach(tab => {
+
+
+
+    tab.addEventListener('click', () => {
+
+
+
+
+
+
+
+      // remove active from all tabs
+
+
+
+      tabs.forEach(t => t.classList.remove('active'));
+
+
+
+      panes.forEach(p => p.classList.remove('active'));
+
+
+
+
+
+
+
+      // add active to clicked tab
+
+
+
+      tab.classList.add('active');
+
+
+
+      document.getElementById(tab.dataset.tab).classList.add('active');
+
+
+
+
+
+
+
+    });
+
+
+
+  });
+
+
+
+</script>
+
+
+
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"0132835687d04cbcb098e47492dbc6f0","spa":2}' crossorigin="anonymous"></script>
+</body>
+
+
+
+</html>
+    
+
+
+
+
+
