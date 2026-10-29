@@ -50,6 +50,7 @@ import { useFormat } from '../i18n/useFormat.js';
 import { notify } from '../i18n/notifications.js';
 import { serverMessageKey, translate } from '../i18n/translate.js';
 import ErrorSlot from '../components/ErrorSlot.jsx';
+import { setMotionMode, useMotionMode } from '../hooks/useMotionPreference.js';
 
 const EMAIL_CODE_LENGTH = 6;
 
@@ -1119,6 +1120,7 @@ function PreferencesSection() {
   const { user, updateUser, language, currency } = useAuth();
   const { t, tServer } = useTranslation();
   const { countries, languages, currencies } = useLocalizedOptions();
+  const motionMode = useMotionMode();
 
   // Everything here is a PENDING selection local to this form. Nothing is applied
   // to the app (or saved) until "Update preferences" succeeds; country, language
@@ -1193,6 +1195,30 @@ function PreferencesSection() {
           </Button>
         </div>
       </form>
+
+      <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">{t('settings.animationsLabel')}</p>
+          <p className="mt-0.5 text-xs text-muted">{t('settings.animationsHint')}</p>
+        </div>
+        <div role="radiogroup" aria-label={t('settings.animationsLabel')} className="flex shrink-0 rounded-xl border border-border bg-surface p-1">
+          {[
+            { id: 'system', label: t('settings.animationsSystem') },
+            { id: 'always', label: t('settings.animationsOn') },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={motionMode === option.id}
+              onClick={() => setMotionMode(option.id)}
+              className={`rounded-lg px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${motionMode === option.id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </SettingsCard>
   );
 }

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useDragControls } from 'framer-motion';
+import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import { X } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 
 function Drawer({ open, onClose, title, label, children }) {
   const { t } = useTranslation();
-  const reduced = useReducedMotion();
+  const reduced = useAppReducedMotion();
   const controls = useDragControls();
 
   useEffect(() => {

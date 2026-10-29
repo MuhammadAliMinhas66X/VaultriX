@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import { Home, Wallet, Users, Receipt, Wifi } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
@@ -678,7 +679,7 @@ function useFitScale(ref) {
 }
 
 function AuthVisual() {
-  const reduce = useReducedMotion();
+  const reduce = useAppReducedMotion();
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const [group, setGroup] = useState(0);

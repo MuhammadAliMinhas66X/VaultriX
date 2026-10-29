@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { Loader2, LogOut, MoreVertical, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -8,7 +9,7 @@ import { useTranslation } from '../../i18n/useTranslation.js';
 function AccountMenu({ hideSettings = false }) {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
-  const reduced = useReducedMotion();
+  const reduced = useAppReducedMotion();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const rootRef = useRef(null);

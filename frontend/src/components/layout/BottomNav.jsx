@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 
 const tabsFrom = (items) =>
   items.map((item) => ({
@@ -45,7 +46,7 @@ function Tab({ tab, active, uid, reduced }) {
 
 function BottomNav({ items, activeId, label }) {
   const uid = useId();
-  const reduced = useReducedMotion();
+  const reduced = useAppReducedMotion();
   const tabs = tabsFrom(items);
 
   return (
