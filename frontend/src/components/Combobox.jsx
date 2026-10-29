@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Loader2, Search } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 
@@ -165,9 +165,11 @@ function Combobox({
             )}
             {filtered.map((item, index) => {
               const isSelected = item.value === value;
+              const showGroup = item.group && item.group !== filtered[index - 1]?.group;
               return (
+                <Fragment key={item.value}>
+                {showGroup && <p className="px-3.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{item.group}</p>}
                 <button
-                  key={item.value}
                   type="button"
                   role="option"
                   aria-selected={isSelected}
@@ -185,6 +187,7 @@ function Combobox({
                   <span className="truncate">{item.label}</span>
                   {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}
                 </button>
+                </Fragment>
               );
             })}
           </div>

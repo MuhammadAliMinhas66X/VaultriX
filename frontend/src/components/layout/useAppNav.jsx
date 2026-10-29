@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { HandCoins, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Handshake, HandCoins, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -13,6 +13,7 @@ export default function useAppNav() {
   const location = useLocation();
 
   const onIncome = location.pathname === '/income';
+  const onLoans = location.pathname === '/loans';
   const focusedId = onIncome && location.hash.startsWith('#stream-') ? location.hash.slice('#stream-'.length) : null;
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
@@ -35,9 +36,10 @@ export default function useAppNav() {
         })),
       ],
     },
+    { id: 'loans', label: t('nav.loans'), icon: Handshake, to: '/loans' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = !onIncome ? 'dashboard' : focusedId ? `stream:${focusedId}` : 'income';
+  const activeId = onLoans ? 'loans' : !onIncome ? 'dashboard' : focusedId ? `stream:${focusedId}` : 'income';
   return { items, activeId };
 }
