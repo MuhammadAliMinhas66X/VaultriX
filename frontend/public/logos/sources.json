@@ -1,38 +1,31 @@
 {
   "hbl": {
-    "from": "https://www.hbl.com/assets/theme_images/X-New-Logo.svg",
-    "file": "hbl.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/hbl.svg"
   },
   "ubl": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/0/05/United_Bank_Limited_logo.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "ubl.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/ubl.svg"
   },
   "mcb": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/0/03/MCB_Bank_Limited_logo_%282026%29.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "mcb.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/mcb.svg"
   },
   "abl": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Allied_Bank_Limited_logo_%282026%29.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "abl.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/abl.svg"
   },
   "nbp": {
-    "from": "https://nbp.com.pk/MainPageImages/TrackingForeeRemittanceLogo.png",
-    "file": "nbp.png",
-    "size": "1252x430"
+    "from": "manual",
+    "file": "manual/nbp.svg"
   },
   "alfalah": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Bank_Alfalah_Limited_logo_%282026%29.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "alfalah.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/alfalah.svg"
   },
   "meezan": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/9/92/Meezan_Bank_Limited_logo_%282026%29.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "meezan.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/meezan.svg"
   },
   "askari": {
     "from": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Askari_Bank_logo.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
@@ -40,24 +33,20 @@
     "size": "vector"
   },
   "bahl": {
-    "from": "https://upload.wikimedia.org/wikipedia/en/3/36/Bank_al_habib_logo.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "bahl.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/bahl.png"
   },
   "jsbank": {
-    "from": "https://www.jsbl.com/wp-content/uploads/2024/10/App-Icon-1012x1024.png",
-    "file": "jsbank.png",
-    "size": "1012x1024"
+    "from": "manual",
+    "file": "manual/jsbank.png"
   },
   "scb": {
-    "from": "https://www.google.com/s2/favicons?domain=sc.com&sz=256",
-    "file": "scb.png",
-    "size": "180x180"
+    "from": "manual",
+    "file": "manual/scb.svg"
   },
   "hmb": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/b/bc/HabibMetro_logo.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "hmb.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/hmb.svg"
   },
   "bankislami": {
     "from": "https://bankislami.com.pk/wp-content/uploads/2025/02/Bankislami-Logo.png",
@@ -90,24 +79,20 @@
     "size": "vector"
   },
   "jazzcash": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/4/41/JazzCash_logo_%282025%29.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "jazzcash.png",
-    "size": "1024x1024"
+    "from": "manual",
+    "file": "manual/jazzcash.png"
   },
   "easypaisa": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Easypaisa_Digital_Bank_logo.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "easypaisa.png",
-    "size": "1536x428"
+    "from": "manual",
+    "file": "manual/easypaisa.png"
   },
   "nayapay": {
-    "from": "https://www.nayapay.com/cdn-cgi/image/f=webp/https://www.nayapay.com/images/rebrand/Layer_1.svg",
-    "file": "nayapay.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/nayapay.png"
   },
   "sadapay": {
-    "from": "https://cdn.prod.website-files.com/64fb2014abe05eccc8b38932/652b86e2f9121f403bc710db_Skrill_logo%201.svg",
-    "file": "sadapay.svg",
-    "size": "vector"
+    "from": "manual",
+    "file": "manual/sadapay.png"
   },
   "upaisa": {
     "from": "https://www.upaisa.com/assets/images/U-mobile.jpg",
@@ -118,5 +103,13 @@
     "from": "https://zindigi.pk/wp-content/uploads/2024/10/image.webp",
     "file": "zindigi.webp",
     "size": "343x97"
+  },
+  "faysal": {
+    "from": "manual",
+    "file": "manual/faysal.svg"
+  },
+  "dib": {
+    "from": "manual",
+    "file": "manual/dib.png"
   }
 }

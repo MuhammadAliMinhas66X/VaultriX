@@ -3,9 +3,9 @@ import { Banknote, Landmark, Smartphone } from 'lucide-react';
 import { findBrand } from '../utils/paymentBrands.js';
 
 const SIZES = {
-  sm: { box: 'h-7 w-7', icon: 'h-4 w-4', img: 'h-6 w-6', text: 'text-[10px]' },
-  md: { box: 'h-11 w-11', icon: 'h-5 w-5', img: 'h-9 w-9', text: 'text-sm' },
-  lg: { box: 'h-14 w-14', icon: 'h-6 w-6', img: 'h-11 w-11', text: 'text-base' },
+  sm: { box: 'h-8 w-8', icon: 'h-4 w-4', img: 'h-full w-full p-0.5', wide: 'w-full px-0.5', text: 'text-[11px]' },
+  md: { box: 'h-12 w-12', icon: 'h-5 w-5', img: 'h-full w-full p-0.5', wide: 'w-full px-1', text: 'text-sm' },
+  lg: { box: 'h-16 w-16', icon: 'h-6 w-6', img: 'h-full w-full p-1', wide: 'w-full px-1.5', text: 'text-base' },
 };
 
 const MIN_REMOTE_WIDTH = 48;
@@ -52,6 +52,7 @@ function BrandMark({ method, name, size = 'md' }) {
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [natural, setNatural] = useState(0);
+  const [wide, setWide] = useState(false);
   const dim = SIZES[size];
   const brand = method === 'cash' ? null : findBrand(name);
 
@@ -67,6 +68,7 @@ function BrandMark({ method, name, size = 'md' }) {
     setAttempt(0);
     setLoaded(false);
     setNatural(0);
+    setWide(false);
   }, [name, method]);
 
   const sources = useMemo(() => (brand && manifest ? sourcesFor(brand, manifest) : []), [brand, manifest]);
@@ -93,15 +95,17 @@ function BrandMark({ method, name, size = 'md' }) {
           referrerPolicy="no-referrer"
           onLoad={(event) => {
             const width = event.currentTarget.naturalWidth;
+            const height = event.currentTarget.naturalHeight;
             if (current.startsWith('/logos/') || width >= MIN_REMOTE_WIDTH) {
               setNatural(width);
+              setWide(height > 0 && width / height > 1.6);
               setLoaded(true);
             } else {
               setAttempt((prev) => prev + 1);
             }
           }}
           onError={() => setAttempt((prev) => prev + 1)}
-          className={`${dim.img} object-contain`}
+          className={`${wide ? dim.wide : dim.img} object-contain`}
           decoding="async"
           style={{ display: loaded ? 'block' : 'none', ...(cap ? { maxWidth: cap, maxHeight: cap } : null) }}
         />
