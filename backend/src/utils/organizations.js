@@ -3,6 +3,9 @@ import Organization from '../models/Organization.js';
 import IncomeStream from '../models/IncomeStream.js';
 import Account from '../models/Account.js';
 import Category from '../models/Category.js';
+import Loan from '../models/Loan.js';
+import { isImageStorageReady } from '../config/cloudinary.js';
+import { destroyByPrefix, loansPrefix } from '../services/imageStorage.js';
 
 export const removeOrganizationIfEmpty = async (orgId) => {
   if (!orgId) return false;
@@ -10,7 +13,14 @@ export const removeOrganizationIfEmpty = async (orgId) => {
   const remainingMembers = await User.countDocuments({ orgId });
   if (remainingMembers > 0) return false;
 
-  await Promise.all([IncomeStream.deleteMany({ orgId }), Account.deleteMany({ orgId }), Category.deleteMany({ orgId })]);
+  if (isImageStorageReady()) await destroyByPrefix(loansPrefix(orgId));
+
+  await Promise.all([
+    IncomeStream.deleteMany({ orgId }),
+    Account.deleteMany({ orgId }),
+    Category.deleteMany({ orgId }),
+    Loan.deleteMany({ orgId }),
+  ]);
   await Organization.deleteOne({ _id: orgId });
   return true;
 };
