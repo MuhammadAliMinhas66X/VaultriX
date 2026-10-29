@@ -29,7 +29,7 @@ export const DIGITAL_WALLETS = [
   { id: 'nayapay', name: 'NayaPay', domains: ['nayapay.com'] },
   { id: 'sadapay', name: 'SadaPay', domains: ['sadapay.pk'] },
   { id: 'upaisa', name: 'UPaisa', domains: ['upaisa.com'] },
-  { id: 'konnect', name: 'Konnect by HBL', domains: ['konnect.hbl.com', 'hbl.com'] },
+  { id: 'konnect', name: 'Konnect by HBL', domains: ['konnect.hbl.com'] },
   { id: 'zindigi', name: 'Zindigi', domains: ['zindigi.com.pk', 'zindigi.pk'] },
 ];
 
