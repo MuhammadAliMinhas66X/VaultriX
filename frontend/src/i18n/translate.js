@@ -92,6 +92,9 @@ const SERVER_MESSAGE_KEYS = {
   'Your 2-step verification setup has expired. Please start again.': 'errors.mfaSetupExpired',
   'That took too long. Please sign in again.': 'errors.loginTimedOut',
   '2-step verification is already on.': 'errors.mfaAlreadyOn',
+  'That is more than what is left to pay.': 'errors.loanOverpay',
+  'Photo upload is not available right now.': 'errors.uploadUnavailable',
+  'Could not upload that photo. Please try again.': 'errors.uploadFailed',
   '2-step verification is already off.': 'errors.mfaAlreadyOff',
   'This device has already created the maximum number of Vaultrix accounts. If you need another account, please contact support.':
     'errors.deviceAccountLimit',
