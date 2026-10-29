@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     currency: { type: String },
     language: { type: String },
     avatarUrl: { type: String, default: '' },
+    avatarPublicId: { type: String, default: '' },
     onboardingCompleted: { type: Boolean, default: false },
     mfaEnabled: { type: Boolean, default: false },
     mfaSecret: { type: String }, // encrypted at rest, see utils/mfaCrypto.js

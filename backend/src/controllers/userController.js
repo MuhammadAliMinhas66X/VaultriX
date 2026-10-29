@@ -11,6 +11,8 @@ import PendingAccountDeletion from '../models/PendingAccountDeletion.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/tokens.js';
 import { describeDevice } from '../utils/deviceLabel.js';
 import { AVATAR_DIR } from '../middleware/upload.js';
+import { isImageStorageReady } from '../config/cloudinary.js';
+import { uploadAvatarImage, destroyImage } from '../services/imageStorage.js';
 import { validatePassword, cleanName, NAME_MESSAGE, isCountryCode, isCurrencyCode } from '../utils/validators.js';
 import { parseEmail, EMAIL_MESSAGES } from '../utils/emailValidation.js';
 import { isDisposableDomain } from '../utils/disposableDomains.js';
@@ -228,12 +230,26 @@ export const changeAvatar = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Please sign in again.' });
     }
 
-    if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
-      const previousPath = path.join(AVATAR_DIR, path.basename(user.avatarUrl));
-      fs.unlink(previousPath, () => {});
+    const previousLocalPath =
+      user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/') ? path.join(AVATAR_DIR, path.basename(user.avatarUrl)) : null;
+
+    if (req.file.buffer) {
+      let stored;
+      try {
+        stored = await uploadAvatarImage(req.file.buffer, user._id);
+      } catch (uploadError) {
+        console.error('Avatar upload failed:', uploadError.message);
+        return res.status(502).json({ success: false, message: 'Could not upload that photo. Please try again.' });
+      }
+      user.avatarUrl = stored.url;
+      user.avatarPublicId = stored.publicId;
+      if (previousLocalPath) fs.unlink(previousLocalPath, () => {});
+    } else {
+      if (previousLocalPath) fs.unlink(previousLocalPath, () => {});
+      user.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      user.avatarPublicId = '';
     }
 
-    user.avatarUrl = `/uploads/avatars/${req.file.filename}`;
     await user.save();
 
     res.json({ success: true, user: publicUser(user) });
@@ -590,6 +606,10 @@ export const confirmAccountDeletion = async (req, res, next) => {
     if (user.avatarUrl && user.avatarUrl.startsWith('/uploads/avatars/')) {
       const avatarPath = path.join(AVATAR_DIR, path.basename(user.avatarUrl));
       fs.unlink(avatarPath, () => {});
+    }
+
+    if (user.avatarPublicId && isImageStorageReady()) {
+      await destroyImage(user.avatarPublicId, 'upload');
     }
 
     await Promise.all([

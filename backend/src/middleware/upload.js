@@ -2,13 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import { isImageStorageReady } from '../config/cloudinary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const AVATAR_DIR = path.join(__dirname, '..', '..', 'uploads', 'avatars');
 
 fs.mkdirSync(AVATAR_DIR, { recursive: true });
 
-const storage = multer.diskStorage({
+const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, AVATAR_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
@@ -26,14 +27,13 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-const uploader = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 3 * 1024 * 1024 },
-});
+const limits = { fileSize: 3 * 1024 * 1024, files: 1 };
 
-export const uploadAvatar = (req, res, next) => {
-  uploader.single('avatar')(req, res, (error) => {
+const diskUploader = multer({ storage: diskStorage, fileFilter, limits });
+const memoryUploader = multer({ storage: multer.memoryStorage(), fileFilter, limits });
+
+const run = (uploader, field) => (req, res, next) => {
+  uploader.single(field)(req, res, (error) => {
     if (!error) return next();
 
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -43,3 +43,7 @@ export const uploadAvatar = (req, res, next) => {
     res.status(400).json({ success: false, message: error.message || 'Could not upload that image.' });
   });
 };
+
+export const uploadAvatar = (req, res, next) => run(isImageStorageReady() ? memoryUploader : diskUploader, 'avatar')(req, res, next);
+
+export const uploadProofImage = run(memoryUploader, 'image');

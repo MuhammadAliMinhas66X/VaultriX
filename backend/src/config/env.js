@@ -45,6 +45,14 @@ export const validateEnv = () => {
     (isProduction ? problems : warnings).push('SMTP settings are missing, so OTP emails cannot be sent');
   }
 
+  const cloudinaryKeys = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+  const cloudinarySet = cloudinaryKeys.filter((key) => process.env[key]);
+  if (cloudinarySet.length === 0) {
+    warnings.push('Cloudinary is not set up, so loan photos cannot be uploaded and profile photos are kept on the server disk');
+  } else if (cloudinarySet.length < cloudinaryKeys.length) {
+    (isProduction ? problems : warnings).push('Cloudinary needs CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET together');
+  }
+
   if (isProduction && process.env.CLIENT_URL && !process.env.CLIENT_URL.startsWith('https://')) {
     problems.push('CLIENT_URL must use https in production');
   }
