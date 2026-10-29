@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom';
 import { Handshake, HandCoins, LayoutDashboard, ShieldCheck } from 'lucide-react';
-import BrandMark from '../BrandMark.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useIncome } from '../../context/IncomeContext.jsx';
@@ -31,7 +30,6 @@ export default function useAppNav() {
         ...streams.map((stream) => ({
           id: `stream:${stream.id}`,
           label: stream.name,
-          mark: <BrandMark method={stream.destinationMethod} name={stream.destinationName} size="sm" />,
           to: `/income#stream-${stream.id}`,
         })),
       ],

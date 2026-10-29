@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
 import Logo from '../Logo.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
+import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 
 const EXPANDED_WIDTH = 264;
 const COLLAPSED_WIDTH = 68;
@@ -47,12 +48,12 @@ function Tooltip({ rect, children }) {
   );
 }
 
-function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compact = false }) {
+function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
   const Icon = item.icon;
   const ref = useRef(null);
   const [tipRect, setTipRect] = useState(null);
   const tone = item.danger ? 'text-red-600 hover:text-red-700' : active ? 'text-ink' : 'text-muted hover:text-ink';
-  const className = `relative flex ${compact ? 'h-9 text-[13px]' : 'h-10 text-sm'} items-center rounded-lg font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
+  const className = `relative flex h-10 text-sm items-center rounded-lg font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
   const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 42 };
 
   const showTip = () => collapsed && ref.current && setTipRect(ref.current.getBoundingClientRect());
@@ -60,21 +61,12 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compa
 
   const content = (
     <>
-      {active && (
-        <>
-          <motion.span layoutId={`${activeId}-bg`} transition={spring} className={`absolute inset-0 rounded-lg ${item.danger ? 'bg-red-50' : 'bg-black/[0.05]'}`} />
-          <motion.span layoutId={`${activeId}-bar`} transition={spring} className={`absolute inset-y-2 start-0 w-0.5 rounded-full ${item.danger ? 'bg-red-600' : 'bg-ink'}`} />
-        </>
+      {active && <motion.span layoutId={`${activeId}-bg`} transition={spring} className={`absolute inset-0 rounded-lg ${item.danger ? 'bg-red-50' : 'bg-black/[0.06]'}`} />}
+      {(item.loading || Icon) && (
+        <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center">
+          {item.loading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+        </span>
       )}
-      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center">
-        {item.loading ? (
-          <Loader2 className="h-[18px] w-[18px] animate-spin" />
-        ) : item.mark ? (
-          item.mark
-        ) : (
-          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-        )}
-      </span>
       {!collapsed && (
         <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: instant ? 0 : 0.18 }} className="relative z-10 min-w-0 flex-1 truncate text-start">
           {item.label}
@@ -147,6 +139,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
   };
 
   const headerTone = group.activeChild ? 'text-ink' : 'text-muted hover:text-ink';
+  const headerActive = group.activeChild && !activeId.startsWith('stream:');
   const arrived = useRef(false);
 
   useEffect(() => {
@@ -171,7 +164,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           }}
           onMouseEnter={() => ref.current && setTipRect(ref.current.getBoundingClientRect())}
           onMouseLeave={() => setTipRect(null)}
-          className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${group.activeChild ? 'bg-black/[0.05]' : ''} ${headerTone}`}
+          className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${group.activeChild ? 'bg-black/[0.06]' : ''} ${headerTone}`}
         >
           <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
         </button>
@@ -186,29 +179,29 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
   return (
     <div className="flex flex-col">
       <div
-        className={`group/header relative flex h-10 w-full items-center rounded-lg transition-colors hover:bg-black/[0.03] ${group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
+        className={`group/header relative flex h-10 w-full items-center rounded-lg transition-colors ${group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >
+        {headerActive && <motion.span layoutId={`${uid}-bg`} transition={spring} className="absolute inset-0 rounded-lg bg-black/[0.06]" />}
         <Link
           to={group.to}
           onClick={() => {
             setAndSave(true);
             onNavigate?.();
           }}
-          aria-current={group.activeChild && !activeId.startsWith('stream:') ? 'page' : undefined}
-          className="relative flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg ps-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          aria-current={headerActive ? 'page' : undefined}
+          className="relative z-10 flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center">
             <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </span>
           <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
-          <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted">{group.count ?? group.items.length}</span>
         </Link>
         <button
           type="button"
           onClick={() => setAndSave(!open)}
           aria-expanded={expanded}
           aria-label={group.label}
-          className="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg text-muted outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-inherit outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={spring} className="flex">
             <ChevronDown className="h-4 w-4" />
@@ -226,21 +219,21 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
             transition={instant ? { duration: 0 } : { height: { type: 'spring', stiffness: 360, damping: 38 }, opacity: { duration: 0.16 } }}
             className="overflow-hidden"
           >
-            <div className="relative ms-[1.65rem] mt-1 pb-1 ps-3">
+            <div className="relative ms-6 mt-0.5 pb-1 ps-4">
               <motion.span
                 aria-hidden="true"
                 initial={instant ? false : { scaleY: 0 }}
                 animate={{ scaleY: 1 }}
                 transition={{ duration: instant ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
                 style={{ originY: 0 }}
-                className="absolute inset-y-1 start-0 w-px rounded-full bg-border"
+                className="absolute inset-y-0 start-0 w-px rounded-full bg-border"
               />
               <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto overflow-x-hidden pe-0.5">
                 {group.items.length === 0 && (
                   <Link
                     to={group.to}
                     onClick={onNavigate}
-                    className="flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] font-medium text-muted outline-none transition-colors hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
+                    className="flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-muted outline-none transition-colors hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
                     <Plus className="h-4 w-4" strokeWidth={1.75} />
                     {t('income.add')}
@@ -256,11 +249,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ type: 'spring', stiffness: 420, damping: 34, delay: instant ? 0 : Math.min(index, 8) * 0.04 }}
                     >
-                      <span
-                        aria-hidden="true"
-                        className={`absolute -start-3 top-1/2 h-px w-3 transition-colors ${itemActive ? 'bg-ink' : 'bg-border'}`}
-                      />
-                      <NavItem item={item} active={itemActive} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} compact />
+                      <NavItem item={item} active={itemActive} collapsed={false} activeId={uid} instant={instant} onNavigate={onNavigate} />
                     </motion.div>
                   );
                 })}
@@ -315,7 +304,7 @@ export function SidebarBody({ title, showLogo, items, activeId, footerItems, col
 }
 
 function Sidebar({ collapsed, onToggle, ...rest }) {
-  const reduced = useReducedMotion();
+  const reduced = useAppReducedMotion();
 
   return (
     <motion.aside
