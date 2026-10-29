@@ -1,5 +1,6 @@
 import api from './api.js';
 import { toApiError } from './apiError.js';
+import { compressImage } from '../utils/imageCompress.js';
 
 export const updateProfile = async (payload) => {
   try {
@@ -21,8 +22,14 @@ export const changePassword = async (payload) => {
 
 export const uploadAvatar = async (file) => {
   try {
+    let prepared = file;
+    try {
+      prepared = await compressImage(file, { maxSide: 768, quality: 0.85 });
+    } catch (compressError) {
+      prepared = file;
+    }
     const form = new FormData();
-    form.append('avatar', file);
+    form.append('avatar', prepared);
     const { data } = await api.post('/users/me/avatar', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000,
