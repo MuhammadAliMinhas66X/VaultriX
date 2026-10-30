@@ -64,9 +64,27 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
     ...points.filter((point) => point.tip).map((point, index) => ({ key: `p${index}`, kind: 'point', day: point.day, at: y(point.balance), tip: point.tip })),
     ...dues.map((due, index) => ({ key: `d${index}`, kind: due.overdue ? 'overdue' : 'due', day: due.day, at: bottom, tip: due.tip })),
   ];
+  const dueClusters = [];
+  [...dues]
+    .map((due) => x(due.day))
+    .sort((a, b) => a - b)
+    .forEach((position) => {
+      const last = dueClusters[dueClusters.length - 1];
+      if (last && position - last.start < 56) {
+        last.sum += position;
+        last.count += 1;
+      } else {
+        dueClusters.push({ start: position, sum: position, count: 1 });
+      }
+    });
   const rawLabels = [
     ...(showToday ? [{ key: 'today', x: x(today), text: t('loans.chartToday'), due: false }] : []),
-    ...dues.map((due, index) => ({ key: `due${index}`, x: x(due.day), text: t('loans.chartDue'), due: true })),
+    ...dueClusters.map((cluster, index) => ({
+      key: `due${index}`,
+      x: cluster.sum / cluster.count,
+      text: cluster.count > 1 ? `${t('loans.chartDue')} x${cluster.count}` : t('loans.chartDue'),
+      due: true,
+    })),
   ].sort((a, b) => a.x - b.x);
   const rowEnds = [-Infinity, -Infinity];
   const labels = [];
