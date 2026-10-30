@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'Le téléversement de photos n’est pas disponible pour le moment.',
   'errors.uploadFailed': 'Impossible d’envoyer cette photo. Veuillez réessayer.',
   'loans.statLeft': 'Reste',
+  'dashboard.cardHolder': 'Titulaire',
+  'dashboard.hideBalance': 'Masquer le solde',
+  'dashboard.showBalance': 'Afficher le solde',
+  'loans.chartPercent': '{percent} % payé',
+  'loans.chartCount': 'Paiements : {count}',
+  'loans.chartLast': 'Dernier paiement le {date}',
 };

@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'La subida de fotos no está disponible en este momento.',
   'errors.uploadFailed': 'No se pudo subir la foto. Inténtalo de nuevo.',
   'loans.statLeft': 'Resta',
+  'dashboard.cardHolder': 'Titular',
+  'dashboard.hideBalance': 'Ocultar saldo',
+  'dashboard.showBalance': 'Mostrar saldo',
+  'loans.chartPercent': '{percent} % pagado',
+  'loans.chartCount': 'Pagos: {count}',
+  'loans.chartLast': 'Último pago el {date}',
 };

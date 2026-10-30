@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'फोटो अपलोड अभी उपलब्ध नहीं है।',
   'errors.uploadFailed': 'वह फोटो अपलोड नहीं हो सकी। फिर कोशिश करें।',
   'loans.statLeft': 'बाकी',
+  'dashboard.cardHolder': 'कार्ड धारक',
+  'dashboard.hideBalance': 'बैलेंस छुपाएं',
+  'dashboard.showBalance': 'बैलेंस दिखाएं',
+  'loans.chartPercent': '{percent}% चुकाया',
+  'loans.chartCount': 'भुगतान: {count}',
+  'loans.chartLast': 'आखिरी भुगतान {date}',
 };

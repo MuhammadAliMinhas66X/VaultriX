@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'رفع الصور غير متاح الآن.',
   'errors.uploadFailed': 'تعذر رفع الصورة. حاول مرة أخرى.',
   'loans.statLeft': 'المتبقي',
+  'dashboard.cardHolder': 'حامل البطاقة',
+  'dashboard.hideBalance': 'إخفاء الرصيد',
+  'dashboard.showBalance': 'إظهار الرصيد',
+  'loans.chartPercent': 'تم دفع {percent}٪',
+  'loans.chartCount': 'الدفعات: {count}',
+  'loans.chartLast': 'آخر دفعة في {date}',
 };

@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'تصویر اپ لوڈ ابھی دستیاب نہیں۔',
   'errors.uploadFailed': 'وہ تصویر اپ لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔',
   'loans.statLeft': 'باقی',
+  'dashboard.cardHolder': 'کارڈ ہولڈر',
+  'dashboard.hideBalance': 'بیلنس چھپائیں',
+  'dashboard.showBalance': 'بیلنس دکھائیں',
+  'loans.chartPercent': '{percent}% ادا',
+  'loans.chartCount': 'ادائیگیاں: {count}',
+  'loans.chartLast': 'آخری ادائیگی {date}',
 };

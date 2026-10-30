@@ -724,4 +724,10 @@ export default {
   'errors.uploadUnavailable': 'Photo upload is not available right now.',
   'errors.uploadFailed': 'Could not upload that photo. Please try again.',
   'loans.statLeft': 'Left',
+  'dashboard.cardHolder': 'Card holder',
+  'dashboard.hideBalance': 'Hide balance',
+  'dashboard.showBalance': 'Show balance',
+  'loans.chartPercent': '{percent}% paid',
+  'loans.chartCount': 'Payments: {count}',
+  'loans.chartLast': 'Last payment {date}',
 };
