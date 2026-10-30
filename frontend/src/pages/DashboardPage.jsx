@@ -34,61 +34,77 @@ function DashboardPage() {
 
   const hasIncome = streams.some((item) => item.expectedAmount !== null);
 
-  const extras =
-    summary && !ratesLoading && !loading
-      ? [
-          summary.cuts > 0.005 && (
-            <dl key="cuts" className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
-              <div>
-                <dt className="text-xs text-muted">{t('dashboard.beforeDeductions')}</dt>
-                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">{formatMoney(summary.gross, { decimals: 2, currency })}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted">{t('dashboard.deductions')}</dt>
-                <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">- {formatMoney(summary.cuts, { decimals: 2, currency })}</dd>
-              </div>
-            </dl>
-          ),
-          rateLines.length > 0 && (
-            <div key="rates" className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
-              {rateLines.map((line) => (
-                <span key={line.code} className="font-medium tabular-nums text-ink">
-                  {t('income.rateLine', { from: line.code, rate: formatNumber(line.value, { maximumFractionDigits: line.value < 1 ? 4 : 2 }), to: currency })}
-                </span>
-              ))}
-              {ratesLive ? <span>{t('income.ratesLive')}</span> : ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>}
-            </div>
-          ),
-          ratesStale && (
-            <p key="stale" className="mt-2 text-xs text-muted">
-              {t('income.totalStaleNote')}
-            </p>
-          ),
-          summary.excluded > 0 && (
-            <p key="excluded" className="mt-1 text-xs text-muted">
-              {t('income.rateUnavailableNote', { count: summary.excluded, currency })}
-            </p>
-          ),
-        ].filter(Boolean)
-      : [];
+  const ready = Boolean(summary) && !ratesLoading && !loading;
+  const cutsBlock = ready && summary.cuts > 0.005 && (
+    <dl key="cuts" className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+      <div>
+        <dt className="text-xs text-muted">{t('dashboard.beforeDeductions')}</dt>
+        <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">{formatMoney(summary.gross, { decimals: 2, currency })}</dd>
+      </div>
+      <div>
+        <dt className="text-xs text-muted">{t('dashboard.deductions')}</dt>
+        <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">- {formatMoney(summary.cuts, { decimals: 2, currency })}</dd>
+      </div>
+    </dl>
+  );
+  const rateBlock = ready && rateLines.length > 0 && (
+    <div key="rates" className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
+      {rateLines.map((line) => (
+        <span key={line.code} className="font-medium tabular-nums text-ink">
+          {t('income.rateLine', { from: line.code, rate: formatNumber(line.value, { maximumFractionDigits: line.value < 1 ? 4 : 2 }), to: currency })}
+        </span>
+      ))}
+      {ratesLive ? <span>{t('income.ratesLive')}</span> : ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>}
+    </div>
+  );
+  const staleBlock = ready && ratesStale && (
+    <p key="stale" className="mt-2 text-xs text-muted">
+      {t('income.totalStaleNote')}
+    </p>
+  );
+  const excludedBlock = ready && summary.excluded > 0 && (
+    <p key="excluded" className="mt-1 text-xs text-muted">
+      {t('income.rateUnavailableNote', { count: summary.excluded, currency })}
+    </p>
+  );
+  const phoneExtras = [cutsBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
+  const tabletNotes = [rateBlock, staleBlock, excludedBlock].filter(Boolean);
 
   const waiting = ratesLoading || loading;
   const cardStatus = waiting ? 'wait' : !summary ? 'error' : 'ready';
+  const hasCuts = ready && summary.cuts > 0.005;
+
+  const tabletRows = [
+    { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
+    { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-' },
+  ];
 
   const heroCard = (
     <>
-      <div className={`mx-auto w-full max-w-xl lg:hidden ${extras.length > 0 ? 'md:grid md:max-w-none md:grid-cols-2 md:items-stretch md:gap-4' : ''}`}>
-        <BalanceCard
-          status={cardStatus}
-          amount={summary ? summary.net : 0}
-          currency={currency}
-          holder={user?.name}
-          message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
-        />
-        {extras.length > 0 && (
-          <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 md:mt-0 md:flex md:flex-col md:justify-center md:px-6 [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">
-            {extras}
+      <div className="mx-auto w-full max-w-xl md:max-w-none lg:hidden">
+        <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4">
+          <BalanceCard
+            status={cardStatus}
+            amount={summary ? summary.net : 0}
+            currency={currency}
+            holder={user?.name}
+            message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
+          />
+          <div className="hidden md:flex md:flex-col md:gap-4">
+            {tabletRows.map((row) => (
+              <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4">
+                <p className="text-xs text-muted">{row.label}</p>
+                <p className="mt-1.5 break-words text-xl font-semibold tabular-nums tracking-tight text-ink">{row.value}</p>
+              </div>
+            ))}
           </div>
+        </div>
+
+        {phoneExtras.length > 0 && (
+          <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 md:hidden [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{phoneExtras}</div>
+        )}
+        {tabletNotes.length > 0 && (
+          <div className="mt-3 hidden rounded-2xl border border-border bg-white px-5 pb-4 pt-1 md:block [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{tabletNotes}</div>
         )}
       </div>
 
@@ -101,7 +117,7 @@ function DashboardPage() {
         ) : (
           <>
             <p className="mt-2 break-words text-4xl font-semibold tracking-tight text-ink sm:text-5xl">{formatMoney(summary.net, { decimals: 2, currency })}</p>
-            {extras}
+            {[cutsBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean)}
           </>
         )}
       </div>

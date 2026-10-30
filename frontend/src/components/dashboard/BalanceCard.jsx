@@ -123,7 +123,7 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
       onPointerUp={rest}
       onPointerCancel={rest}
       style={{ rotateX: reduced ? 0 : rotateX, rotateY: reduced ? 0 : rotateY, transformPerspective: 900, touchAction: 'pan-y' }}
-      className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0d0d10] via-[#1c1c21] to-[#3b3b44] p-5 text-white shadow-[0_24px_48px_-20px_rgba(17,17,20,0.65)]"
+      className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0d0d10] via-[#1c1c21] to-[#3b3b44] p-5 text-white md:flex md:min-h-[280px] md:flex-col md:justify-between md:p-8 shadow-[0_24px_48px_-20px_rgba(17,17,20,0.65)]"
     >
       <span aria-hidden="true" className="pointer-events-none absolute -end-16 -top-20 h-64 w-64 rounded-full bg-white/[0.07] blur-2xl" />
       <span aria-hidden="true" className="pointer-events-none absolute -bottom-24 -start-10 h-56 w-56 rounded-full bg-white/[0.05] blur-2xl" />
@@ -159,7 +159,7 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
           )}
         </div>
         {status === 'ready' ? (
-          <div className="mt-1.5 h-11 overflow-hidden">
+          <div className="mt-1.5 h-11 overflow-hidden md:h-[3.25rem]">
             <AnimatePresence mode="wait" initial={false}>
               <motion.p
                 key={hidden ? 'hidden' : 'shown'}
@@ -167,7 +167,7 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={reduced ? { opacity: 0 } : { opacity: 0, y: -14, filter: 'blur(6px)' }}
                 transition={{ duration: 0.22 }}
-                className="whitespace-nowrap text-[clamp(1.75rem,9vw,2.4rem)] font-semibold leading-[2.75rem] tracking-tight tabular-nums"
+                className="whitespace-nowrap text-[clamp(1.75rem,9vw,2.4rem)] md:text-[2.75rem] font-semibold leading-[2.75rem] md:leading-[3.25rem] tracking-tight tabular-nums"
               >
                 {hidden ? '••••••' : formatMoney(counted, { decimals: 2, currency })}
               </motion.p>
@@ -181,7 +181,7 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
       {holder && (
         <div className="relative mt-7">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">{t('dashboard.cardHolder')}</p>
-          <p className="mt-1 truncate text-sm font-semibold uppercase tracking-[0.14em]">{holder}</p>
+          <p className="mt-1 truncate text-sm font-semibold uppercase tracking-[0.14em] md:text-base">{holder}</p>
         </div>
       )}
     </motion.div>
