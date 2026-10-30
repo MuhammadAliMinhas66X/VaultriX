@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Banknote, Plus } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, Banknote, Plus, Wallet } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
@@ -74,9 +74,10 @@ function DashboardPage() {
   const cardStatus = waiting ? 'wait' : !summary ? 'error' : 'ready';
   const hasCuts = ready && summary.cuts > 0.005;
 
+  const share = ready && hasCuts && summary.gross > 0 ? Math.min(100, (summary.cuts / summary.gross) * 100) : 0;
   const tabletRows = [
-    { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
-    { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-' },
+    { key: 'gross', icon: Wallet, label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
+    { key: 'cuts', icon: ArrowDownRight, label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
   ];
 
   const heroCard = (
@@ -91,12 +92,28 @@ function DashboardPage() {
             message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
           />
           <div className="hidden md:flex md:flex-col md:gap-4">
-            {tabletRows.map((row) => (
-              <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4">
-                <p className="text-xs text-muted">{row.label}</p>
-                <p className="mt-1.5 break-words text-xl font-semibold tabular-nums tracking-tight text-ink">{row.value}</p>
-              </div>
-            ))}
+            {tabletRows.map((row) => {
+              const RowIcon = row.icon;
+              return (
+                <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4 shadow-[0_1px_0_rgba(17,17,20,0.03)]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                      <RowIcon className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{row.label}</p>
+                  </div>
+                  <p className="mt-3 break-words text-[1.65rem] font-bold leading-none tracking-tight tabular-nums text-ink">{row.value}</p>
+                  {row.bar && (
+                    <div className="mt-3.5">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+                        <div style={{ width: `${Math.max(share, 2)}%` }} className="h-full rounded-full bg-ink" />
+                      </div>
+                      <p className="mt-1.5 text-xs font-medium tabular-nums text-muted">{t('dashboard.deductionShare', { percent: formatNumber(share, { maximumFractionDigits: 1 }) })}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
