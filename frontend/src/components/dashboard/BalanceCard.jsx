@@ -31,6 +31,10 @@ function Chip() {
         <rect x="19" y="13" width="18" height="16" rx="3.5" />
       </g>
       <rect x="19.6" y="13.6" width="16.8" height="14.8" rx="3" fill={`url(#${id}-shine)`} />
+      <g fill="none" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23.6 17.6L28 25.4L32.4 17.6" stroke="#ffffff" strokeOpacity="0.7" transform="translate(0 0.7)" />
+        <path d="M23.6 17.6L28 25.4L32.4 17.6" stroke="#3d3d47" />
+      </g>
       <rect x="0.5" y="0.5" width="55" height="20" rx="7" fill={`url(#${id}-shine)`} opacity="0.5" />
     </svg>
   );
