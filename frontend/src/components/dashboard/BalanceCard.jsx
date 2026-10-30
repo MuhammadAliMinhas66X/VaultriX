@@ -1,0 +1,160 @@
+import { useEffect, useRef, useState } from 'react';
+import { animate, AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from '../../i18n/useTranslation.js';
+import { useFormat } from '../../i18n/useFormat.js';
+import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
+
+const STORAGE_KEY = 'vaultrix.hideBalance';
+const tilt = { stiffness: 220, damping: 20, mass: 0.6 };
+
+const readHidden = () => {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === '1';
+  } catch (error) {
+    return false;
+  }
+};
+
+const useCountUp = (target, still) => {
+  const [value, setValue] = useState(still ? target : 0);
+  const shown = useRef(still ? target : 0);
+
+  useEffect(() => {
+    if (still) {
+      shown.current = target;
+      setValue(target);
+      return undefined;
+    }
+    const controls = animate(shown.current, target, {
+      duration: 1.1,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (latest) => {
+        shown.current = latest;
+        setValue(latest);
+      },
+    });
+    return () => controls.stop();
+  }, [target, still]);
+
+  return value;
+};
+
+function BalanceCard({ status, amount = 0, currency, holder, message }) {
+  const { t } = useTranslation();
+  const { formatMoney } = useFormat();
+  const reduced = useAppReducedMotion();
+  const ref = useRef(null);
+  const [hidden, setHidden] = useState(readHidden);
+
+  const px = useMotionValue(0.5);
+  const py = useMotionValue(0.5);
+  const rotateY = useSpring(useTransform(px, [0, 1], [-10, 10]), tilt);
+  const rotateX = useSpring(useTransform(py, [0, 1], [10, -10]), tilt);
+  const sheenX = useTransform(px, [0, 1], ['-45%', '45%']);
+
+  const counted = useCountUp(status === 'ready' ? amount : 0, reduced);
+
+  const toggle = () => {
+    setHidden((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
+      } catch (error) {
+        return next;
+      }
+      return next;
+    });
+  };
+
+  const move = (event) => {
+    if (reduced || !ref.current) return;
+    const box = ref.current.getBoundingClientRect();
+    px.set(Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)));
+    py.set(Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)));
+  };
+
+  const rest = () => {
+    px.set(0.5);
+    py.set(0.5);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={reduced ? false : { opacity: 0, y: 18, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+      whileTap={reduced ? undefined : { scale: 0.985 }}
+      onPointerMove={move}
+      onPointerLeave={rest}
+      onPointerUp={rest}
+      onPointerCancel={rest}
+      style={{ rotateX: reduced ? 0 : rotateX, rotateY: reduced ? 0 : rotateY, transformPerspective: 900, touchAction: 'pan-y' }}
+      className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0d0d10] via-[#1c1c21] to-[#3b3b44] p-5 text-white shadow-[0_24px_48px_-20px_rgba(17,17,20,0.65)]"
+    >
+      <span aria-hidden="true" className="pointer-events-none absolute -end-16 -top-20 h-64 w-64 rounded-full bg-white/[0.07] blur-2xl" />
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-24 -start-10 h-56 w-56 rounded-full bg-white/[0.05] blur-2xl" />
+      <motion.span
+        aria-hidden="true"
+        style={{ x: reduced ? 0 : sheenX }}
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.14)_50%,transparent_70%)]"
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="relative block h-8 w-11 overflow-hidden rounded-md bg-gradient-to-br from-white/80 via-white/45 to-white/70 shadow-inner">
+            <span className="absolute inset-x-0 top-1/2 h-px bg-black/20" />
+            <span className="absolute inset-y-0 start-1/2 w-px bg-black/20" />
+          </span>
+          {status === 'ready' && (
+            <button
+              type="button"
+              onClick={toggle}
+              aria-pressed={hidden}
+              aria-label={hidden ? t('dashboard.showBalance') : t('dashboard.hideBalance')}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white outline-none backdrop-blur-sm transition active:scale-90 focus-visible:ring-2 focus-visible:ring-white/60"
+            >
+              {hidden ? <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <Eye className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+            </button>
+          )}
+        </div>
+        <div className="text-end">
+          <p className="text-lg font-semibold uppercase tracking-[0.18em]">Vaultrix</p>
+          <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">{currency}</p>
+        </div>
+      </div>
+
+      <div className="relative mt-9">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/65">{t('dashboard.inAccount')}</p>
+        {status === 'ready' ? (
+          <div className="mt-1.5 h-11 overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.p
+                key={hidden ? 'hidden' : 'shown'}
+                initial={reduced ? false : { opacity: 0, y: 14, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, y: -14, filter: 'blur(6px)' }}
+                transition={{ duration: 0.22 }}
+                className="whitespace-nowrap text-[clamp(1.75rem,9vw,2.4rem)] font-semibold leading-[2.75rem] tracking-tight tabular-nums"
+              >
+                {hidden ? '••••••' : formatMoney(counted, { decimals: 2, currency })}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-white/75">{message}</p>
+        )}
+      </div>
+
+      {holder && (
+        <div className="relative mt-7">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">{t('dashboard.cardHolder')}</p>
+          <p className="mt-1 truncate text-sm font-semibold uppercase tracking-[0.14em]">{holder}</p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+export default BalanceCard;

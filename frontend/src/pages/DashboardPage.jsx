@@ -4,6 +4,7 @@ import { ArrowRight, Banknote, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
+import BalanceCard from '../components/dashboard/BalanceCard.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -16,7 +17,7 @@ import { typeLabelKey } from '../components/income/incomeOptions.js';
 const LATEST_LIMIT = 8;
 
 function DashboardPage() {
-  const { currency } = useAuth();
+  const { currency, user } = useAuth();
   const { t } = useTranslation();
   const { formatMoney, formatNumber, formatDate } = useFormat();
   const { streams, loading, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt } = useIncome();
@@ -33,19 +34,11 @@ function DashboardPage() {
 
   const hasIncome = streams.some((item) => item.expectedAmount !== null);
 
-  const heroCard = (
-    <div className="rounded-2xl border border-border bg-white p-5 sm:p-7">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.inAccount')}</p>
-      {ratesLoading || loading ? (
-        <p className="mt-3 text-sm text-muted">{t('income.ratesLoading')}</p>
-      ) : !summary ? (
-        <p className="mt-3 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
-      ) : (
-        <>
-          <p className="mt-2 break-words text-4xl font-semibold tracking-tight text-ink sm:text-5xl">{formatMoney(summary.net, { decimals: 2, currency })}</p>
-
-          {summary.cuts > 0.005 && (
-            <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+  const extras =
+    summary && !ratesLoading && !loading
+      ? [
+          summary.cuts > 0.005 && (
+            <dl key="cuts" className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
               <div>
                 <dt className="text-xs text-muted">{t('dashboard.beforeDeductions')}</dt>
                 <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">{formatMoney(summary.gross, { decimals: 2, currency })}</dd>
@@ -55,10 +48,9 @@ function DashboardPage() {
                 <dd className="mt-1 text-sm font-semibold tabular-nums text-ink">- {formatMoney(summary.cuts, { decimals: 2, currency })}</dd>
               </div>
             </dl>
-          )}
-
-          {rateLines.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
+          ),
+          rateLines.length > 0 && (
+            <div key="rates" className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
               {rateLines.map((line) => (
                 <span key={line.code} className="font-medium tabular-nums text-ink">
                   {t('income.rateLine', { from: line.code, rate: formatNumber(line.value, { maximumFractionDigits: line.value < 1 ? 4 : 2 }), to: currency })}
@@ -66,12 +58,50 @@ function DashboardPage() {
               ))}
               {ratesLive ? <span>{t('income.ratesLive')}</span> : ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>}
             </div>
-          )}
-          {ratesStale && <p className="mt-2 text-xs text-muted">{t('income.totalStaleNote')}</p>}
-          {summary.excluded > 0 && <p className="mt-1 text-xs text-muted">{t('income.rateUnavailableNote', { count: summary.excluded, currency })}</p>}
-        </>
-      )}
-    </div>
+          ),
+          ratesStale && (
+            <p key="stale" className="mt-2 text-xs text-muted">
+              {t('income.totalStaleNote')}
+            </p>
+          ),
+          summary.excluded > 0 && (
+            <p key="excluded" className="mt-1 text-xs text-muted">
+              {t('income.rateUnavailableNote', { count: summary.excluded, currency })}
+            </p>
+          ),
+        ].filter(Boolean)
+      : [];
+
+  const waiting = ratesLoading || loading;
+  const cardStatus = waiting ? 'wait' : !summary ? 'error' : 'ready';
+
+  const heroCard = (
+    <>
+      <div className="md:hidden">
+        <BalanceCard
+          status={cardStatus}
+          amount={summary ? summary.net : 0}
+          currency={currency}
+          holder={user?.name}
+          message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
+        />
+        {extras.length > 0 && <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{extras}</div>}
+      </div>
+
+      <div className="hidden rounded-2xl border border-border bg-white p-5 sm:p-7 md:block">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.inAccount')}</p>
+        {waiting ? (
+          <p className="mt-3 text-sm text-muted">{t('income.ratesLoading')}</p>
+        ) : !summary ? (
+          <p className="mt-3 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
+        ) : (
+          <>
+            <p className="mt-2 break-words text-4xl font-semibold tracking-tight text-ink sm:text-5xl">{formatMoney(summary.net, { decimals: 2, currency })}</p>
+            {extras}
+          </>
+        )}
+      </div>
+    </>
   );
 
   const latestCard = (
