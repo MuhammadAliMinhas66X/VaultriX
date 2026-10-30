@@ -77,7 +77,7 @@ function DashboardPage() {
 
   const heroCard = (
     <>
-      <div className="mx-auto w-full max-w-xl lg:hidden">
+      <div className={`mx-auto w-full max-w-xl lg:hidden ${extras.length > 0 ? 'md:grid md:max-w-none md:grid-cols-2 md:items-stretch md:gap-4' : ''}`}>
         <BalanceCard
           status={cardStatus}
           amount={summary ? summary.net : 0}
@@ -85,7 +85,11 @@ function DashboardPage() {
           holder={user?.name}
           message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
         />
-        {extras.length > 0 && <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{extras}</div>}
+        {extras.length > 0 && (
+          <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 md:mt-0 md:flex md:flex-col md:justify-center md:px-6 [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">
+            {extras}
+          </div>
+        )}
       </div>
 
       <div className="hidden rounded-2xl border border-border bg-white p-5 sm:p-7 lg:block">
