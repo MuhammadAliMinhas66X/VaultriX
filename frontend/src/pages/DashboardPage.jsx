@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDownRight, ArrowRight, Banknote, Plus, Wallet } from 'lucide-react';
+import { ArrowRight, Banknote, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
@@ -76,14 +76,14 @@ function DashboardPage() {
 
   const share = ready && hasCuts && summary.gross > 0 ? Math.min(100, (summary.cuts / summary.gross) * 100) : 0;
   const tabletRows = [
-    { key: 'gross', icon: Wallet, label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
-    { key: 'cuts', icon: ArrowDownRight, label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
+    { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
+    { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
   ];
 
   const heroCard = (
     <>
-      <div className="mx-auto w-full max-w-xl md:max-w-none lg:hidden">
-        <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4">
+      <div className="mx-auto w-full max-w-xl md:max-w-none">
+        <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4 lg:grid-cols-[1.7fr_1fr] lg:gap-5">
           <BalanceCard
             status={cardStatus}
             amount={summary ? summary.net : 0}
@@ -92,28 +92,20 @@ function DashboardPage() {
             message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
           />
           <div className="hidden md:flex md:flex-col md:gap-4">
-            {tabletRows.map((row) => {
-              const RowIcon = row.icon;
-              return (
-                <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4 shadow-[0_1px_0_rgba(17,17,20,0.03)]">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
-                      <RowIcon className="h-4 w-4" strokeWidth={2} />
-                    </span>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{row.label}</p>
-                  </div>
-                  <p className="mt-3 break-words text-[1.65rem] font-bold leading-none tracking-tight tabular-nums text-ink">{row.value}</p>
-                  {row.bar && (
-                    <div className="mt-3.5">
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
-                        <div style={{ width: `${Math.max(share, 2)}%` }} className="h-full rounded-full bg-ink" />
-                      </div>
-                      <p className="mt-1.5 text-xs font-medium tabular-nums text-muted">{t('dashboard.deductionShare', { percent: formatNumber(share, { maximumFractionDigits: 1 }) })}</p>
+            {tabletRows.map((row) => (
+              <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-5 lg:px-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{row.label}</p>
+                <p className="mt-2 break-words text-[1.9rem] font-bold leading-none tracking-tight tabular-nums text-ink lg:text-[2.25rem]">{row.value}</p>
+                {row.bar && (
+                  <div className="mt-4">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+                      <div style={{ width: `${Math.max(share, 2)}%` }} className="h-full rounded-full bg-ink" />
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    <p className="mt-1.5 text-xs font-medium tabular-nums text-muted">{t('dashboard.deductionShare', { percent: formatNumber(share, { maximumFractionDigits: 1 }) })}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -122,20 +114,6 @@ function DashboardPage() {
         )}
         {tabletNotes.length > 0 && (
           <div className="mt-3 hidden rounded-2xl border border-border bg-white px-5 pb-4 pt-1 md:block [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{tabletNotes}</div>
-        )}
-      </div>
-
-      <div className="hidden rounded-2xl border border-border bg-white p-5 sm:p-7 lg:block">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.inAccount')}</p>
-        {waiting ? (
-          <p className="mt-3 text-sm text-muted">{t('income.ratesLoading')}</p>
-        ) : !summary ? (
-          <p className="mt-3 text-sm text-muted">{t('errors.ratesUnavailable')}</p>
-        ) : (
-          <>
-            <p className="mt-2 break-words text-4xl font-semibold tracking-tight text-ink sm:text-5xl">{formatMoney(summary.net, { decimals: 2, currency })}</p>
-            {[cutsBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean)}
-          </>
         )}
       </div>
     </>
