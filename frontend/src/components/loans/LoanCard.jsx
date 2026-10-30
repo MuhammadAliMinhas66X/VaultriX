@@ -11,6 +11,7 @@ function LoanCard({ loan, selected, converted, currency, onSelect }) {
   const { formatMoney, formatDate } = useFormat();
   const state = loanState(loan);
   const shown = state.done ? loan.amount : loan.remaining;
+  const partial = !state.done && loan.paid > 0;
 
   return (
     <button
@@ -30,23 +31,27 @@ function LoanCard({ loan, selected, converted, currency, onSelect }) {
         <span className="shrink-0 text-end">
           <span className="block text-base font-semibold tabular-nums text-ink">{formatMoney(shown, { decimals: 0, currency: loan.currency })}</span>
           <span className="block text-xs text-muted">
-            {state.done ? t('loans.paidInFull') : converted !== null ? t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) }) : t('loans.chartLeft')}
+            {!state.done && converted !== null ? t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) }) : state.done ? t('loans.statTotal') : t('loans.chartLeft')}
           </span>
         </span>
       </span>
 
-      <span className="block h-1.5 w-full overflow-hidden rounded-full bg-border/70">
-        <span style={{ width: `${state.progress * 100}%` }} className="block h-full rounded-full bg-ink transition-[width] duration-500" />
-      </span>
+      {partial && (
+        <span className="block h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+          <span style={{ width: `${state.progress * 100}%` }} className="block h-full rounded-full bg-ink transition-[width] duration-500" />
+        </span>
+      )}
 
       <span className="flex flex-wrap items-center gap-2 text-xs">
         <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 font-medium ${statusClass(state)}`}>
           {state.done && <Check className="h-3 w-3" strokeWidth={2.5} />}
           {statusLabel(t, formatDate, loan, state)}
         </span>
-        <span className="rounded-full bg-surface px-2.5 py-1 font-medium tabular-nums text-muted">
-          {t('loans.paidOf', { paid: formatMoney(loan.paid, { decimals: 0, currency: loan.currency }), total: formatMoney(loan.amount, { decimals: 0, currency: loan.currency }) })}
-        </span>
+        {partial && (
+          <span className="rounded-full bg-surface px-2.5 py-1 font-medium tabular-nums text-muted">
+            {t('loans.paidOf', { paid: formatMoney(loan.paid, { decimals: 0, currency: loan.currency }), total: formatMoney(loan.amount, { decimals: 0, currency: loan.currency }) })}
+          </span>
+        )}
       </span>
     </button>
   );

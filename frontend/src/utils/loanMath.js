@@ -86,3 +86,50 @@ export const balanceSeries = (loan, today = todayDayNumber()) => {
   if (endDay <= startDay) endDay = startDay + 1;
   return { points, startDay, endDay, dueDay, today };
 };
+
+const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+export const outstandingSeries = (loans, rates, baseCurrency, today = todayDayNumber()) => {
+  const rows = [];
+  const dueByDay = new Map();
+
+  loans.forEach((loan) => {
+    const same = loan.currency === baseCurrency;
+    const convert = (value) => (same ? value : toBase(value, loan.currency, rates));
+    const total = convert(loan.amount);
+    if (total === null) return;
+    const startDay = utcDayNumber(loan.sentAt);
+    rows.push({ day: startDay, delta: total, kind: 'added', name: loan.personName, amount: total, order: 0 });
+    loan.payments.forEach((payment) => {
+      const amount = convert(payment.amount);
+      rows.push({ day: Math.max(startDay, utcDayNumber(payment.paidAt)), delta: -amount, kind: 'paid', name: loan.personName, amount, order: 1 });
+    });
+    if (!loan.done && loan.dueAt) {
+      const day = utcDayNumber(loan.dueAt);
+      const entry = dueByDay.get(day) || { day, overdue: day < today, items: [] };
+      entry.items.push({ name: loan.personName, left: convert(loan.remaining) });
+      dueByDay.set(day, entry);
+    }
+  });
+
+  rows.sort((a, b) => a.day - b.day || a.order - b.order);
+  const points = [];
+  let balance = 0;
+  rows.forEach((row) => {
+    balance = Math.max(0, round2(balance + row.delta));
+    const last = points[points.length - 1];
+    if (last && last.day === row.day) {
+      last.balance = balance;
+      last.events.push(row);
+    } else {
+      points.push({ day: row.day, balance, events: [row] });
+    }
+  });
+
+  const dues = [...dueByDay.values()].sort((a, b) => a.day - b.day);
+  const startDay = points.length ? points[0].day : today;
+  const lastDay = points.length ? points[points.length - 1].day : today;
+  const endDay = Math.max(today, lastDay, ...dues.map((due) => due.day), startDay + 1);
+  const max = Math.max(1, ...points.map((point) => point.balance));
+  return { points, dues, startDay, endDay, today, max };
+};

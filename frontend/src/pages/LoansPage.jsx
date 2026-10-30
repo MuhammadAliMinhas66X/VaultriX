@@ -7,6 +7,7 @@ import Drawer from '../components/Drawer.jsx';
 import LoanForm, { emptyLoanForm, formFromLoan } from '../components/loans/LoanForm.jsx';
 import LoanCard from '../components/loans/LoanCard.jsx';
 import LoanDetail from '../components/loans/LoanDetail.jsx';
+import LoansOverview from '../components/loans/LoansOverview.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -259,7 +260,7 @@ function LoansPage() {
   const sidePanel = adding ? addForm : editing ? editForm : selected ? detailFor(selected) : null;
   const leftLabel = tab === 'borrowed' ? t('loans.leftToPay') : t('loans.leftToGet');
   const filterLabels = { all: t('loans.filterAll'), open: t('loans.filterOpen'), done: t('loans.filterDone'), critical: t('loans.filterCritical') };
-  const money = (value) => formatMoney(value, { decimals: 0 });
+  const money = useCallback((value) => formatMoney(value, { decimals: 0 }), [formatMoney]);
 
   const tabs = [
     { id: 'borrowed', label: t('loans.tabOwe'), count: tabCounts.borrowed },
@@ -318,21 +319,7 @@ function LoansPage() {
           )
         ) : (
           <>
-            <div className="mb-4 grid grid-cols-3 gap-3 rounded-2xl border border-border bg-white p-4 sm:p-5">
-              <div className="min-w-0">
-                <p className="truncate text-xs text-muted">{t('loans.statTotal')}</p>
-                <p className="mt-1 truncate text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{money(summary.total)}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs text-muted">{t('loans.statPaid')}</p>
-                <p className="mt-1 truncate text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{money(summary.paid)}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs text-muted">{leftLabel}</p>
-                <p className="mt-1 truncate text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{money(summary.left)}</p>
-              </div>
-              {summary.excluded > 0 && <p className="col-span-3 text-xs text-muted">{t('loans.excludedNote', { count: summary.excluded })}</p>}
-            </div>
+            <LoansOverview loans={inTab} rates={rates} currency={currency} summary={summary} leftLabel={leftLabel} money={money} />
 
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div role="group" aria-label={t('loans.filterLabel')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0">

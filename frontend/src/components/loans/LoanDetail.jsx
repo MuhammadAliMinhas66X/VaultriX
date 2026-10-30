@@ -4,6 +4,7 @@ import { Check, Copy, Pencil, Plus, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import PaymentForm from './PaymentForm.jsx';
+import LoanAmounts from './LoanAmounts.jsx';
 import PaymentsChart from './PaymentsChart.jsx';
 import ProofSlot from './ProofSlot.jsx';
 import { statusLabel, statusClass } from './loanStatus.js';
@@ -18,15 +19,6 @@ function Detail({ label, children, wide = false }) {
     <div className={`min-w-0 ${wide ? 'col-span-2 sm:col-span-3' : ''}`}>
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="mt-1 break-words text-sm font-medium text-ink">{children}</dd>
-    </div>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="min-w-0">
-      <p className="truncate text-xs text-muted">{label}</p>
-      <p className="mt-1 truncate text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-xl">{value}</p>
     </div>
   );
 }
@@ -122,11 +114,7 @@ function LoanDetail({
       <ErrorSlot className="mx-5 mb-3" />
 
       <div className="mx-5 rounded-xl bg-surface px-4 py-4">
-        <div className="grid grid-cols-3 gap-3">
-          <Stat label={t('loans.statTotal')} value={money(loan.amount)} />
-          <Stat label={t('loans.statPaid')} value={money(loan.paid)} />
-          <Stat label={t('loans.statLeft')} value={money(loan.remaining)} />
-        </div>
+        <LoanAmounts total={loan.amount} paid={loan.paid} left={loan.remaining} leftLabel={borrowed ? t('loans.leftToPay') : t('loans.leftToGet')} money={money} size="md" />
         {converted !== null && !state.done && (
           <p className="mt-3 text-xs tabular-nums text-muted">{t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) })}</p>
         )}
@@ -136,11 +124,7 @@ function LoanDetail({
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-ink">{t('loans.payments')}</h3>
-            {state.done ? (
-              <span className="flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-ink">
-                <Check className="h-3 w-3" strokeWidth={2.5} /> {t('loans.paidInFull')}
-              </span>
-            ) : (
+            {state.done ? null : (
               !paying && (
                 <button type="button" onClick={() => setPaying(true)} className="flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-white outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/40">
                   <Plus className="h-4 w-4" /> {t('loans.addPayment')}
