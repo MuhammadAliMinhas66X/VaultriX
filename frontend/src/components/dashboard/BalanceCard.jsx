@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { animate, AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -7,6 +7,34 @@ import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 
 const STORAGE_KEY = 'vaultrix.hideBalance';
 const tilt = { stiffness: 55, damping: 18, mass: 1.4 };
+
+function Chip() {
+  const id = useId().replace(/:/g, '');
+  return (
+    <svg viewBox="0 0 56 42" className="h-[42px] w-14 shrink-0 drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${id}-metal`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f4f4f7" />
+          <stop offset="35%" stopColor="#c9c9d1" />
+          <stop offset="65%" stopColor="#e6e6eb" />
+          <stop offset="100%" stopColor="#a9a9b3" />
+        </linearGradient>
+        <linearGradient id={`${id}-shine`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect x="0.5" y="0.5" width="55" height="41" rx="7" fill={`url(#${id}-metal)`} stroke="#8d8d97" strokeWidth="0.8" />
+      <g fill="none" stroke="#6f6f79" strokeWidth="0.9" strokeLinecap="round">
+        <path d="M0.5 14.5H19M0.5 21H19M0.5 27.5H19M37 14.5H55.5M37 21H55.5M37 27.5H55.5" />
+        <path d="M19 0.5V13M37 0.5V13M19 29V41.5M37 29V41.5" />
+        <rect x="19" y="13" width="18" height="16" rx="3.5" />
+      </g>
+      <rect x="19.6" y="13.6" width="16.8" height="14.8" rx="3" fill={`url(#${id}-shine)`} />
+      <rect x="0.5" y="0.5" width="55" height="20" rx="7" fill={`url(#${id}-shine)`} opacity="0.5" />
+    </svg>
+  );
+}
 
 const readHidden = () => {
   try {
@@ -102,16 +130,12 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
       />
 
       <div className="relative flex items-start justify-between gap-3">
-        <span
-          aria-label="Vaultrix TM"
-          className="relative flex h-10 min-w-[96px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-white/85 via-white/50 to-white/75 px-3 shadow-inner"
-        >
-          <span aria-hidden="true" className="absolute inset-y-0 start-2 w-px bg-black/15" />
-          <span aria-hidden="true" className="absolute inset-y-0 end-2 w-px bg-black/15" />
-          <span className="relative text-[10px] font-bold uppercase tracking-[0.2em] text-[#1c1c21]">
-            Vaultrix<sup className="ms-0.5 align-super text-[6px] font-semibold tracking-normal">TM</sup>
-          </span>
-        </span>
+        <div className="flex items-center gap-3">
+          <Chip />
+          <p className="text-[13px] font-semibold uppercase tracking-[0.22em]">
+            Vaultrix<sup className="ms-0.5 align-super text-[7px] font-semibold tracking-normal text-white/80">TM</sup>
+          </p>
+        </div>
         <p className="pt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">{currency}</p>
       </div>
 
