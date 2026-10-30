@@ -6,7 +6,7 @@ import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { dayNumberToDate } from '../../utils/loanMath.js';
 
 const HEIGHT = 232;
-const MARGIN = { top: 34, right: 16, bottom: 34, left: 48 };
+const MARGIN = { top: 40, right: 16, bottom: 34, left: 48 };
 const SHORT = { day: 'numeric', month: 'short', timeZone: 'UTC' };
 
 const useWidth = (ref, fallback = 360) => {
@@ -64,6 +64,22 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
     ...points.filter((point) => point.tip).map((point, index) => ({ key: `p${index}`, kind: 'point', day: point.day, at: y(point.balance), tip: point.tip })),
     ...dues.map((due, index) => ({ key: `d${index}`, kind: due.overdue ? 'overdue' : 'due', day: due.day, at: bottom, tip: due.tip })),
   ];
+  const rawLabels = [
+    ...(showToday ? [{ key: 'today', x: x(today), text: t('loans.chartToday'), due: false }] : []),
+    ...dues.map((due, index) => ({ key: `due${index}`, x: x(due.day), text: t('loans.chartDue'), due: true })),
+  ].sort((a, b) => a.x - b.x);
+  const rowEnds = [-Infinity, -Infinity];
+  const labels = [];
+  rawLabels.forEach((item) => {
+    const half = item.text.length * 3.4;
+    const anchor = item.x > width - MARGIN.right - half - 4 ? 'end' : item.x < MARGIN.left + half ? 'start' : 'middle';
+    const left = anchor === 'end' ? item.x - half * 2 : anchor === 'start' ? item.x : item.x - half;
+    const right = left + half * 2;
+    const row = rowEnds.findIndex((end) => left - end >= 8);
+    if (row === -1) return;
+    rowEnds[row] = right;
+    labels.push({ ...item, anchor, y: MARGIN.top - 12 - row * 13 });
+  });
   const current = active === null ? null : markers.find((marker) => marker.key === active) || null;
   const tipLeft = current ? Math.min(Math.max(x(current.day), 84), width - 84) : 0;
 
@@ -89,21 +105,20 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
 
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#111114" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#111114" stopOpacity="0.01" />
+            <stop offset="0%" stopColor="#111114" stopOpacity="0.055" />
+            <stop offset="100%" stopColor="#111114" stopOpacity="0" />
           </linearGradient>
         </defs>
 
         <motion.path d={area} fill={`url(#${gradientId})`} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.25 }} />
 
-        {showToday && (
-          <g>
-            <line x1={x(today)} x2={x(today)} y1={MARGIN.top - 6} y2={bottom} className="stroke-muted/70" strokeWidth="1" strokeDasharray="2 3" />
-            <text x={x(today)} y={MARGIN.top - 12} textAnchor={x(today) > width - 40 ? 'end' : x(today) < MARGIN.left + 24 ? 'start' : 'middle'} className="fill-muted text-[11px] font-medium">
-              {t('loans.chartToday')}
-            </text>
-          </g>
-        )}
+        {showToday && <line x1={x(today)} x2={x(today)} y1={MARGIN.top - 6} y2={bottom} className="stroke-muted/70" strokeWidth="1" strokeDasharray="2 3" />}
+
+        {labels.map((item) => (
+          <text key={item.key} x={item.x} y={item.y} textAnchor={item.anchor} className={`${item.due ? 'fill-ink font-semibold' : 'fill-muted font-medium'} text-[11px]`}>
+            {item.text}
+          </text>
+        ))}
 
         {drops.map((drop) => (
           <line key={drop.key} x1={drop.x} x2={drop.x} y1={drop.top} y2={drop.bottom} className="stroke-ink" strokeWidth="5" strokeLinecap="round" opacity="0.1" />
@@ -148,9 +163,6 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
               ) : (
                 <>
                   <line x1={x(marker.day)} x2={x(marker.day)} y1={MARGIN.top - 6} y2={marker.at - 6} className="stroke-ink" strokeWidth="1" strokeDasharray="3 3" opacity={marker.kind === 'overdue' ? 0.7 : 0.35} />
-                  <text x={x(marker.day)} y={MARGIN.top - 12} textAnchor={x(marker.day) > width - 36 ? 'end' : 'middle'} className="fill-ink text-[11px] font-semibold">
-                    {t('loans.chartDue')}
-                  </text>
                 <path
                   d={`M ${x(marker.day)} ${marker.at - 6} l 6 6 l -6 6 l -6 -6 z`}
                   className={`stroke-ink ${marker.kind === 'overdue' || active === marker.key ? 'fill-ink' : 'fill-white'}`}
