@@ -1,12 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { animate, AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { animate, AnimatePresence, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 
 const STORAGE_KEY = 'vaultrix.hideBalance';
-const tilt = { stiffness: 55, damping: 18, mass: 1.4 };
+const follow = { stiffness: 38, damping: 16, mass: 1.6 };
 
 function Chip() {
   const id = useId().replace(/:/g, '');
@@ -80,10 +80,12 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
   const [hidden, setHidden] = useState(readHidden);
 
   const px = useMotionValue(0.5);
-  const py = useMotionValue(0.5);
-  const rotateY = useSpring(useTransform(px, [0, 1], [-6, 6]), tilt);
-  const rotateX = useSpring(useTransform(py, [0, 1], [6, -6]), tilt);
-  const sheenX = useSpring(useTransform(px, [0, 1], [-60, 60]), tilt);
+  const py = useMotionValue(0.4);
+  const glow = useMotionValue(0);
+  const spotX = useSpring(useTransform(px, [0, 1], [0, 100]), follow);
+  const spotY = useSpring(useTransform(py, [0, 1], [0, 100]), follow);
+  const spotlight = useMotionTemplate`radial-gradient(circle at ${spotX}% ${spotY}%, rgba(255,255,255,0.2), rgba(255,255,255,0.06) 32%, transparent 62%)`;
+  const [sweep, setSweep] = useState(0);
 
   const counted = useCountUp(status === 'ready' ? amount : 0, reduced);
 
@@ -99,39 +101,62 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
     });
   };
 
-  const move = (event) => {
-    if (reduced || !ref.current) return;
+  const place = (event) => {
+    if (!ref.current) return;
     const box = ref.current.getBoundingClientRect();
     px.set(Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)));
     py.set(Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)));
   };
 
+  const move = (event) => {
+    if (reduced) return;
+    place(event);
+    animate(glow, 1, { duration: 0.9, ease: 'easeOut' });
+  };
+
+  const press = (event) => {
+    if (reduced) return;
+    place(event);
+    animate(glow, 1, { duration: 0.6, ease: 'easeOut' });
+    if (!event.target.closest('button')) setSweep((value) => value + 1);
+  };
+
   const rest = () => {
-    px.set(0.5);
-    py.set(0.5);
+    animate(glow, 0, { duration: 1.4, ease: 'easeInOut' });
   };
 
   return (
+    <motion.div
+      animate={reduced ? undefined : { y: [0, -5, 0] }}
+      transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+    >
     <motion.div
       ref={ref}
       initial={reduced ? false : { opacity: 0, y: 18, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 120, damping: 22 }}
       whileTap={reduced ? undefined : { scale: 0.992 }}
+      onPointerDown={press}
       onPointerMove={move}
       onPointerLeave={rest}
       onPointerUp={rest}
       onPointerCancel={rest}
-      style={{ rotateX: reduced ? 0 : rotateX, rotateY: reduced ? 0 : rotateY, transformPerspective: 900, touchAction: 'pan-y' }}
-      className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0d0d10] via-[#1c1c21] to-[#3b3b44] p-5 text-white md:flex md:min-h-[280px] md:flex-col md:justify-between md:p-8 lg:min-h-[330px] lg:p-10 shadow-[0_24px_48px_-20px_rgba(17,17,20,0.65)]"
+      style={{ touchAction: 'pan-y' }}
+      className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0d0d10] via-[#1c1c21] to-[#3b3b44] p-5 text-white shadow-[0_24px_48px_-20px_rgba(17,17,20,0.65)] md:flex md:min-h-[280px] md:flex-col md:justify-between md:p-8 lg:min-h-[330px] lg:p-10"
     >
       <span aria-hidden="true" className="pointer-events-none absolute -end-16 -top-20 h-64 w-64 rounded-full bg-white/[0.07] blur-2xl" />
       <span aria-hidden="true" className="pointer-events-none absolute -bottom-24 -start-10 h-56 w-56 rounded-full bg-white/[0.05] blur-2xl" />
-      <motion.span
-        aria-hidden="true"
-        style={{ x: reduced ? 0 : sheenX }}
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_30%,rgba(255,255,255,0.14)_50%,transparent_70%)]"
-      />
+      {!reduced && <motion.span aria-hidden="true" style={{ background: spotlight, opacity: glow }} className="pointer-events-none absolute inset-0" />}
+      {!reduced && sweep > 0 && (
+        <motion.span
+          key={sweep}
+          aria-hidden="true"
+          initial={{ x: '-130%' }}
+          animate={{ x: '130%' }}
+          transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
+          className="pointer-events-none absolute inset-y-0 start-0 w-2/3 -skew-x-[18deg] bg-gradient-to-r from-transparent via-white/20 to-transparent"
+        />
+      )}
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -184,6 +209,7 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
           <p className="mt-1 truncate text-sm font-semibold uppercase tracking-[0.14em] md:text-base lg:text-lg">{holder}</p>
         </div>
       )}
+    </motion.div>
     </motion.div>
   );
 }
