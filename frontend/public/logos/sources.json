@@ -1,115 +1,110 @@
 {
-  "hbl": {
-    "from": "manual",
-    "file": "manual/hbl.svg"
-  },
-  "ubl": {
-    "from": "manual",
-    "file": "manual/ubl.svg"
-  },
-  "mcb": {
-    "from": "manual",
-    "file": "manual/mcb.svg"
-  },
-  "abl": {
-    "from": "manual",
-    "file": "manual/abl.svg"
-  },
-  "nbp": {
-    "from": "manual",
-    "file": "manual/nbp.svg"
-  },
-  "alfalah": {
-    "from": "manual",
-    "file": "manual/alfalah.svg"
-  },
-  "meezan": {
-    "from": "manual",
-    "file": "manual/meezan.svg"
-  },
-  "askari": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Askari_Bank_logo.svg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "askari.svg",
-    "size": "vector"
-  },
-  "bahl": {
-    "from": "manual",
-    "file": "manual/bahl.png"
-  },
-  "jsbank": {
-    "from": "manual",
-    "file": "manual/jsbank.png"
-  },
-  "scb": {
-    "from": "manual",
-    "file": "manual/scb.svg"
-  },
-  "hmb": {
-    "from": "manual",
-    "file": "manual/hmb.svg"
-  },
-  "bankislami": {
-    "from": "https://bankislami.com.pk/wp-content/uploads/2025/02/Bankislami-Logo.png",
-    "file": "bankislami.png",
-    "size": "2728x849"
-  },
-  "albaraka": {
-    "from": "https://www.albaraka.com.pk/assets/img/jama-footer-logob.png",
-    "file": "albaraka.png",
-    "size": "852x427"
-  },
-  "bop": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Bank_of_Punjab_logo.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "bop.png",
-    "size": "300x178"
-  },
-  "bok": {
-    "from": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Bank_of_Khyber_logo.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=original",
-    "file": "bok.png",
-    "size": "824x175"
-  },
-  "sindh": {
-    "from": "https://www.sindhbank.com.pk/wp-content/themes/consulting/assets/images/tmp/layout_barcelona/logo_dark.svg",
-    "file": "sindh.svg",
-    "size": "vector"
-  },
-  "fwbl": {
-    "from": "https://fwbl.com.pk/core/modules/7e4609f00f/legacy/public/images/logo-cookieyes.svg",
-    "file": "fwbl.svg",
-    "size": "vector"
-  },
-  "jazzcash": {
-    "from": "manual",
-    "file": "manual/jazzcash.png"
-  },
-  "easypaisa": {
-    "from": "manual",
-    "file": "manual/easypaisa.png"
-  },
-  "nayapay": {
-    "from": "manual",
-    "file": "manual/nayapay.png"
-  },
-  "sadapay": {
-    "from": "manual",
-    "file": "manual/sadapay.png"
-  },
-  "upaisa": {
-    "from": "https://www.upaisa.com/assets/images/U-mobile.jpg",
-    "file": "upaisa.jpg",
-    "size": "115x135"
-  },
-  "zindigi": {
-    "from": "https://zindigi.pk/wp-content/uploads/2024/10/image.webp",
-    "file": "zindigi.webp",
-    "size": "343x97"
-  },
-  "faysal": {
-    "from": "manual",
-    "file": "manual/faysal.svg"
-  },
-  "dib": {
-    "from": "manual",
-    "file": "manual/dib.png"
-  }
+    "hbl":  {
+                "from":  "manual",
+                "file":  "manual/hbl.svg"
+            },
+    "ubl":  {
+                "from":  "manual",
+                "file":  "manual/ubl.svg"
+            },
+    "mcb":  {
+                "from":  "manual",
+                "file":  "manual/mcb.svg"
+            },
+    "abl":  {
+                "from":  "manual",
+                "file":  "manual/abl.svg"
+            },
+    "nbp":  {
+                "from":  "manual",
+                "file":  "manual/nbp.svg"
+            },
+    "alfalah":  {
+                    "from":  "manual",
+                    "file":  "manual/alfalah.svg"
+                },
+    "meezan":  {
+                   "from":  "manual",
+                   "file":  "manual/meezan.svg"
+               },
+    "askari":  {
+                   "from":  "https://upload.wikimedia.org/wikipedia/commons/c/ce/Askari_Bank_logo.svg?utm_source=en.wikipedia.org\u0026utm_campaign=imageinfo\u0026utm_content=original",
+                   "file":  "askari.svg",
+                   "size":  "vector"
+               },
+    "bahl":  {
+                 "from":  "manual",
+                 "file":  "manual/bahl.png"
+             },
+    "jsbank":  {
+                   "from":  "manual",
+                   "file":  "manual/jsbank.png"
+               },
+    "scb":  {
+                "from":  "manual",
+                "file":  "manual/scb.svg"
+            },
+    "hmb":  {
+                "from":  "manual",
+                "file":  "manual/hmb.svg"
+            },
+    "albaraka":  {
+                     "from":  "https://www.albaraka.com.pk/assets/img/jama-footer-logob.png",
+                     "file":  "albaraka.png",
+                     "size":  "852x427"
+                 },
+    "bop":  {
+                "from":  "https://upload.wikimedia.org/wikipedia/commons/9/9e/Bank_of_Punjab_logo.png?utm_source=en.wikipedia.org\u0026utm_campaign=imageinfo\u0026utm_content=original",
+                "file":  "bop.png",
+                "size":  "300x178"
+            },
+    "bok":  {
+                "from":  "https://upload.wikimedia.org/wikipedia/commons/b/b1/Bank_of_Khyber_logo.png?utm_source=en.wikipedia.org\u0026utm_campaign=imageinfo\u0026utm_content=original",
+                "file":  "bok.png",
+                "size":  "824x175"
+            },
+    "sindh":  {
+                  "from":  "https://www.sindhbank.com.pk/wp-content/themes/consulting/assets/images/tmp/layout_barcelona/logo_dark.svg",
+                  "file":  "sindh.svg",
+                  "size":  "vector"
+              },
+    "fwbl":  {
+                 "from":  "https://fwbl.com.pk/core/modules/7e4609f00f/legacy/public/images/logo-cookieyes.svg",
+                 "file":  "fwbl.svg",
+                 "size":  "vector"
+             },
+    "jazzcash":  {
+                     "from":  "manual",
+                     "file":  "manual/jazzcash.png"
+                 },
+    "easypaisa":  {
+                      "from":  "manual",
+                      "file":  "manual/easypaisa.png"
+                  },
+    "nayapay":  {
+                    "from":  "manual",
+                    "file":  "manual/nayapay.png"
+                },
+    "sadapay":  {
+                    "from":  "manual",
+                    "file":  "manual/sadapay.png"
+                },
+    "upaisa":  {
+                   "from":  "https://www.upaisa.com/assets/images/U-mobile.jpg",
+                   "file":  "upaisa.jpg",
+                   "size":  "115x135"
+               },
+    "zindigi":  {
+                    "from":  "https://zindigi.pk/wp-content/uploads/2024/10/image.webp",
+                    "file":  "zindigi.webp",
+                    "size":  "343x97"
+                },
+    "faysal":  {
+                   "from":  "manual",
+                   "file":  "manual/faysal.svg"
+               },
+    "dib":  {
+                "from":  "manual",
+                "file":  "manual/dib.png"
+            }
 }

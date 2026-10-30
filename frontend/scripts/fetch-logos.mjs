@@ -31,7 +31,6 @@ const WIKI = {
   jsbank: { title: 'JS Bank', match: /js.?bank|jsbl/i },
   scb: { title: 'Standard Chartered Pakistan', match: /standard.?chartered|scb/i },
   hmb: { title: 'Habib Metropolitan Bank', match: /metro|hmb/i },
-  bankislami: { title: 'BankIslami Pakistan', match: /bankislami|bank.?islami/i },
   dib: { title: 'Dubai Islamic Bank Pakistan', match: /dubai.?islamic|dib/i },
   albaraka: { title: 'Al Baraka Bank (Pakistan)', match: /baraka/i },
   bop: { title: 'Bank of Punjab', match: /punjab|bop/i },

@@ -13,7 +13,6 @@ export const PAKISTANI_BANKS = [
   { id: 'jsbank', name: 'JS Bank', domains: ['jsbl.com'] },
   { id: 'scb', name: 'Standard Chartered Pakistan', domains: ['sc.com'] },
   { id: 'hmb', name: 'Habib Metropolitan Bank', domains: ['habibmetro.com'] },
-  { id: 'bankislami', name: 'BankIslami Pakistan', domains: ['bankislami.com.pk'] },
   { id: 'dib', name: 'Dubai Islamic Bank Pakistan', domains: ['dibpak.com'] },
   { id: 'albaraka', name: 'Al Baraka Bank Pakistan', domains: ['albaraka.com.pk'] },
   { id: 'bop', name: 'The Bank of Punjab', domains: ['bop.com.pk'] },
@@ -29,7 +28,6 @@ export const DIGITAL_WALLETS = [
   { id: 'nayapay', name: 'NayaPay', domains: ['nayapay.com'] },
   { id: 'sadapay', name: 'SadaPay', domains: ['sadapay.pk'] },
   { id: 'upaisa', name: 'UPaisa', domains: ['upaisa.com'] },
-  { id: 'konnect', name: 'Konnect by HBL', domains: ['konnect.hbl.com'] },
   { id: 'zindigi', name: 'Zindigi', domains: ['zindigi.com.pk', 'zindigi.pk'] },
 ];
 
