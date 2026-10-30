@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
+import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { dayNumberToDate } from '../../utils/loanMath.js';
 
 const HEIGHT = 232;
-const MARGIN = { top: 28, right: 16, bottom: 34, left: 48 };
+const MARGIN = { top: 34, right: 16, bottom: 34, left: 48 };
 const SHORT = { day: 'numeric', month: 'short', timeZone: 'UTC' };
 
 const useWidth = (ref, fallback = 360) => {
@@ -28,6 +30,8 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
   const wrapRef = useRef(null);
   const width = useWidth(wrapRef);
   const [active, setActive] = useState(null);
+  const reduced = useAppReducedMotion();
+  const gradientId = useId().replace(/:/g, '');
 
   const innerW = width - MARGIN.left - MARGIN.right;
   const innerH = HEIGHT - MARGIN.top - MARGIN.bottom;
@@ -44,6 +48,15 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
   const area = `${line} V ${bottom} H ${x(points[0].day)} Z`;
 
   const ticks = [0, 0.5, 1].map((fraction) => max * fraction);
+  const finalBalance = points[points.length - 1].balance;
+  const finalText = finalBalance <= 0 ? t('loans.paidInFull') : `${t('loans.chartLeft')} ${formatNumber(finalBalance, { notation: 'compact', maximumFractionDigits: 1 })}`;
+  const pillWidth = finalText.length * 6.6 + 18;
+  const pillY = Math.max(MARGIN.top - 4, Math.min(bottom - 30, y(finalBalance) - 30));
+  const drops = points.slice(1).map((point, index) => {
+    const before = points[index].balance;
+    const nextX = index + 2 < points.length ? x(points[index + 2].day) : x(endDay);
+    return { key: `drop${index}`, x: x(point.day), top: y(before), bottom: y(point.balance), amount: before - point.balance, room: nextX - x(point.day) };
+  });
   const compact = (value) => formatNumber(value, { notation: 'compact', maximumFractionDigits: 1 });
   const showToday = today >= startDay && today <= endDay;
 
@@ -74,32 +87,77 @@ function StepChart({ points, dues = [], startDay, endDay, today, max, label }) {
           </g>
         ))}
 
-        <path d={area} className="fill-ink/[0.07]" />
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#111114" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#111114" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        <motion.path d={area} fill={`url(#${gradientId})`} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.25 }} />
 
         {showToday && (
           <g>
-            <line x1={x(today)} x2={x(today)} y1={MARGIN.top - 6} y2={bottom} className="stroke-muted/60" strokeWidth="1" />
+            <line x1={x(today)} x2={x(today)} y1={MARGIN.top - 6} y2={bottom} className="stroke-muted/70" strokeWidth="1" strokeDasharray="2 3" />
             <text x={x(today)} y={MARGIN.top - 12} textAnchor={x(today) > width - 40 ? 'end' : x(today) < MARGIN.left + 24 ? 'start' : 'middle'} className="fill-muted text-[11px] font-medium">
               {t('loans.chartToday')}
             </text>
           </g>
         )}
 
-        <path d={line} fill="none" className="stroke-ink" strokeWidth="2.25" strokeLinejoin="round" strokeLinecap="round" />
+        {drops.map((drop) => (
+          <line key={drop.key} x1={drop.x} x2={drop.x} y1={drop.top} y2={drop.bottom} className="stroke-ink" strokeWidth="5" strokeLinecap="round" opacity="0.1" />
+        ))}
+
+        <motion.path
+          d={line}
+          fill="none"
+          className="stroke-ink"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          initial={reduced ? false : { pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        />
+
+        {drops
+          .filter((drop) => drop.bottom - drop.top >= 20 && drop.room >= 46)
+          .map((drop) => (
+            <text key={`${drop.key}-label`} x={drop.x + 8} y={(drop.top + drop.bottom) / 2} dominantBaseline="middle" className="fill-muted text-[10px] font-semibold tabular-nums">
+              {`-${compact(drop.amount)}`}
+            </text>
+          ))}
+
+        <g>
+          <rect x={width - MARGIN.right - pillWidth} y={pillY} width={pillWidth} height="22" rx="11" className="fill-ink" />
+          <text x={width - MARGIN.right - pillWidth / 2} y={pillY + 11} textAnchor="middle" dominantBaseline="middle" className="fill-white text-[11px] font-semibold tabular-nums">
+            {finalText}
+          </text>
+        </g>
 
         {markers.map((marker) => {
           const aria = `${marker.tip.title}. ${marker.tip.lines.join(', ')}`;
           return (
             <g key={marker.key}>
               {marker.kind === 'point' ? (
-                <circle cx={x(marker.day)} cy={marker.at} r="4.5" className={`stroke-ink ${active === marker.key ? 'fill-ink' : 'fill-white'}`} strokeWidth="2" />
+                <>
+                  {active === marker.key && <circle cx={x(marker.day)} cy={marker.at} r="10" className="fill-ink" opacity="0.12" />}
+                  <circle cx={x(marker.day)} cy={marker.at} r="4.5" className={`stroke-ink ${active === marker.key ? 'fill-ink' : 'fill-white'}`} strokeWidth="2" />
+                </>
               ) : (
+                <>
+                  <line x1={x(marker.day)} x2={x(marker.day)} y1={MARGIN.top - 6} y2={marker.at - 6} className="stroke-ink" strokeWidth="1" strokeDasharray="3 3" opacity={marker.kind === 'overdue' ? 0.7 : 0.35} />
+                  <text x={x(marker.day)} y={MARGIN.top - 12} textAnchor={x(marker.day) > width - 36 ? 'end' : 'middle'} className="fill-ink text-[11px] font-semibold">
+                    {t('loans.chartDue')}
+                  </text>
                 <path
                   d={`M ${x(marker.day)} ${marker.at - 6} l 6 6 l -6 6 l -6 -6 z`}
                   className={`stroke-ink ${marker.kind === 'overdue' || active === marker.key ? 'fill-ink' : 'fill-white'}`}
                   strokeWidth="1.75"
                   strokeLinejoin="round"
                 />
+                </>
               )}
               <circle cx={x(marker.day)} cy={marker.at} r="15" fill="transparent" tabIndex={0} role="button" aria-label={aria} className="cursor-pointer outline-none" {...bind(marker.key)} />
             </g>

@@ -28,7 +28,26 @@ function PaymentsChart({ loan }) {
   if (loan.payments.length === 0) return <p className="text-sm text-muted">{t('loans.noPayments')}</p>;
 
   const { series } = chart;
-  return <StepChart points={chart.points} dues={chart.dues} startDay={series.startDay} endDay={series.endDay} today={series.today} max={loan.amount} label={t('loans.chartLabel')} />;
+  const percent = Math.round(loanState(loan, series.today).progress * 100);
+  const last = loan.payments[loan.payments.length - 1];
+  const facts = [
+    t('loans.chartPercent', { percent }),
+    t('loans.chartCount', { count: loan.payments.length }),
+    t('loans.chartLast', { date: formatDate(new Date(last.paidAt), { ...dateOptions, timeZone: 'UTC' }) }),
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ul className="flex flex-wrap gap-2">
+        {facts.map((fact) => (
+          <li key={fact} className="rounded-full bg-surface px-3 py-1.5 text-xs font-medium tabular-nums text-ink">
+            {fact}
+          </li>
+        ))}
+      </ul>
+      <StepChart points={chart.points} dues={chart.dues} startDay={series.startDay} endDay={series.endDay} today={series.today} max={loan.amount} label={t('loans.chartLabel')} />
+    </div>
+  );
 }
 
 export default PaymentsChart;
