@@ -730,4 +730,5 @@ export default {
   'loans.chartPercent': '{percent}% चुकाया',
   'loans.chartCount': 'भुगतान: {count}',
   'loans.chartLast': 'आखिरी भुगतान {date}',
+  'dashboard.deductionShare': 'कुल का {percent}%',
 };

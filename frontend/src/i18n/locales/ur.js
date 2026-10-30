@@ -730,4 +730,5 @@ export default {
   'loans.chartPercent': '{percent}% ادا',
   'loans.chartCount': 'ادائیگیاں: {count}',
   'loans.chartLast': 'آخری ادائیگی {date}',
+  'dashboard.deductionShare': 'کل کا {percent}%',
 };

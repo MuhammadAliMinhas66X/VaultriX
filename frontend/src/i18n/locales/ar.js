@@ -730,4 +730,5 @@ export default {
   'loans.chartPercent': 'تم دفع {percent}٪',
   'loans.chartCount': 'الدفعات: {count}',
   'loans.chartLast': 'آخر دفعة في {date}',
+  'dashboard.deductionShare': '{percent}٪ من الإجمالي',
 };

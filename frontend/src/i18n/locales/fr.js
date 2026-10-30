@@ -730,4 +730,5 @@ export default {
   'loans.chartPercent': '{percent} % payé',
   'loans.chartCount': 'Paiements : {count}',
   'loans.chartLast': 'Dernier paiement le {date}',
+  'dashboard.deductionShare': '{percent} % du total',
 };
