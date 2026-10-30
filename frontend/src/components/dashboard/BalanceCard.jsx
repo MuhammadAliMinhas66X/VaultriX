@@ -6,7 +6,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 
 const STORAGE_KEY = 'vaultrix.hideBalance';
-const tilt = { stiffness: 220, damping: 20, mass: 0.6 };
+const tilt = { stiffness: 55, damping: 18, mass: 1.4 };
 
 const readHidden = () => {
   try {
@@ -49,9 +49,9 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
 
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
-  const rotateY = useSpring(useTransform(px, [0, 1], [-10, 10]), tilt);
-  const rotateX = useSpring(useTransform(py, [0, 1], [10, -10]), tilt);
-  const sheenX = useTransform(px, [0, 1], ['-45%', '45%']);
+  const rotateY = useSpring(useTransform(px, [0, 1], [-6, 6]), tilt);
+  const rotateX = useSpring(useTransform(py, [0, 1], [6, -6]), tilt);
+  const sheenX = useSpring(useTransform(px, [0, 1], [-60, 60]), tilt);
 
   const counted = useCountUp(status === 'ready' ? amount : 0, reduced);
 
@@ -84,8 +84,8 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
       ref={ref}
       initial={reduced ? false : { opacity: 0, y: 18, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-      whileTap={reduced ? undefined : { scale: 0.985 }}
+      transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+      whileTap={reduced ? undefined : { scale: 0.992 }}
       onPointerMove={move}
       onPointerLeave={rest}
       onPointerUp={rest}
@@ -102,31 +102,34 @@ function BalanceCard({ status, amount = 0, currency, holder, message }) {
       />
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span aria-hidden="true" className="relative block h-8 w-11 overflow-hidden rounded-md bg-gradient-to-br from-white/80 via-white/45 to-white/70 shadow-inner">
-            <span className="absolute inset-x-0 top-1/2 h-px bg-black/20" />
-            <span className="absolute inset-y-0 start-1/2 w-px bg-black/20" />
+        <span
+          aria-label="Vaultrix TM"
+          className="relative flex h-10 min-w-[96px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-white/85 via-white/50 to-white/75 px-3 shadow-inner"
+        >
+          <span aria-hidden="true" className="absolute inset-y-0 start-2 w-px bg-black/15" />
+          <span aria-hidden="true" className="absolute inset-y-0 end-2 w-px bg-black/15" />
+          <span className="relative text-[10px] font-bold uppercase tracking-[0.2em] text-[#1c1c21]">
+            Vaultrix<sup className="ms-0.5 align-super text-[6px] font-semibold tracking-normal">TM</sup>
           </span>
+        </span>
+        <p className="pt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">{currency}</p>
+      </div>
+
+      <div className="relative mt-8">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/65">{t('dashboard.inAccount')}</p>
           {status === 'ready' && (
             <button
               type="button"
               onClick={toggle}
               aria-pressed={hidden}
               aria-label={hidden ? t('dashboard.showBalance') : t('dashboard.hideBalance')}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white outline-none backdrop-blur-sm transition active:scale-90 focus-visible:ring-2 focus-visible:ring-white/60"
+              className="-me-2 flex h-9 w-9 items-center justify-center rounded-full text-white/75 outline-none transition hover:text-white active:scale-90 focus-visible:ring-2 focus-visible:ring-white/60"
             >
               {hidden ? <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <Eye className="h-[18px] w-[18px]" strokeWidth={1.75} />}
             </button>
           )}
         </div>
-        <div className="text-end">
-          <p className="text-lg font-semibold uppercase tracking-[0.18em]">Vaultrix</p>
-          <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">{currency}</p>
-        </div>
-      </div>
-
-      <div className="relative mt-9">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/65">{t('dashboard.inAccount')}</p>
         {status === 'ready' ? (
           <div className="mt-1.5 h-11 overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>

@@ -77,7 +77,7 @@ function DashboardPage() {
 
   const heroCard = (
     <>
-      <div className="md:hidden">
+      <div className="mx-auto w-full max-w-xl lg:hidden">
         <BalanceCard
           status={cardStatus}
           amount={summary ? summary.net : 0}
@@ -88,7 +88,7 @@ function DashboardPage() {
         {extras.length > 0 && <div className="mt-3 rounded-2xl border border-border bg-white px-4 pb-4 pt-1 [&>*:first-child]:mt-3 [&>*:first-child]:border-t-0 [&>*:first-child]:pt-0">{extras}</div>}
       </div>
 
-      <div className="hidden rounded-2xl border border-border bg-white p-5 sm:p-7 md:block">
+      <div className="hidden rounded-2xl border border-border bg-white p-5 sm:p-7 lg:block">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.inAccount')}</p>
         {waiting ? (
           <p className="mt-3 text-sm text-muted">{t('income.ratesLoading')}</p>
