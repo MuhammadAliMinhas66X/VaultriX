@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Banknote, Plus } from 'lucide-react';
+import { IncomeSkeleton } from '../components/Skeletons.jsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
@@ -219,7 +220,7 @@ function IncomePage() {
             <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('income.headerStream')}</h1>
             <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold tabular-nums text-muted ring-1 ring-border">{streams.length}</span>
           </div>
-          {!adding && (
+          {!adding && !loading && streams.length > 0 && (
             <button type="button" onClick={startAdding} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('income.add')}
@@ -228,7 +229,7 @@ function IncomePage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-border bg-white px-6 py-10 text-center text-sm text-muted">{t('common.loading')}</div>
+          <IncomeSkeleton />
         ) : streams.length === 0 && !adding ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted">

@@ -7,6 +7,7 @@ import Drawer from '../components/Drawer.jsx';
 import LoanForm, { emptyLoanForm, formFromLoan } from '../components/loans/LoanForm.jsx';
 import LoanCard from '../components/loans/LoanCard.jsx';
 import LoanDetail from '../components/loans/LoanDetail.jsx';
+import { LoansSkeleton } from '../components/Skeletons.jsx';
 import LoansOverview from '../components/loans/LoansOverview.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -272,7 +273,7 @@ function LoansPage() {
       <div className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('loans.title')}</h1>
-          {!adding && (
+          {!adding && !loading && inTab.length > 0 && (
             <button type="button" onClick={startAdding} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('loans.add')}
@@ -300,7 +301,7 @@ function LoansPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-border bg-white px-6 py-10 text-center text-sm text-muted">{t('common.loading')}</div>
+          <LoansSkeleton />
         ) : inTab.length === 0 ? (
           adding ? (
             wide ? (
