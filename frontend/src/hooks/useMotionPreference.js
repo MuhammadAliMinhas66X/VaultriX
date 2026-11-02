@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useReducedMotion } from 'framer-motion';
 
 const STORAGE_KEY = 'vaultrix.motion';
@@ -35,5 +35,9 @@ export const useMotionMode = () => useSyncExternalStore(subscribe, read, () => '
 export const useAppReducedMotion = () => {
   const system = useReducedMotion();
   const mode = useMotionMode();
-  return mode === 'always' ? false : Boolean(system);
+  const reduced = mode === 'always' ? false : Boolean(system);
+  useEffect(() => {
+    document.documentElement.dataset.reduceMotion = String(reduced);
+  }, [reduced]);
+  return reduced;
 };

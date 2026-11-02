@@ -8,6 +8,7 @@ const tabsFrom = (items) =>
     id: item.id,
     label: item.label,
     icon: item.icon,
+    big: item.big,
     to: item.to,
     onSelect: item.onSelect,
     danger: item.danger,
@@ -18,7 +19,7 @@ function Tab({ tab, active, uid, reduced }) {
   const Icon = tab.icon;
   const pill = tab.danger ? 'bg-red-600' : 'bg-ink';
   const tone = active ? 'text-white' : tab.danger ? 'text-red-500' : 'text-muted';
-  const className = `relative flex h-12 min-w-0 items-center justify-center gap-2 rounded-[20px] px-3 outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/40 flex-1 ${tone}`;
+  const className = `nav-hover relative flex h-12 min-w-0 items-center justify-center gap-2 rounded-[20px] px-3 outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent/40 flex-1 ${tone}`;
 
   const inner = (
     <>
@@ -29,7 +30,7 @@ function Tab({ tab, active, uid, reduced }) {
           className={`absolute inset-0 rounded-[20px] shadow-[0_8px_18px_-8px_rgba(0,0,0,0.55)] ${pill}`}
         />
       )}
-      <Icon className="relative z-10 h-[22px] w-[22px] shrink-0" strokeWidth={active ? 2 : 1.7} />
+      <Icon className={`relative z-10 shrink-0 ${tab.big ? 'h-[27px] w-[27px]' : 'h-[22px] w-[22px]'}`} strokeWidth={active ? 2 : 1.7} />
     </>
   );
 
