@@ -40,6 +40,7 @@ const loanSchema = new mongoose.Schema(
     payoutInstitution: { type: String, default: '' },
     payoutNumber: { type: String, default: '' },
     payments: { type: [paymentSchema], default: [] },
+    source: { type: String, enum: ['manual', 'expense'], default: 'manual' },
   },
   { timestamps: true, optimisticConcurrency: true }
 );

@@ -1,4 +1,5 @@
 import Loan, { LOAN_DIRECTIONS, LOAN_METHODS } from '../models/Loan.js';
+import Expense from '../models/Expense.js';
 import { cleanLabel, cleanFreeText, isCurrencyCode } from '../utils/validators.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
 import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
@@ -60,6 +61,7 @@ const toLoanDto = (loan) => {
     payoutName: loan.payoutName || '',
     payoutMethod: loan.payoutMethod || '',
     payoutInstitution: loan.payoutInstitution || '',
+    fromExpense: loan.source === 'expense',
     payoutNumber: loan.payoutNumber || '',
     paid: toMajor(paidMinor),
     remaining: toMajor(remainingMinor),
@@ -246,6 +248,7 @@ export const deleteLoan = async (req, res, next) => {
 
     await cleanupImages(loan);
     await Loan.deleteOne({ _id: loan._id });
+    await Expense.updateMany({ orgId: req.user.orgId, loanId: loan._id }, { $set: { loanId: null } });
 
     res.json({ success: true });
   } catch (error) {

@@ -13,6 +13,9 @@ const expenseSchema = new mongoose.Schema(
     note: { type: String, default: '' },
     payMethod: { type: String, enum: [...EXPENSE_METHODS, ''], default: '' },
     payName: { type: String, default: '' },
+    paidBy: { type: String, enum: ['self', 'other'], default: 'self' },
+    payerName: { type: String, default: '' },
+    loanId: { type: mongoose.Schema.Types.ObjectId, ref: 'Loan', default: null },
   },
   { timestamps: true }
 );
