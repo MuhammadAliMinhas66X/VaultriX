@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Banknote, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import BalanceCard from '../components/dashboard/BalanceCard.jsx';
+import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -12,6 +13,8 @@ import { useFormat } from '../i18n/useFormat.js';
 import { amountForTotal, isDeducted } from '../utils/salaryCuts.js';
 import { byReceivedDesc, summarize, toBase } from '../utils/incomeMath.js';
 import { dateOptions } from '../utils/dates.js';
+import { listExpenses } from '../services/expenseService.js';
+import { monthKey, sumExpenses } from '../utils/expenseMath.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
 
 const LATEST_LIMIT = 8;
@@ -24,6 +27,19 @@ function DashboardPage() {
   const { items, activeId } = useAppNav();
 
   const summary = useMemo(() => (rates ? summarize(streams, rates) : null), [streams, rates]);
+  const [monthExpenses, setMonthExpenses] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    listExpenses(monthKey(new Date()))
+      .then((data) => alive && setMonthExpenses(data.expenses))
+      .catch(() => alive && setMonthExpenses([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const spent = useMemo(() => (monthExpenses && rates ? sumExpenses(monthExpenses, rates, currency).total : 0), [monthExpenses, rates, currency]);
   const latest = useMemo(() => byReceivedDesc(streams.filter((item) => item.expectedAmount !== null)).slice(0, LATEST_LIMIT), [streams]);
 
   const rateLines = useMemo(() => {
@@ -67,7 +83,16 @@ function DashboardPage() {
       {t('income.rateUnavailableNote', { count: summary.excluded, currency })}
     </p>
   );
-  const phoneExtras = [cutsBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
+  const spentBlock = ready && (
+    <div key="spent" className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
+      <span className="text-xs text-muted">{t('dashboard.spentMonth')}</span>
+      <span className="text-sm font-semibold tabular-nums text-ink">
+        {spent > 0 ? '- ' : ''}
+        {formatMoney(spent, { decimals: 2, currency })}
+      </span>
+    </div>
+  );
+  const phoneExtras = [cutsBlock, spentBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
   const tabletNotes = [rateBlock, staleBlock, excludedBlock].filter(Boolean);
 
   const waiting = ratesLoading || loading;
@@ -78,6 +103,7 @@ function DashboardPage() {
   const tabletRows = [
     { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
     { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
+    { key: 'spent', label: t('dashboard.spentMonth'), value: ready ? `${spent > 0 ? '- ' : ''}${formatMoney(spent, { decimals: 2, currency })}` : '-' },
   ];
 
   const heroCard = (
@@ -86,16 +112,16 @@ function DashboardPage() {
         <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4 lg:grid-cols-[1.7fr_1fr] lg:gap-5">
           <BalanceCard
             status={cardStatus}
-            amount={summary ? summary.net : 0}
+            amount={summary ? summary.net - spent : 0}
             currency={currency}
             holder={user?.name}
             message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
           />
           <div className="hidden md:flex md:flex-col md:gap-4">
             {tabletRows.map((row) => (
-              <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-5 lg:px-8">
+              <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4 lg:px-8">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{row.label}</p>
-                <p className="mt-2 break-words text-[1.9rem] font-bold leading-none tracking-tight tabular-nums text-ink lg:text-[2.25rem]">{row.value}</p>
+                <p className="mt-2 break-words text-[1.5rem] font-bold leading-none tracking-tight tabular-nums text-ink lg:text-[2.25rem]">{row.value}</p>
                 {row.bar && (
                   <div className="mt-4">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
@@ -161,7 +187,9 @@ function DashboardPage() {
       <div className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-ink">{t('nav.dashboard')}</h1>
 
-        {!loading && !hasIncome ? (
+        {loading ? (
+          <DashboardSkeleton />
+        ) : !hasIncome ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted">
               <Banknote className="h-6 w-6" strokeWidth={1.5} />
