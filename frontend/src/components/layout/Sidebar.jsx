@@ -1,3 +1,4 @@
+import { readDirection } from '../../utils/direction.js';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
@@ -52,8 +53,9 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
   const Icon = item.icon;
   const ref = useRef(null);
   const [tipRect, setTipRect] = useState(null);
-  const tone = item.danger ? 'text-red-600 hover:text-red-700' : active ? 'text-ink' : 'text-muted hover:text-ink';
-  const className = `relative flex h-10 text-sm items-center rounded-lg font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
+  const tone = item.danger ? 'text-red-600 hover:text-red-700' : item.back ? 'group text-ink hover:bg-black/[0.05] active:bg-black/[0.08]' : active ? 'text-ink' : 'text-muted hover:text-ink';
+  const nudge = item.back && !instant ? 'transition-transform duration-200 ease-out group-hover:-translate-x-1 group-focus-visible:-translate-x-1 group-active:-translate-x-1.5 rtl:group-hover:translate-x-1 rtl:group-focus-visible:translate-x-1 rtl:group-active:translate-x-1.5 motion-reduce:transform-none' : '';
+  const className = `nav-hover relative flex h-10 text-sm items-center rounded-lg font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70 ${collapsed ? 'mx-auto w-10 justify-center' : 'w-full gap-3 px-3'} ${tone}`;
   const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 42 };
 
   const showTip = () => collapsed && ref.current && setTipRect(ref.current.getBoundingClientRect());
@@ -63,8 +65,8 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
     <>
       {active && <motion.span layoutId={`${activeId}-bg`} transition={spring} className={`absolute inset-0 rounded-lg ${item.danger ? 'bg-red-50' : 'bg-black/[0.06]'}`} />}
       {(item.loading || Icon) && (
-        <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center">
-          {item.loading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+        <span className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center ${nudge}`}>
+          {item.loading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <Icon className={`${item.big ? 'h-[23px] w-[23px]' : 'h-[18px] w-[18px]'} ${item.back ? 'rtl:rotate-180' : ''}`} strokeWidth={item.back ? 2 : 1.75} />}
         </span>
       )}
       {!collapsed && (
@@ -164,9 +166,9 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           }}
           onMouseEnter={() => ref.current && setTipRect(ref.current.getBoundingClientRect())}
           onMouseLeave={() => setTipRect(null)}
-          className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${group.activeChild ? 'bg-black/[0.06]' : ''} ${headerTone}`}
+          className={`nav-hover relative mx-auto flex h-10 w-10 items-center justify-center rounded-lg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40 ${group.activeChild ? 'bg-black/[0.06]' : ''} ${headerTone}`}
         >
-          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          <Icon className={group.big ? 'h-[23px] w-[23px]' : 'h-[18px] w-[18px]'} strokeWidth={1.75} />
         </button>
         <Tooltip rect={tipRect}>{group.label}</Tooltip>
       </>
@@ -179,7 +181,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
   return (
     <div className="flex flex-col">
       <div
-        className={`group/header relative flex h-10 w-full items-center rounded-lg transition-colors ${group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
+        className={`nav-hover group/header relative flex h-10 w-full items-center rounded-lg transition-colors ${group.activeChild ? 'text-ink' : 'text-muted hover:text-ink'}`}
       >
         {headerActive && <motion.span layoutId={`${uid}-bg`} transition={spring} className="absolute inset-0 rounded-lg bg-black/[0.06]" />}
         <Link
@@ -192,7 +194,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           className="relative z-10 flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center">
-            <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <Icon className={group.big ? 'h-[23px] w-[23px]' : 'h-[18px] w-[18px]'} strokeWidth={1.75} />
           </span>
           <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
         </Link>
@@ -311,9 +313,11 @@ function Sidebar({ collapsed, onToggle, ...rest }) {
       initial={false}
       animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
       transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 38 }}
-      className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col overflow-hidden border-e border-border bg-white lg:flex"
+      className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-white lg:flex"
     >
-      <SidebarBody {...rest} collapsed={collapsed} onToggle={onToggle} instant={Boolean(reduced)} />
+      <div dir={readDirection()} className="flex min-h-0 flex-1 flex-col">
+        <SidebarBody {...rest} collapsed={collapsed} onToggle={onToggle} instant={Boolean(reduced)} />
+      </div>
     </motion.aside>
   );
 }

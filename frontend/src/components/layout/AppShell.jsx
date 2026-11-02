@@ -4,17 +4,19 @@ import Sidebar, { useSidebarCollapsed } from './Sidebar.jsx';
 import BottomNav from './BottomNav.jsx';
 import AccountMenu from './AccountMenu.jsx';
 import Logo from '../Logo.jsx';
+import { readDirection } from '../../utils/direction.js';
 
 function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerItems = [], hideSettingsLink = false, children }) {
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
   const back = footerItems.find((item) => item.to);
   const bodyProps = { title, showLogo, items, activeId, footerItems };
+  const dir = readDirection();
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div dir="ltr" className="flex min-h-screen bg-surface">
       <Sidebar {...bodyProps} collapsed={collapsed} onToggle={toggleCollapsed} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div dir={dir} className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-white/90 px-4 backdrop-blur sm:px-6">
           {back && (
             <Link

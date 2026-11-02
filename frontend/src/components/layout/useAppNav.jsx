@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
-import { Handshake, HandCoins, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon } from '../icons/NavIcons.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useIncome } from '../../context/IncomeContext.jsx';
@@ -13,16 +14,19 @@ export default function useAppNav() {
 
   const onIncome = location.pathname === '/income';
   const onLoans = location.pathname === '/loans';
+  const onExpenses = location.pathname === '/expenses';
+  const onDashboard = location.pathname === '/dashboard';
+  const onAdmin = location.pathname === '/admin';
   const focusedId = onIncome && location.hash.startsWith('#stream-') ? location.hash.slice('#stream-'.length) : null;
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const items = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: LayoutDashboard, to: '/dashboard' },
+    { id: 'dashboard', label: t('nav.dashboard'), icon: DashboardIcon, big: true, to: '/dashboard' },
     {
       type: 'group',
       id: 'income',
       label: t('income.headerStream'),
-      icon: HandCoins,
+      icon: IncomeIcon, big: true,
       to: '/income',
       count: streams.length,
       activeChild: onIncome,
@@ -34,10 +38,11 @@ export default function useAppNav() {
         })),
       ],
     },
-    { id: 'loans', label: t('nav.loans'), icon: Handshake, to: '/loans' },
+    { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
+    { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = onLoans ? 'loans' : !onIncome ? 'dashboard' : focusedId ? `stream:${focusedId}` : 'income';
+  const activeId = onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
   return { items, activeId };
 }
