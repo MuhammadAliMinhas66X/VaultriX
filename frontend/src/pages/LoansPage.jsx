@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { HandCoins, Plus, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -40,6 +41,8 @@ function LoansPage() {
   const { items, activeId } = useAppNav();
   const wide = useMediaQuery('(min-width: 1280px)');
 
+  const location = useLocation();
+  const openedFromLink = useRef(false);
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('borrowed');
@@ -69,6 +72,16 @@ function LoansPage() {
 
   const replaceLoan = (loan) =>
     setLoans((prev) => (prev.some((item) => item.id === loan.id) ? prev.map((item) => (item.id === loan.id ? loan : item)) : [loan, ...prev]));
+
+  useEffect(() => {
+    if (openedFromLink.current || loading) return;
+    const id = new URLSearchParams(location.search).get('loan');
+    const target = id ? loans.find((loan) => loan.id === id) : null;
+    if (!target) return;
+    openedFromLink.current = true;
+    setTab(target.direction);
+    setSelectedId(target.id);
+  }, [loading, loans, location.search]);
 
   const today = todayDayNumber();
   const inTab = useMemo(() => loans.filter((loan) => loan.direction === tab), [loans, tab]);

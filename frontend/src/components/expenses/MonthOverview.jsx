@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 
-function MonthOverview({ month, label, total, days, todayDay, currency, onPrev, onNext, canNext, busy }) {
+function MonthOverview({ month, label, total, others = 0, days, todayDay, currency, onPrev, onNext, canNext, busy }) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
   const [picked, setPicked] = useState(null);
@@ -27,6 +27,8 @@ function MonthOverview({ month, label, total, days, todayDay, currency, onPrev, 
       <div className={`mt-5 transition-opacity ${busy ? 'opacity-50' : ''}`}>
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{t('expenses.spentThisMonth')}</p>
         <p className="mt-2 break-words text-[2rem] font-bold leading-none tracking-tight tabular-nums text-ink sm:text-[2.5rem]">{formatMoney(total, { decimals: 2, currency })}</p>
+
+        {others > 0 && <p className="mt-2 text-xs font-medium tabular-nums text-muted">{t('expenses.paidByOthers', { amount: formatMoney(others, { decimals: 2, currency }) })}</p>}
 
         <div role="group" aria-label={t('expenses.chartLabel')} className="mt-6 flex h-24 items-end gap-[3px]" onMouseLeave={() => setPicked(null)}>
           {days.map((item) => {

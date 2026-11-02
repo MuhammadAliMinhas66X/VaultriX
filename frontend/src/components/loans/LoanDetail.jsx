@@ -73,6 +73,7 @@ function LoanDetail({
           <h2 className="truncate text-lg font-semibold tracking-tight text-ink">{loan.personName}</h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-ink">{borrowed ? t('loans.directionBorrowed') : t('loans.directionLent')}</span>
+            {loan.fromExpense && <span className="rounded-full border border-ink px-2.5 py-1 text-xs font-medium text-ink">{t('loans.fromExpense')}</span>}
             <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(state)}`}>
               {state.done && <Check className="h-3 w-3" strokeWidth={2.5} />}
               {statusLabel(t, formatDate, loan, state)}

@@ -40,6 +40,11 @@ function DashboardPage() {
   }, []);
 
   const spent = useMemo(() => (monthExpenses && rates ? sumExpenses(monthExpenses, rates, currency).total : 0), [monthExpenses, rates, currency]);
+  const spentByOthers = useMemo(
+    () => (monthExpenses && rates ? sumExpenses(monthExpenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total : 0),
+    [monthExpenses, rates, currency]
+  );
+  const spentBySelf = Math.max(0, spent - spentByOthers);
   const latest = useMemo(() => byReceivedDesc(streams.filter((item) => item.expectedAmount !== null)).slice(0, LATEST_LIMIT), [streams]);
 
   const rateLines = useMemo(() => {
@@ -86,9 +91,12 @@ function DashboardPage() {
   const spentBlock = ready && (
     <div key="spent" className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
       <span className="text-xs text-muted">{t('dashboard.spentMonth')}</span>
-      <span className="text-sm font-semibold tabular-nums text-ink">
-        {spent > 0 ? '- ' : ''}
-        {formatMoney(spent, { decimals: 2, currency })}
+      <span className="text-end">
+        <span className="block text-sm font-semibold tabular-nums text-ink">
+          {spent > 0 ? '- ' : ''}
+          {formatMoney(spent, { decimals: 2, currency })}
+        </span>
+        {spentByOthers > 0 && <span className="mt-0.5 block text-xs text-muted">{t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) })}</span>}
       </span>
     </div>
   );
@@ -103,7 +111,7 @@ function DashboardPage() {
   const tabletRows = [
     { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
     { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
-    { key: 'spent', label: t('dashboard.spentMonth'), value: ready ? `${spent > 0 ? '- ' : ''}${formatMoney(spent, { decimals: 2, currency })}` : '-' },
+    { key: 'spent', label: t('dashboard.spentMonth'), value: ready ? `${spent > 0 ? '- ' : ''}${formatMoney(spent, { decimals: 2, currency })}` : '-', sub: ready && spentByOthers > 0 ? t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) }) : '' },
   ];
 
   const heroCard = (
@@ -112,7 +120,7 @@ function DashboardPage() {
         <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4 lg:grid-cols-[1.7fr_1fr] lg:gap-5">
           <BalanceCard
             status={cardStatus}
-            amount={summary ? summary.net - spent : 0}
+            amount={summary ? summary.net - spentBySelf : 0}
             currency={currency}
             holder={user?.name}
             message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
@@ -122,6 +130,7 @@ function DashboardPage() {
               <div key={row.key} className="flex flex-1 flex-col justify-center rounded-2xl border border-border bg-white px-6 py-4 lg:px-8">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{row.label}</p>
                 <p className="mt-2 break-words text-[1.5rem] font-bold leading-none tracking-tight tabular-nums text-ink lg:text-[2.25rem]">{row.value}</p>
+                {row.sub && <p className="mt-1.5 text-xs font-medium text-muted">{row.sub}</p>}
                 {row.bar && (
                   <div className="mt-4">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">

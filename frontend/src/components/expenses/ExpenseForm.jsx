@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import Button from '../Button.jsx';
 import FormField from '../FormField.jsx';
 import Combobox from '../Combobox.jsx';
@@ -7,9 +9,13 @@ import ErrorSlot from '../ErrorSlot.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
 import { splitKey, isOtherKey, todayLocal } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
+import { useFormat } from '../../i18n/useFormat.js';
+import { initialsFromName } from '../../utils/avatar.js';
+import { dateOptions } from '../../utils/dates.js';
 
-function ExpenseForm({ initial, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onRemoveCategory, onCancel, busy }) {
+function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onRemoveCategory, onCancel, busy }) {
   const { t } = useTranslation();
+  const { formatMoney, formatDate } = useFormat();
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [adding, setAdding] = useState(false);
@@ -17,10 +23,27 @@ function ExpenseForm({ initial, categories, currencies, mode, onSubmit, onDelete
   const [newName, setNewName] = useState('');
   const [confirming, setConfirming] = useState(false);
 
+  const payerItems = useMemo(
+    () => [
+      { value: 'self', label: t('expenses.paidBySelf'), group: t('expenses.paidByGroupYou') },
+      ...people.map((name) => ({
+        value: `person:${name}`,
+        label: name,
+        group: t('expenses.paidByGroupPeople'),
+        icon: <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-[10px] font-semibold text-ink">{initialsFromName(name) || '?'}</span>,
+      })),
+      { value: 'new', label: t('expenses.paidByNew'), group: t('expenses.paidByGroupPeople') },
+    ],
+    [people, t]
+  );
+
   const set = (key) => (value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
   };
+
+  const other = form.payer !== 'self';
+  const shownName = form.payer.startsWith('person:') ? form.payer.slice(7) : form.payerName.trim();
 
   const submit = (event) => {
     event.preventDefault();
@@ -28,11 +51,16 @@ function ExpenseForm({ initial, categories, currencies, mode, onSubmit, onDelete
     if (!form.amount || !(Number(form.amount) > 0)) found.amount = t('loans.errAmount');
     if (!form.currency) found.currency = t('income.errCurrency');
     if (!form.date || form.date > todayLocal()) found.date = t('loans.errSent');
-    if (isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
+    const other = form.payer !== 'self';
+    const payerName = form.payer.startsWith('person:') ? form.payer.slice(7) : form.payerName.trim();
+    if (other && !payerName) found.payerName = t('loans.errName');
+    if (!other && isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
     setErrors(found);
     if (Object.keys(found).length) return;
-    const where = splitKey(form.payKey, form.payCustom);
+    const where = other ? { method: '', name: '' } : splitKey(form.payKey, form.payCustom);
     onSubmit({
+      paidBy: other ? 'other' : 'self',
+      payerName: other ? payerName : '',
       amount: Number(form.amount),
       currency: form.currency,
       categoryId: form.categoryId || null,
@@ -161,15 +189,49 @@ function ExpenseForm({ initial, categories, currencies, mode, onSubmit, onDelete
         )}
       </div>
 
-      <WherePicker
-        optional
-        label={<span className="text-sm font-medium text-ink">{t('expenses.paidFrom')}</span>}
-        value={form.payKey}
-        custom={form.payCustom}
-        onChange={set('payKey')}
-        onCustomChange={set('payCustom')}
-        customError={errors.payCustom}
-      />
+      <div className="flex flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">{t('expenses.paidByLabel')}</span>
+          <Combobox items={payerItems} ariaLabel={t('expenses.paidByLabel')} placeholder={t('expenses.paidBySelf')} searchPlaceholder={t('common.search')} value={form.payer} onChange={set('payer')} />
+        </div>
+        {form.payer === 'new' && (
+          <FormField label={t('loans.nameLabel')} value={form.payerName} maxLength={60} onChange={(event) => set('payerName')(event.target.value)} placeholder={t('loans.namePlaceholder')} error={errors.payerName} />
+        )}
+        <FieldError>{form.payer !== 'new' ? errors.payerName : ''}</FieldError>
+      </div>
+
+      <AnimatePresence initial={false} mode="wait">
+        {other ? (
+          <motion.div key="preview" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+            <div className="flex items-start gap-3.5 rounded-2xl bg-ink p-4 text-white">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">{initialsFromName(shownName) || '?'}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">{t('expenses.loanPreviewTitle')}</p>
+                <p className="mt-1.5 text-sm font-medium leading-relaxed">
+                  {t('expenses.loanPreviewBody', { name: shownName || '...', amount: formatMoney(Number(form.amount) || 0, { decimals: 2, currency: form.currency }) })}
+                </p>
+                {mode === 'edit' && loanId && (
+                  <Link to={`/loans?loan=${loanId}`} className="mt-2.5 inline-block text-xs font-semibold text-white underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+                    {t('expenses.viewInLoans')}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div key="from" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+            <WherePicker
+              optional
+              label={<span className="text-sm font-medium text-ink">{t('expenses.paidFrom')}</span>}
+              value={form.payKey}
+              custom={form.payCustom}
+              onChange={set('payKey')}
+              onCustomChange={set('payCustom')}
+              customError={errors.payCustom}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label={t('expenses.dateLabel')} type="date" max={todayLocal()} value={form.date} onChange={(event) => set('date')(event.target.value)} error={errors.date} />
@@ -181,6 +243,8 @@ function ExpenseForm({ initial, categories, currencies, mode, onSubmit, onDelete
           placeholder={t('expenses.notePlaceholder')}
         />
       </div>
+
+      <p className="-mt-3 text-xs text-muted">{t('loans.enteredOn', { date: formatDate(new Date(enteredAt || Date.now()), dateOptions) })}</p>
 
       <ErrorSlot />
 

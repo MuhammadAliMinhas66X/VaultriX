@@ -23,7 +23,8 @@ import {
   createExpenseCategory,
   deleteExpenseCategory,
 } from '../services/expenseService.js';
-import { analyze, convertAmount, dayKey, monthKey, shiftDay, shiftMonth } from '../utils/expenseMath.js';
+import { listLoans } from '../services/loanService.js';
+import { analyze, convertAmount, dayKey, shiftDay, shiftMonth, sumExpenses } from '../utils/expenseMath.js';
 import { keyFor, customFor, todayLocal } from '../components/loans/loanOptions.js';
 
 const REMEMBER_KEY = 'vaultrix.lastExpense';
@@ -58,6 +59,7 @@ function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
   const [previous, setPrevious] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [range, setRange] = useState('all');
@@ -92,7 +94,14 @@ function ExpensesPage() {
     load(month, loading);
   }, [month]);
 
+  const loadPeople = useCallback(() => {
+    listLoans()
+      .then((data) => setPeople([...new Set(data.loans.filter((loan) => loan.direction === 'borrowed').map((loan) => loan.personName))].sort((a, b) => a.localeCompare(b))))
+      .catch(() => null);
+  }, []);
+
   useEffect(() => {
+    loadPeople();
     listExpenseCategories()
       .then(setCategories)
       .catch((error) => notify.error(tServer(error)));
@@ -100,6 +109,8 @@ function ExpensesPage() {
 
   const names = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
   const nameOf = (id) => (id && names.get(id)) || t('expenses.uncategorized');
+
+  const others = useMemo(() => sumExpenses(expenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total, [expenses, rates, currency]);
 
   const stats = useMemo(() => analyze(expenses, previous, month, todayKey, rates, currency), [expenses, previous, month, todayKey, rates, currency]);
 
@@ -147,6 +158,8 @@ function ExpensesPage() {
         payCustom: customFor(expense.payMethod, expense.payName),
         date: dayKey(expense.spentAt),
         note: expense.note || '',
+        payer: expense.paidBy === 'other' ? (people.includes(expense.payerName) ? `person:${expense.payerName}` : 'new') : 'self',
+        payerName: expense.paidBy === 'other' && !people.includes(expense.payerName) ? expense.payerName : '',
       };
     }
     const last = readRemembered();
@@ -159,6 +172,8 @@ function ExpensesPage() {
       payCustom: last.payCustom || '',
       date: todayKey,
       note: '',
+      payer: 'self',
+      payerName: '',
     };
   };
 
@@ -177,6 +192,7 @@ function ExpensesPage() {
       }
       const target = payload.spentAt.slice(0, 7);
       closePanel();
+      loadPeople();
       if (target !== month) setMonth(target);
       else await load(month);
     } catch (error) {
@@ -192,6 +208,7 @@ function ExpensesPage() {
       await deleteExpense(panel.expense.id);
       notify.success(t('expenses.deletedTitle'));
       closePanel();
+      loadPeople();
       await load(month);
     } catch (error) {
       notify.error(tServer(error), { title: t('expenses.deleteFailedTitle') });
@@ -261,6 +278,7 @@ function ExpensesPage() {
               month={month}
               label={monthLabel}
               total={stats.total}
+              others={others}
               days={stats.days}
               todayDay={todayDay}
               currency={currency}
@@ -347,8 +365,13 @@ function ExpensesPage() {
                               >
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
-                                  <span className="mt-0.5 block truncate text-sm text-muted">
-                                    {[expense.note, expense.payMethod === 'cash' ? t('loans.cash') : expense.payName].filter(Boolean).join(' · ') || '-'}
+                                  <span className="mt-1 flex items-center gap-2">
+                                    {expense.paidBy === 'other' && (
+                                      <span className="max-w-[55%] shrink-0 truncate rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('expenses.paidByName', { name: expense.payerName })}</span>
+                                    )}
+                                    <span className="min-w-0 truncate text-sm text-muted">
+                                      {[expense.note, expense.paidBy === 'other' ? '' : expense.payMethod === 'cash' ? t('loans.cash') : expense.payName].filter(Boolean).join(' · ') || (expense.paidBy === 'other' ? '' : '-')}
+                                    </span>
                                   </span>
                                 </span>
                                 <span className="shrink-0 text-end text-[15px] font-bold tabular-nums text-ink">
@@ -392,6 +415,9 @@ function ExpensesPage() {
             key={panel.mode === 'edit' ? panel.expense.id : 'add'}
             mode={panel.mode}
             initial={formFor(panel.mode === 'edit' ? panel.expense : null)}
+            people={people}
+            enteredAt={panel.mode === 'edit' ? panel.expense.createdAt : undefined}
+            loanId={panel.mode === 'edit' ? panel.expense.loanId : null}
             categories={categories}
             currencies={currencies}
             busy={busy}
