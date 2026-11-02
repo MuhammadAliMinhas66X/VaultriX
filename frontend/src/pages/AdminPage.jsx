@@ -1090,7 +1090,7 @@ function AdminPage() {
     icon: section.Icon,
     onSelect: () => setActive(section.id),
   }));
-  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' }];
+  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard', back: true }];
 
   return (
     <AppShell title={t('nav.admin')} pageTitle={t('nav.admin')} items={items} activeId={current.id} footerItems={footerItems}>

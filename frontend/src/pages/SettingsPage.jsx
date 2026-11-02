@@ -1490,7 +1490,7 @@ function SettingsPage() {
     onSelect: () => setActiveSection(section.id),
   }));
 
-  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard' }];
+  const footerItems = [{ id: 'back', label: t('nav.backToDashboard'), icon: ArrowLeft, to: '/dashboard', back: true }];
 
   return (
     <AppShell title={t('settings.title')} pageTitle={t('settings.title')} items={items} activeId={active.id} footerItems={footerItems} hideSettingsLink>
