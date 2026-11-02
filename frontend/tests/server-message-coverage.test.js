@@ -23,6 +23,8 @@ const KNOWN_BACKEND_MESSAGES = [
   'An account with this email already exists. Sign in with your password, then link Google from Settings if you want to use it too.',
   'Choose an image to upload.',
   'Could not upload that photo. Please try again.',
+  'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.',
+  'This expense is linked to a loan that already has payments. Delete those payments first.',
   'Photo upload is not available right now.',
   'That is more than what is left to pay.',
   'Could not read your Google account details.',

@@ -93,6 +93,8 @@ const SERVER_MESSAGE_KEYS = {
   'That took too long. Please sign in again.': 'errors.loginTimedOut',
   '2-step verification is already on.': 'errors.mfaAlreadyOn',
   'That is more than what is left to pay.': 'errors.loanOverpay',
+  'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.': 'errors.expenseLinkedEdit',
+  'This expense is linked to a loan that already has payments. Delete those payments first.': 'errors.expenseLinkedDelete',
   'Photo upload is not available right now.': 'errors.uploadUnavailable',
   'Could not upload that photo. Please try again.': 'errors.uploadFailed',
   '2-step verification is already off.': 'errors.mfaAlreadyOff',
