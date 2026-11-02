@@ -1,6 +1,7 @@
 import Loan, { LOAN_DIRECTIONS, LOAN_METHODS } from '../models/Loan.js';
 import { cleanLabel, cleanFreeText, isCurrencyCode } from '../utils/validators.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
+import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
 import {
   uploadPrivateImage,
   privateImageUrls,
@@ -17,36 +18,6 @@ const UPLOAD_FAILED = 'Could not upload that photo. Please try again.';
 const NO_IMAGE = 'Choose an image to upload.';
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
-
-const toMinor = (amount) => Math.round((Number(amount) + Number.EPSILON) * 100);
-const toMajor = (minor) => Math.round(minor) / 100;
-
-const parseAmountMinor = (raw) => {
-  if (raw === undefined || raw === null || raw === '') return undefined;
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value <= 0 || value > 1e12) return undefined;
-  const minor = toMinor(value);
-  return minor >= 1 ? minor : undefined;
-};
-
-const parseDay = (raw, { maxFutureDays = 1 } = {}) => {
-  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(raw)) return undefined;
-  const date = new Date(`${raw.slice(0, 10)}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) return undefined;
-  if (date.getUTCFullYear() < 2000) return undefined;
-  if (date.getTime() > Date.now() + maxFutureDays * 24 * 60 * 60 * 1000) return undefined;
-  return date;
-};
-
-const parseWhere = (methodRaw, nameRaw) => {
-  const method = methodRaw === undefined || methodRaw === null ? '' : methodRaw;
-  if (method === '') return { method: '', name: '' };
-  if (!LOAN_METHODS.includes(method)) return undefined;
-  if (method === 'cash') return { method, name: '' };
-  const name = cleanFreeText(typeof nameRaw === 'string' ? nameRaw : '', 80);
-  if (!name) return undefined;
-  return { method, name };
-};
 
 const parsePayout = (body) => {
   const where = parseWhere(body.payoutMethod, body.payoutInstitution);
@@ -65,12 +36,6 @@ const parsePayout = (body) => {
   }
 
   return { payoutName: holder, payoutMethod: where.method, payoutInstitution: where.name, payoutNumber: number };
-};
-
-const optionalText = (raw, maxLength) => {
-  if (raw === undefined || raw === null || raw === '') return '';
-  const cleaned = cleanFreeText(raw, maxLength);
-  return cleaned === null ? undefined : cleaned;
 };
 
 const paidMinorOf = (loan) => (loan.payments || []).reduce((sum, item) => sum + item.amountMinor, 0);

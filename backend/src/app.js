@@ -16,6 +16,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import incomeStreamRoutes from './routes/incomeStreamRoutes.js';
 import fxRoutes from './routes/fxRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -104,6 +105,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/income-streams', incomeStreamRoutes);
 app.use('/api/fx', fxRoutes);
 app.use('/api/loans', loanRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
