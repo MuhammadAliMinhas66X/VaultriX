@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera } from 'lucide-react';
@@ -20,7 +20,8 @@ import ErrorSlot from '../components/ErrorSlot.jsx';
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
-const WELCOME_MS = 1800;
+const WELCOME_MS = 5000;
+const AUTO_NEXT_MS = 420;
 
 const POPULAR_COUNTRIES = ['PK', 'IN', 'AE', 'GB', 'US', 'SA', 'BD', 'CA'];
 const POPULAR_CURRENCIES = ['USD', 'EUR', 'GBP', 'PKR', 'INR', 'AED', 'SAR', 'CAD'];
@@ -64,6 +65,9 @@ function OnboardingPage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [welcoming, setWelcoming] = useState(false);
+  const autoTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(autoTimer.current), []);
 
   const [activeSteps] = useState(() => (user?.avatarUrl ? steps.slice(0, 3) : steps));
   const currentStep = activeSteps[stepIndex];
@@ -160,22 +164,17 @@ function OnboardingPage() {
     }, WELCOME_MS);
   };
 
-  const handleContinue = async () => {
-    if (!canContinue) {
-      notify.warning(t('onboarding.selectRequired'));
-      return;
-    }
-
+  const advance = async (step, value) => {
     setSubmitting(true);
     try {
-      if (currentStep === 'country') {
-        const data = await updateProfile({ country });
+      if (step === 'country') {
+        const data = await updateProfile({ country: value });
         updateUser(data.user);
-      } else if (currentStep === 'language') {
-        const data = await updateProfile({ language });
+      } else if (step === 'language') {
+        const data = await updateProfile({ language: value });
         updateUser(data.user);
-      } else if (currentStep === 'currency') {
-        const data = await updateProfile({ currency });
+      } else if (step === 'currency') {
+        const data = await updateProfile({ currency: value });
         updateUser(data.user);
       }
 
@@ -192,6 +191,22 @@ function OnboardingPage() {
     }
   };
 
+  const handleContinue = () => {
+    if (!canContinue) {
+      notify.warning(t('onboarding.selectRequired'));
+      return;
+    }
+    clearTimeout(autoTimer.current);
+    advance(currentStep, requiredValueByStep[currentStep]);
+  };
+
+  const pick = (step, setter) => (value) => {
+    setter(value);
+    if (submitting || !value) return;
+    clearTimeout(autoTimer.current);
+    autoTimer.current = setTimeout(() => advance(step, value), AUTO_NEXT_MS);
+  };
+
   const handleSkipPhoto = async () => {
     setSubmitting(true);
     try {
@@ -203,6 +218,7 @@ function OnboardingPage() {
   };
 
   const handleBack = () => {
+    clearTimeout(autoTimer.current);
     setStepIndex((prev) => Math.max(0, prev - 1));
   };
 
@@ -328,13 +344,13 @@ function OnboardingPage() {
                             code={item.value}
                             label={item.label}
                             selected={country === item.value}
-                            onClick={() => setCountry(item.value)}
+                            onClick={() => pick('country', setCountry)(item.value)}
                           />
                         ))}
                       </div>
                       <div className="mt-6">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('onboarding.moreCountries')}</p>
-                        <Combobox items={countries} value={country} onChange={setCountry} placeholder={t('combobox.searchCountries')} />
+                        <Combobox items={countries} value={country} onChange={pick('country', setCountry)} placeholder={t('combobox.searchCountries')} />
                       </div>
                       <p className="mt-4 text-xs text-muted">{t('onboarding.countryNote')}</p>
                     </div>
@@ -346,7 +362,7 @@ function OnboardingPage() {
                         {languageTiles.map((item) => {
                           const selected = language === item.value;
                           return (
-                            <OptionTile key={item.value} selected={selected} onClick={() => setLanguage(item.value)}>
+                            <OptionTile key={item.value} selected={selected} onClick={() => pick('language', setLanguage)(item.value)}>
                               <p dir="ltr" style={{ unicodeBidi: 'isolate' }} className="pe-6 text-left text-lg font-semibold leading-snug">
                                 {item.native}
                               </p>
@@ -368,7 +384,7 @@ function OnboardingPage() {
                         {popularCurrencies.map((item) => {
                           const selected = currency === item.value;
                           return (
-                            <OptionTile key={item.value} selected={selected} onClick={() => setCurrency(item.value)}>
+                            <OptionTile key={item.value} selected={selected} onClick={() => pick('currency', setCurrency)(item.value)}>
                               <p dir="ltr" style={{ unicodeBidi: 'isolate' }} className="text-left text-xl font-semibold leading-none">
                                 {item.symbol}
                               </p>
@@ -380,7 +396,7 @@ function OnboardingPage() {
                       </div>
                       <div className="mt-6">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{t('onboarding.moreCurrencies')}</p>
-                        <Combobox items={currencies} value={currency} onChange={setCurrency} placeholder={t('combobox.searchCurrencies')} />
+                        <Combobox items={currencies} value={currency} onChange={pick('currency', setCurrency)} placeholder={t('combobox.searchCurrencies')} />
                       </div>
                       <p className="mt-4 text-xs text-muted">{t('onboarding.currencyNote')}</p>
                     </div>
