@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { IncomeLayout } from './context/IncomeContext.jsx';
 import IncomePage from './pages/IncomePage.jsx';
 import LoansPage from './pages/LoansPage.jsx';
+import ExpensesPage from './pages/ExpensesPage.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/income" element={<IncomePage />} />
               <Route path="/loans" element={<LoansPage />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
 
