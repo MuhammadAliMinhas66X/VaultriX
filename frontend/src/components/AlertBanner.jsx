@@ -35,8 +35,8 @@ function AlertBanner({ tone = 'error', title, message, duration, stamp = 0, onDi
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -14, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ y: -14, scale: 0.97 }}
+      animate={{ y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.16 } }}
       transition={{ type: 'spring', stiffness: 460, damping: 36 }}
       onMouseEnter={() => setPaused(true)}
@@ -44,7 +44,7 @@ function AlertBanner({ tone = 'error', title, message, duration, stamp = 0, onDi
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       role={tone === 'error' || tone === 'warning' ? 'alert' : 'status'}
-      className="pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-xl shadow-black/25"
+      className="alert-fade pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl border border-ink bg-ink text-white shadow-xl shadow-black/25"
     >
       <div className="flex items-start gap-3 py-3.5 pe-3 ps-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-ink">

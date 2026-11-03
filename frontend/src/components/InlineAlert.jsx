@@ -17,11 +17,11 @@ function InlineAlert({ tone = 'error', title, message, onDismiss }) {
   return (
     <motion.div
       role="alert"
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
+      initial={{ height: 0 }}
+      animate={{ height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="overflow-hidden"
+      className="alert-fade overflow-hidden"
     >
       <div className={`flex items-start gap-3 rounded-xl border bg-white p-3.5 ${config.border}`}>
         <span className="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-white">

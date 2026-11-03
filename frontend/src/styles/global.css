@@ -39,6 +39,19 @@ li {
   unicode-bidi: plaintext;
 }
 
+@keyframes alert-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.alert-fade {
+  animation: alert-fade 0.24s ease-out backwards;
+}
+
 @keyframes toast-shrink {
   from {
     transform: scaleX(1);
