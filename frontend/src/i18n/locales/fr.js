@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'Échéance',
   'loans.errName': 'Saisissez le nom de la personne.',
   'loans.errAmount': 'Saisissez un montant supérieur à 0.',
+  'loans.errDecimals': 'Utilisez au maximum 4 décimales.',
   'loans.errBelowPaid': 'Le montant ne peut pas être inférieur à ce qui est déjà payé ({amount}).',
   'loans.errOverpay': 'C’est plus que ce qui reste ({amount}).',
   'loans.errSent': 'Choisissez une date qui n’est pas dans le futur.',

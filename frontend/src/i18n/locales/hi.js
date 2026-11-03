@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'देय',
   'loans.errName': 'व्यक्ति का नाम लिखें।',
   'loans.errAmount': '0 से ज़्यादा रकम लिखें।',
+  'loans.errDecimals': 'अधिकतम 4 दशमलव स्थान का उपयोग करें।',
   'loans.errBelowPaid': 'रकम पहले चुकाई गई रकम ({amount}) से कम नहीं हो सकती।',
   'loans.errOverpay': 'यह बाकी रकम ({amount}) से ज़्यादा है।',
   'loans.errSent': 'भविष्य की तारीख न चुनें।',

@@ -10,7 +10,7 @@ function PaymentsChart({ loan }) {
   const { formatMoney, formatDate } = useFormat();
 
   const chart = useMemo(() => {
-    const money = (value) => formatMoney(value, { currency: loan.currency });
+    const money = (value) => formatMoney(value, { decimals: 0, maxDecimals: 4, currency: loan.currency });
     const date = (day) => formatDate(dayNumberToDate(day), { ...dateOptions, timeZone: 'UTC' });
     const series = balanceSeries(loan);
     const points = series.points.map((point, index) => ({

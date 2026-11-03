@@ -62,6 +62,8 @@ const parsePayer = (body, current) => {
 
 const paidMinorOf = (loan) => (loan.payments || []).reduce((sum, item) => sum + item.amountMinor, 0);
 
+const toLoanMinor = (loan, expenseMinor) => expenseMinor * ((loan.scale || 100) / 100);
+
 const removeLoan = async (loan) => {
   if (loan.receivedProof?.publicId && isImageStorageReady()) await destroyImage(loan.receivedProof.publicId);
   await Loan.deleteOne({ _id: loan._id });
@@ -213,16 +215,17 @@ export const updateExpense = async (req, res, next) => {
       loanId = null;
     } else if (loan) {
       const paid = paidMinorOf(loan);
+      const nextMinor = toLoanMinor(loan, next_.amountMinor);
       const firstPayment = loan.payments.reduce((min, item) => (!min || item.paidAt < min ? item.paidAt : min), null);
       const sensitive =
-        next_.amountMinor !== loan.amountMinor || next_.currency !== loan.currency || String(next_.spentAt) !== String(loan.sentAt);
+        nextMinor !== loan.amountMinor || next_.currency !== loan.currency || String(next_.spentAt) !== String(loan.sentAt);
       if (loan.payments.length > 0 && sensitive) {
-        if (next_.amountMinor < paid || next_.currency !== loan.currency || (firstPayment && next_.spentAt > firstPayment)) {
+        if (nextMinor < paid || next_.currency !== loan.currency || (firstPayment && next_.spentAt > firstPayment)) {
           return fail(res, 400, LINKED_EDIT);
         }
       }
       loan.personName = payer.payerName;
-      loan.amountMinor = next_.amountMinor;
+      loan.amountMinor = nextMinor;
       loan.currency = next_.currency;
       loan.sentAt = next_.spentAt;
       loan.note = next_.note;

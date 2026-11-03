@@ -10,6 +10,7 @@ import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { toInputDate, dateOptions } from '../../utils/dates.js';
 import { keyFor, customFor, splitKey, isOtherKey, methodOf, todayLocal } from './loanOptions.js';
+import { LOAN_DECIMALS, decimalsOf, loanMinor } from '../../utils/loanMath.js';
 
 export const emptyLoanForm = (direction, currency) => ({
   direction,
@@ -77,7 +78,8 @@ function LoanForm({ initial, currencies, mode, enteredAt, paid = 0, firstPayment
     const found = {};
     if (!form.personName.trim()) found.personName = t('loans.errName');
     if (!form.amount || !(Number(form.amount) > 0)) found.amount = t('loans.errAmount');
-    else if (Math.round(Number(form.amount) * 100) < Math.round(paid * 100)) found.amount = t('loans.errBelowPaid', { amount: formatMoney(paid, { decimals: 2, currency: form.currency }) });
+    else if (decimalsOf(form.amount) > LOAN_DECIMALS) found.amount = t('loans.errDecimals');
+    else if (loanMinor(form.amount) < loanMinor(paid)) found.amount = t('loans.errBelowPaid', { amount: formatMoney(paid, { decimals: 0, maxDecimals: 4, currency: form.currency }) });
     if (!form.currency) found.currency = t('income.errCurrency');
     if (!form.sentAt || form.sentAt > todayLocal()) found.sentAt = t('loans.errSent');
     else if (firstPaymentOn && form.sentAt > toInputDate(firstPaymentOn)) found.sentAt = t('loans.errSentPayment');
@@ -157,7 +159,7 @@ function LoanForm({ initial, currencies, mode, enteredAt, paid = 0, firstPayment
           label={<StepLabel n={2}>{t('loans.amountLabel')}</StepLabel>}
           type="number"
           inputMode="decimal"
-          step="0.01"
+          step="any"
           min="0"
           value={form.amount}
           onChange={(event) => set('amount')(event.target.value)}

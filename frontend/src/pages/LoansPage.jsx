@@ -197,7 +197,7 @@ function LoansPage() {
       if (latest.done) {
         notify.success(t('loans.doneBody', { name: latest.personName }), { title: t('loans.doneTitle') });
       } else {
-        notify.success(t('loans.paymentAddedBody', { amount: formatMoney(payload.amount, { decimals: 2, currency: loan.currency }) }), { title: t('loans.paymentAddedTitle') });
+        notify.success(t('loans.paymentAddedBody', { amount: formatMoney(payload.amount, { decimals: 0, maxDecimals: 4, currency: loan.currency }) }), { title: t('loans.paymentAddedTitle') });
       }
       return true;
     } catch (error) {
@@ -274,7 +274,8 @@ function LoansPage() {
   const sidePanel = adding ? addForm : editing ? editForm : selected ? detailFor(selected) : null;
   const leftLabel = tab === 'borrowed' ? t('loans.leftToPay') : t('loans.leftToGet');
   const filterLabels = { all: t('loans.filterAll'), open: t('loans.filterOpen'), done: t('loans.filterDone'), critical: t('loans.filterCritical') };
-  const money = useCallback((value) => formatMoney(value, { decimals: 0 }), [formatMoney]);
+  const exactMoney = inTab.every((loan) => loan.currency === currency);
+  const money = useCallback((value) => formatMoney(value, { decimals: 0, maxDecimals: exactMoney ? 4 : 2 }), [formatMoney, exactMoney]);
 
   const tabs = [
     { id: 'borrowed', label: t('loans.tabOwe'), count: tabCounts.borrowed },

@@ -7,6 +7,7 @@ import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { toInputDate } from '../../utils/dates.js';
 import { todayLocal } from './loanOptions.js';
+import { LOAN_DECIMALS, decimalsOf, loanMinor } from '../../utils/loanMath.js';
 
 function PaymentForm({ loan, onSubmit, onCancel, busy }) {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ function PaymentForm({ loan, onSubmit, onCancel, busy }) {
   const [errors, setErrors] = useState({});
 
   const sentOn = toInputDate(loan.sentAt);
-  const remainingText = formatMoney(loan.remaining, { decimals: 2, currency: loan.currency });
+  const remainingText = formatMoney(loan.remaining, { decimals: 0, maxDecimals: 4, currency: loan.currency });
 
   const clear = (key) => setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
 
@@ -27,7 +28,8 @@ function PaymentForm({ loan, onSubmit, onCancel, busy }) {
     const found = {};
     const value = Number(amount);
     if (!amount || !(value > 0)) found.amount = t('loans.errAmount');
-    else if (Math.round(value * 100) > Math.round(loan.remaining * 100)) found.amount = t('loans.errOverpay', { amount: remainingText });
+    else if (decimalsOf(amount) > LOAN_DECIMALS) found.amount = t('loans.errDecimals');
+    else if (loanMinor(value) > loanMinor(loan.remaining)) found.amount = t('loans.errOverpay', { amount: remainingText });
     if (!paidAt || paidAt > todayLocal() || paidAt < sentOn) found.paidAt = t('loans.errPaymentDate');
     setErrors(found);
     if (Object.keys(found).length) return;
@@ -41,7 +43,7 @@ function PaymentForm({ loan, onSubmit, onCancel, busy }) {
           label={t('loans.paymentAmount')}
           type="number"
           inputMode="decimal"
-          step="0.01"
+          step="any"
           min="0"
           value={amount}
           onChange={(event) => {

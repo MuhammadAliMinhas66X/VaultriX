@@ -28,6 +28,7 @@ const loanSchema = new mongoose.Schema(
     direction: { type: String, enum: LOAN_DIRECTIONS, required: true },
     personName: { type: String, required: true },
     amountMinor: { type: Number, required: true, min: 1 },
+    scale: { type: Number, default: 100 },
     currency: { type: String, required: true },
     sentAt: { type: Date, required: true },
     dueAt: { type: Date, default: null },

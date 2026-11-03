@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'Vence',
   'loans.errName': 'Escribe el nombre de la persona.',
   'loans.errAmount': 'Escribe un monto mayor que 0.',
+  'loans.errDecimals': 'Usa como máximo 4 decimales.',
   'loans.errBelowPaid': 'El monto no puede ser menor que lo ya pagado ({amount}).',
   'loans.errOverpay': 'Es más de lo que queda ({amount}).',
   'loans.errSent': 'Elige una fecha que no sea futura.',

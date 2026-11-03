@@ -1,5 +1,16 @@
 import { toBase } from './incomeMath.js';
 
+export const LOAN_DECIMALS = 4;
+const FACTOR = 10 ** LOAN_DECIMALS;
+export const roundLoan = (value) => Math.round((value + Number.EPSILON) * FACTOR) / FACTOR;
+export const loanMinor = (value) => Math.round((Number(value) + Number.EPSILON) * FACTOR);
+export const decimalsOf = (text) => {
+  const value = String(text).trim();
+  if (!/^\d*\.?\d*$/.test(value)) return Infinity;
+  const dot = value.indexOf('.');
+  return dot === -1 ? 0 : value.length - dot - 1;
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const CRITICAL_DAYS = 7;
 
@@ -69,7 +80,7 @@ export const summarizeLoans = (loans, rates, baseCurrency) => {
     paid += convert(loan.paid);
     left += convert(loan.remaining);
   });
-  return { total, paid, left, excluded };
+  return { total: roundLoan(total), paid: roundLoan(paid), left: roundLoan(left), excluded };
 };
 
 export const balanceSeries = (loan, today = todayDayNumber()) => {
@@ -78,7 +89,7 @@ export const balanceSeries = (loan, today = todayDayNumber()) => {
   const points = [{ day: startDay, balance: loan.amount }];
   let balance = loan.amount;
   loan.payments.forEach((payment) => {
-    balance = Math.max(0, Math.round((balance - payment.amount) * 100) / 100);
+    balance = Math.max(0, roundLoan(balance - payment.amount));
     points.push({ day: Math.max(startDay, utcDayNumber(payment.paidAt)), balance, payment });
   });
   const lastDay = points[points.length - 1].day;
@@ -86,8 +97,6 @@ export const balanceSeries = (loan, today = todayDayNumber()) => {
   if (endDay <= startDay) endDay = startDay + 1;
   return { points, startDay, endDay, dueDay, today };
 };
-
-const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 export const outstandingSeries = (loans, rates, baseCurrency, today = todayDayNumber()) => {
   const rows = [];
@@ -116,7 +125,7 @@ export const outstandingSeries = (loans, rates, baseCurrency, today = todayDayNu
   const points = [];
   let balance = 0;
   rows.forEach((row) => {
-    balance = Math.max(0, round2(balance + row.delta));
+    balance = Math.max(0, roundLoan(balance + row.delta));
     const last = points[points.length - 1];
     if (last && last.day === row.day) {
       last.balance = balance;

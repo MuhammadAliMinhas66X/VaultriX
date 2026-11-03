@@ -17,8 +17,8 @@ export function useFormat() {
 
     const formatNumber = (value, options) => new Intl.NumberFormat(locale, options).format(value);
 
-    const formatMoney = (value, { decimals = 0, signed = false, currency: code = currency } = {}) => {
-      const base = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
+    const formatMoney = (value, { decimals = 0, maxDecimals, signed = false, currency: code = currency } = {}) => {
+      const base = { minimumFractionDigits: decimals, maximumFractionDigits: Math.max(decimals, maxDecimals ?? decimals) };
       if (signed) base.signDisplay = 'exceptZero';
       if (code) {
         try {

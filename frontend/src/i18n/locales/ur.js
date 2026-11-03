@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'واپسی',
   'loans.errName': 'شخص کا نام لکھیں۔',
   'loans.errAmount': '0 سے زیادہ رقم لکھیں۔',
+  'loans.errDecimals': 'زیادہ سے زیادہ 4 اعشاری مقامات استعمال کریں۔',
   'loans.errBelowPaid': 'رقم پہلے ادا کی گئی رقم ({amount}) سے کم نہیں ہو سکتی۔',
   'loans.errOverpay': 'یہ باقی رقم ({amount}) سے زیادہ ہے۔',
   'loans.errSent': 'مستقبل کی تاریخ نہ چنیں۔',

@@ -2,7 +2,8 @@ import Loan, { LOAN_DIRECTIONS, LOAN_METHODS } from '../models/Loan.js';
 import Expense from '../models/Expense.js';
 import { cleanLabel, cleanFreeText, isCurrencyCode } from '../utils/validators.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
-import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
+import { parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
+import { LOAN_SCALE, LEGACY_SCALE, parseDecimalMinor, minorToMajor } from '../utils/decimalMoney.js';
 import {
   uploadPrivateImage,
   privateImageUrls,
@@ -41,9 +42,24 @@ const parsePayout = (body) => {
 
 const paidMinorOf = (loan) => (loan.payments || []).reduce((sum, item) => sum + item.amountMinor, 0);
 
+const scaleOf = (loan) => loan.scale || LEGACY_SCALE;
+
+const upgradeScale = (loan) => {
+  const current = scaleOf(loan);
+  if (current === LOAN_SCALE) return;
+  const factor = LOAN_SCALE / current;
+  loan.amountMinor *= factor;
+  (loan.payments || []).forEach((item) => {
+    item.amountMinor *= factor;
+  });
+  loan.scale = LOAN_SCALE;
+};
+
 const proofDto = (proof) => (isImageStorageReady() ? privateImageUrls(proof) : null);
 
 const toLoanDto = (loan) => {
+  const scale = scaleOf(loan);
+  const toMajor = (minor) => minorToMajor(minor, scale);
   const paidMinor = paidMinorOf(loan);
   const remainingMinor = Math.max(0, loan.amountMinor - paidMinor);
   return {
@@ -118,7 +134,7 @@ export const createLoan = async (req, res, next) => {
     const personName = cleanLabel(body.personName);
     if (!personName) return fail(res, 400, GENERIC_INVALID);
 
-    const amountMinor = parseAmountMinor(body.amount);
+    const amountMinor = parseDecimalMinor(body.amount);
     if (amountMinor === undefined) return fail(res, 400, GENERIC_INVALID);
 
     if (!isCurrencyCode(body.currency)) return fail(res, 400, GENERIC_INVALID);
@@ -147,6 +163,7 @@ export const createLoan = async (req, res, next) => {
       direction: body.direction,
       personName,
       amountMinor,
+      scale: LOAN_SCALE,
       currency: body.currency,
       sentAt,
       dueAt,
@@ -182,8 +199,10 @@ export const updateLoan = async (req, res, next) => {
     }
 
     if (body.amount !== undefined) {
-      const amountMinor = parseAmountMinor(body.amount);
-      if (amountMinor === undefined || amountMinor < paidMinorOf(loan)) return fail(res, 400, GENERIC_INVALID);
+      const amountMinor = parseDecimalMinor(body.amount);
+      if (amountMinor === undefined) return fail(res, 400, GENERIC_INVALID);
+      upgradeScale(loan);
+      if (amountMinor < paidMinorOf(loan)) return fail(res, 400, GENERIC_INVALID);
       update.amountMinor = amountMinor;
     }
 
@@ -263,8 +282,9 @@ export const addPayment = async (req, res, next) => {
 
     const body = req.body || {};
 
-    const amountMinor = parseAmountMinor(body.amount);
+    const amountMinor = parseDecimalMinor(body.amount);
     if (amountMinor === undefined) return fail(res, 400, GENERIC_INVALID);
+    upgradeScale(loan);
     if (amountMinor > loan.amountMinor - paidMinorOf(loan)) return fail(res, 400, OVERPAY);
 
     const paidAt = parseDay(body.paidAt);

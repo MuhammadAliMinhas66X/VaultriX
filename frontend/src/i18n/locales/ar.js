@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'الاستحقاق',
   'loans.errName': 'أدخل اسم الشخص.',
   'loans.errAmount': 'أدخل مبلغًا أكبر من 0.',
+  'loans.errDecimals': 'استخدم 4 منازل عشرية كحد أقصى.',
   'loans.errBelowPaid': 'لا يمكن أن يكون المبلغ أقل من المدفوع ({amount}).',
   'loans.errOverpay': 'هذا أكثر من المتبقي ({amount}).',
   'loans.errSent': 'اختر تاريخًا ليس في المستقبل.',

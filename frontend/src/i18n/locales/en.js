@@ -695,6 +695,7 @@ export default {
   'loans.chartDue': 'Due',
   'loans.errName': 'Enter the person’s name.',
   'loans.errAmount': 'Enter an amount above 0.',
+  'loans.errDecimals': 'Use at most 4 decimal places.',
   'loans.errBelowPaid': 'The amount cannot be less than what is already paid ({amount}).',
   'loans.errOverpay': 'That is more than what is left ({amount}).',
   'loans.errSent': 'Pick a date that is not in the future.',

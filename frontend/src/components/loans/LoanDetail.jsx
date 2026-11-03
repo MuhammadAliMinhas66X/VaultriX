@@ -49,7 +49,7 @@ function LoanDetail({
 
   const state = loanState(loan);
   const borrowed = loan.direction === 'borrowed';
-  const money = (value) => formatMoney(value, { decimals: 0, currency: loan.currency });
+  const money = (value) => formatMoney(value, { decimals: 0, maxDecimals: 4, currency: loan.currency });
   const day = (value) => formatDate(new Date(value), dateOptions);
 
   const copyNumber = async () => {
