@@ -6,6 +6,8 @@ import { notify } from '../i18n/notifications.js';
 import { listIncomeStreams } from '../services/incomeStreamService.js';
 import { getExchangeRates } from '../services/fxService.js';
 
+const REFRESH_MS = 30 * 1000;
+
 const IncomeContext = createContext(null);
 
 export function IncomeProvider({ children }) {
@@ -44,20 +46,25 @@ export function IncomeProvider({ children }) {
     [streams, currency]
   );
 
+  const applyRates = useCallback((data) => {
+    setRates(data.rates);
+    setRatesStale(Boolean(data.stale));
+    setRatesLive(Array.isArray(data.live) && data.live.length > 0);
+    setRatesUpdatedAt(data.liveAt || data.updatedAt || data.fetchedAt || null);
+  }, []);
+
   useEffect(() => {
     if (!currency) {
       setRatesLoading(false);
       return undefined;
     }
     let cancelled = false;
+    const symbols = neededSymbols ? neededSymbols.split(',') : [];
+
     setRatesLoading(true);
-    getExchangeRates(currency, neededSymbols ? neededSymbols.split(',') : [])
+    getExchangeRates(currency, symbols)
       .then((data) => {
-        if (cancelled) return;
-        setRates(data.rates);
-        setRatesStale(Boolean(data.stale));
-        setRatesLive(Array.isArray(data.live) && data.live.length > 0);
-        setRatesUpdatedAt(data.updatedAt || data.fetchedAt || null);
+        if (!cancelled) applyRates(data);
       })
       .catch(() => {
         if (!cancelled) setRates(null);
@@ -65,10 +72,26 @@ export function IncomeProvider({ children }) {
       .finally(() => {
         if (!cancelled) setRatesLoading(false);
       });
+
+    const refresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      getExchangeRates(currency, symbols)
+        .then((data) => {
+          if (!cancelled) applyRates(data);
+        })
+        .catch(() => {});
+    };
+    const timer = window.setInterval(refresh, REFRESH_MS);
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('online', refresh);
+
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('online', refresh);
     };
-  }, [currency, neededSymbols]);
+  }, [currency, neededSymbols, applyRates]);
 
   const value = useMemo(
     () => ({ streams, setStreams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt }),
