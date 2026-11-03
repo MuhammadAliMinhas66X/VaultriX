@@ -1,16 +1,14 @@
-// Exchange rates for converting an income stream's own currency into the
-// currency the person picked for the app. No API key needed. Several free
-// sources are tried one after another, so one being down does not break
-// the dashboard. Every source publishes mid-market rates about once a day,
-// so a small gap against a live number on Google is normal. Results are
-// cached in memory per base currency so a page full of streams does not
-// trigger a fresh outbound call each time, and old numbers can still be
-// served for a while if every source is briefly unreachable.
-const CACHE_TTL_MS = 30 * 60 * 1000;
-const LIVE_TTL_MS = 60 * 1000;
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const LIVE_TTL_MS = 20 * 1000;
 const FETCH_TIMEOUT_MS = 8000;
 const LIVE_TIMEOUT_MS = 5000;
-const MAX_LIVE_SYMBOLS = 10;
+const MAX_LIVE_SYMBOLS = 40;
+const LIVE_CONCURRENCY = 8;
+
+export const LIVE_CURRENCIES = [
+  'USD', 'EUR', 'GBP', 'PKR', 'INR', 'AED', 'SAR', 'CNY', 'JPY', 'CAD', 'AUD', 'CHF', 'TRY', 'ZAR',
+  'NGN', 'BDT', 'IDR', 'MYR', 'SGD', 'KRW', 'RUB', 'BRL', 'MXN', 'EGP', 'KES', 'QAR', 'KWD',
+];
 
 const cache = new Map();
 const liveCache = new Map();
@@ -69,6 +67,7 @@ const SOURCES = [
 ];
 
 const fetchLivePrice = async (from, to) => {
+  if (from === to) return 1;
   const pair = `${from}${to}=X`;
   const cached = liveCache.get(pair);
   if (cached && cached.expiresAt > Date.now()) return cached.price;
@@ -83,29 +82,64 @@ const fetchLivePrice = async (from, to) => {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Vaultrix/1.0)', Accept: 'application/json' },
       }
     );
-    if (!response.ok) return null;
+    if (!response.ok) return cached ? cached.price : null;
     const payload = await response.json();
     const price = Number(payload?.chart?.result?.[0]?.meta?.regularMarketPrice);
-    if (!Number.isFinite(price) || price <= 0) return null;
+    if (!Number.isFinite(price) || price <= 0) return cached ? cached.price : null;
     liveCache.set(pair, { price, expiresAt: Date.now() + LIVE_TTL_MS });
     return price;
   } catch (error) {
-    return null;
+    return cached ? cached.price : null;
   } finally {
     clearTimeout(timeout);
   }
 };
 
+const mapLimit = async (items, limit, task) => {
+  const results = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await task(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+};
+
+const codesPerUsd = async (code) => {
+  if (code === 'USD') return 1;
+  const direct = await fetchLivePrice('USD', code);
+  if (direct && direct >= 1) return direct;
+  const inverse = await fetchLivePrice(code, 'USD');
+  if (inverse) return 1 / inverse;
+  return direct;
+};
+
+const pairRate = async (base, code, basePerUsd) => {
+  const direct = await fetchLivePrice(base, code);
+  if (direct && direct >= 1) return direct;
+  const inverse = await fetchLivePrice(code, base);
+  if (inverse) return 1 / inverse;
+  const perUsd = await codesPerUsd(code);
+  if (perUsd && basePerUsd) return perUsd / basePerUsd;
+  return direct;
+};
+
 const withLiveRates = async (data, symbols) => {
-  const wanted = [...new Set(symbols)].filter((code) => code !== data.base).slice(0, MAX_LIVE_SYMBOLS);
+  const wanted = [...new Set([...LIVE_CURRENCIES, ...symbols])].filter((code) => code !== data.base).slice(0, MAX_LIVE_SYMBOLS);
   if (wanted.length === 0) return data;
 
-  const prices = await Promise.all(wanted.map((code) => fetchLivePrice(code, data.base)));
+  const basePerUsd = await codesPerUsd(data.base);
+  const prices = await mapLimit(wanted, LIVE_CONCURRENCY, (code) => pairRate(data.base, code, basePerUsd));
+
   const rates = { ...data.rates };
   const live = [];
   wanted.forEach((code, index) => {
     if (prices[index]) {
-      rates[code] = 1 / prices[index];
+      rates[code] = prices[index];
       live.push(code);
     }
   });

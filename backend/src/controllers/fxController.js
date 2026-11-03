@@ -15,9 +15,10 @@ export const getExchangeRates = async (req, res, next) => {
       .split(',')
       .map((code) => code.trim().toUpperCase())
       .filter((code) => isCurrencyCode(code))
-      .slice(0, 10);
+      .slice(0, 40);
 
     const data = await getRates(base, symbols);
+    res.set('Cache-Control', 'no-store');
     res.json({ success: true, ...data });
   } catch (error) {
     if (error instanceof ExchangeRateError) {

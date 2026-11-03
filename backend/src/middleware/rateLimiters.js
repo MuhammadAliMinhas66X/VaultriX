@@ -43,3 +43,4 @@ export const adminLimiter = build(5 * 60 * 1000, 300);
 // to match the rest of the app's "every mutation is rate limited" posture.
 export const financeLimiter = build(15 * 60 * 1000, 120);
 export const uploadLimiter = build(15 * 60 * 1000, 40);
+export const fxLimiter = build(15 * 60 * 1000, 300);
