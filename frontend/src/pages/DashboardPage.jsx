@@ -50,7 +50,9 @@ function DashboardPage() {
   const rateLines = useMemo(() => {
     if (!rates) return [];
     const codes = [...new Set(streams.filter((item) => item.expectedAmount !== null).map((item) => item.currency))];
-    return codes.filter((code) => code !== currency && rates[code]).map((code) => ({ code, value: 1 / rates[code] }));
+    return codes
+      .filter((code) => code !== currency && rates[code])
+      .map((code) => (rates[code] >= 1 ? { code, from: currency, to: code, value: rates[code] } : { code, from: code, to: currency, value: 1 / rates[code] }));
   }, [streams, rates, currency]);
 
   const hasIncome = streams.some((item) => item.expectedAmount !== null);
@@ -72,10 +74,17 @@ function DashboardPage() {
     <div key="rates" className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-muted">
       {rateLines.map((line) => (
         <span key={line.code} className="font-medium tabular-nums text-ink">
-          {t('income.rateLine', { from: line.code, rate: formatNumber(line.value, { maximumFractionDigits: line.value < 1 ? 4 : 2 }), to: currency })}
+          {t('income.rateLine', { from: line.from, rate: formatNumber(line.value, { minimumFractionDigits: 4, maximumFractionDigits: 4 }), to: line.to })}
         </span>
       ))}
-      {ratesLive ? <span>{t('income.ratesLive')}</span> : ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>}
+      {ratesLive ? (
+        <span>
+          {t('income.ratesLive')}
+          {ratesUpdatedAt ? ` \u00b7 ${formatDate(new Date(ratesUpdatedAt), { hour: 'numeric', minute: '2-digit', second: '2-digit' })}` : ''}
+        </span>
+      ) : (
+        ratesUpdatedAt && <span>{t('income.ratesUpdated', { date: formatDate(new Date(ratesUpdatedAt), dateOptions) })}</span>
+      )}
     </div>
   );
   const staleBlock = ready && ratesStale && (
@@ -136,7 +145,7 @@ function DashboardPage() {
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
                       <div style={{ width: `${Math.max(share, 2)}%` }} className="h-full rounded-full bg-ink" />
                     </div>
-                    <p className="mt-1.5 text-xs font-medium tabular-nums text-muted">{t('dashboard.deductionShare', { percent: formatNumber(share, { maximumFractionDigits: 1 }) })}</p>
+                    <p className="mt-1.5 text-xs font-medium tabular-nums text-muted">{t('dashboard.deductionShare', { percent: formatNumber(share, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) })}</p>
                   </div>
                 )}
               </div>
