@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Loader2, Search } from 'lucide-react';
 import { useTranslation } from '../i18n/useTranslation.js';
 
@@ -26,18 +27,14 @@ function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlighted, setHighlighted] = useState(0);
-  // When a field sits near the bottom of a long page (onboarding steps,
-  // the Settings preferences card), the menu normally opens downward and
-  // can run past the bottom of the viewport. Because it's absolutely
-  // positioned, nothing stops the page itself from growing to fit it,
-  // which left a block of empty space below the real content with its
-  // own scrollbar - not a new bug exactly, just confusing to look at. We
-  // measure the room below on open and flip the menu upward when there
-  // isn't enough of it, same as any native/select-style dropdown would.
-  const [openUpward, setOpenUpward] = useState(false);
+  const [place, setPlace] = useState(null);
   const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const inputRef = useRef(null);
-  const MENU_HEIGHT_ESTIMATE = 272; // search bar + max-h-56 list, in px
+  const widthMatch = /\bw-(\d+)\b/.exec(menuClassName);
+  const wantedWidth = widthMatch ? Number(widthMatch[1]) * 4 : 0;
+  const alignRight = /\bright-0\b/.test(menuClassName);
 
   const selected = items.find((item) => item.value === value) || null;
   const needle = normalize(query.trim());
@@ -45,20 +42,69 @@ function Combobox({
     ? items.filter((item) => (item.search || normalize(item.label)).includes(needle))
     : items;
 
+  const measure = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const edge = 8;
+    const gap = 6;
+    const width = Math.min(Math.max(wantedWidth || rect.width, Math.min(rect.width, 220)), vw - edge * 2);
+    let left = alignRight ? rect.right - width : rect.left;
+    left = Math.max(edge, Math.min(left, vw - width - edge));
+    const below = vh - rect.bottom - gap - edge;
+    const above = rect.top - gap - edge;
+    const upward = below < 240 && above > below;
+    const room = upward ? above : below;
+    setPlace({
+      left,
+      width,
+      upward,
+      top: upward ? undefined : rect.bottom + gap,
+      bottom: upward ? vh - rect.top + gap : undefined,
+      maxHeight: Math.max(150, Math.min(360, room)),
+    });
+  }, [wantedWidth, alignRight]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlace(null);
+      return undefined;
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    const viewport = window.visualViewport;
+    viewport?.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
+      viewport?.removeEventListener('resize', measure);
+    };
+  }, [open, measure]);
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) {
+    if (!open) return undefined;
+    const handleOutside = (event) => {
+      const inside = rootRef.current?.contains(event.target) || menuRef.current?.contains(event.target);
+      if (!inside) {
         setOpen(false);
         setQuery('');
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
-      inputRef.current?.focus();
+      const fine = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
+      if (fine) inputRef.current?.focus();
       setHighlighted(0);
     }
   }, [open, query]);
@@ -90,18 +136,11 @@ function Combobox({
       {label && <label className="text-sm font-medium text-ink">{label}</label>}
 
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => {
           if (loading) return;
-          setOpen((prev) => {
-            const next = !prev;
-            if (next && rootRef.current) {
-              const rect = rootRef.current.getBoundingClientRect();
-              const spaceBelow = window.innerHeight - rect.bottom;
-              setOpenUpward(spaceBelow < MENU_HEIGHT_ESTIMATE && rect.top > spaceBelow);
-            }
-            return next;
-          });
+          setOpen((prev) => !prev);
         }}
         disabled={loading}
         aria-label={ariaLabel}
@@ -141,58 +180,60 @@ function Combobox({
         </span>
       )}
 
-      {open && (
-        <div
-          className={`absolute z-30 overflow-hidden rounded-lg border border-border bg-white shadow-xl ${
-            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          } ${menuClassName}`}
-        >
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-            <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={searchPlaceholder || t('common.search')}
-              className="w-full text-sm text-ink outline-none placeholder:text-muted"
-            />
-          </div>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={
+              place
+                ? { position: 'fixed', left: place.left, width: place.width, top: place.top, bottom: place.bottom, maxHeight: place.maxHeight }
+                : { position: 'fixed', visibility: 'hidden' }
+            }
+            className="z-[80] flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-[0_18px_50px_-12px_rgba(0,0,0,0.35)]"
+          >
+            <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2.5">
+              <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={searchPlaceholder || t('common.search')}
+                className="w-full bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-sm"
+              />
+            </div>
 
-          <div role="listbox" className="max-h-56 overflow-y-auto py-1">
-            {filtered.length === 0 && (
-              <p className="px-3.5 py-2.5 text-sm text-muted">{t('common.noMatches')}</p>
-            )}
-            {filtered.map((item, index) => {
-              const isSelected = item.value === value;
-              const showGroup = item.group && item.group !== filtered[index - 1]?.group;
-              return (
-                <Fragment key={item.value}>
-                {showGroup && <p className="px-3.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{item.group}</p>}
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => selectItem(item)}
-                  onMouseEnter={() => setHighlighted(index)}
-                  className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition-colors ${
-                    isSelected ? 'bg-accent/10 font-semibold text-ink' : index === highlighted ? 'bg-surface text-ink' : 'text-ink'
-                  }`}
-                >
-                  {item.icon}
-                  {item.flag && <span className="text-base leading-none">{item.flag}</span>}
-                  {item.symbol && (
-                    <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>
-                  )}
-                  <span className="truncate">{item.label}</span>
-                  {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}
-                </button>
-                </Fragment>
-              );
-            })}
-          </div>
-        </div>
-      )}
+            <div role="listbox" className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1">
+              {filtered.length === 0 && <p className="px-3.5 py-2.5 text-sm text-muted">{t('common.noMatches')}</p>}
+              {filtered.map((item, index) => {
+                const isSelected = item.value === value;
+                const showGroup = item.group && item.group !== filtered[index - 1]?.group;
+                return (
+                  <Fragment key={item.value}>
+                    {showGroup && <p className="px-3.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{item.group}</p>}
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => selectItem(item)}
+                      onMouseEnter={() => setHighlighted(index)}
+                      className={`flex w-full items-center gap-2.5 px-3.5 py-3 text-left text-[15px] transition-colors sm:py-2 sm:text-sm ${
+                        isSelected ? 'bg-accent/10 font-semibold text-ink' : index === highlighted ? 'bg-surface text-ink' : 'text-ink'
+                      }`}
+                    >
+                      {item.icon}
+                      {item.flag && <span className="text-base leading-none">{item.flag}</span>}
+                      {item.symbol && <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>}
+                      <span className="truncate">{item.label}</span>
+                      {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}
+                    </button>
+                  </Fragment>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
