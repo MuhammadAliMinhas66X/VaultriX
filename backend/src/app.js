@@ -9,6 +9,7 @@ import errorHandler from './middleware/errorHandler.js';
 import { sanitizeInput, noStore, allowedOrigins } from './middleware/security.js';
 import { attachDeviceId } from './middleware/deviceId.js';
 import authRoutes from './routes/authRoutes.js';
+import securityRoutes from './routes/securityRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import accountRoutes from './routes/accountRoutes.js';
@@ -99,6 +100,7 @@ app.use('/api', apiLimiter, noStore);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/security', securityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/categories', categoryRoutes);

@@ -523,7 +523,7 @@ export const unlockUserAccount = async (req, res, next) => {
 // going wrong with sign-in" - plus the accounts currently locked out,
 // which the audit log alone doesn't surface as a standing list.
 
-const SECURITY_EVENT_TYPES = ['login_failed', 'account_locked', 'login_while_locked', 'login_unknown_email', 'mfa_wrong_code'];
+const SECURITY_EVENT_TYPES = ['login_failed', 'account_locked', 'login_while_locked', 'login_unknown_email', 'mfa_wrong_code', 'client_capture_key', 'client_print_attempt', 'client_save_attempt', 'client_fullscreen_exit'];
 
 export const getSecurityOverview = async (req, res, next) => {
   try {

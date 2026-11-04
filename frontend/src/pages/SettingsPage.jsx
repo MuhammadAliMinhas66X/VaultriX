@@ -51,6 +51,8 @@ import { notify } from '../i18n/notifications.js';
 import { serverMessageKey, translate } from '../i18n/translate.js';
 import ErrorSlot from '../components/ErrorSlot.jsx';
 import { setMotionMode, useMotionMode } from '../hooks/useMotionPreference.js';
+import { setSecureMode, useSecureMode } from '../hooks/useSecureMode.js';
+import { reportSecurityEvent } from '../services/securityService.js';
 
 const EMAIL_CODE_LENGTH = 6;
 
@@ -1121,6 +1123,7 @@ function PreferencesSection() {
   const { t, tServer } = useTranslation();
   const { countries, languages, currencies } = useLocalizedOptions();
   const motionMode = useMotionMode();
+  const secureOn = useSecureMode();
 
   // Everything here is a PENDING selection local to this form. Nothing is applied
   // to the app (or saved) until "Update preferences" succeeds; country, language
@@ -1213,6 +1216,33 @@ function PreferencesSection() {
               aria-checked={motionMode === option.id}
               onClick={() => setMotionMode(option.id)}
               className={`rounded-lg px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${motionMode === option.id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">{t('secure.settingLabel')}</p>
+          <p className="mt-0.5 text-xs text-muted">{t('secure.settingHint')}</p>
+        </div>
+        <div role="radiogroup" aria-label={t('secure.settingLabel')} className="flex shrink-0 rounded-xl border border-border bg-surface p-1">
+          {[
+            { id: false, label: t('secure.off') },
+            { id: true, label: t('secure.on') },
+          ].map((option) => (
+            <button
+              key={String(option.id)}
+              type="button"
+              role="radio"
+              aria-checked={secureOn === option.id}
+              onClick={() => {
+                setSecureMode(option.id);
+                reportSecurityEvent(option.id ? 'secure_on' : 'secure_off');
+              }}
+              className={`rounded-lg px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${secureOn === option.id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
             >
               {option.label}
             </button>

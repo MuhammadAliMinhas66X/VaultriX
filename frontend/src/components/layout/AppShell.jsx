@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import Sidebar, { useSidebarCollapsed } from './Sidebar.jsx';
 import BottomNav from './BottomNav.jsx';
 import AccountMenu from './AccountMenu.jsx';
+import SecureGuard from '../security/SecureGuard.jsx';
+import SecureBadge from '../security/SecureBadge.jsx';
 import Logo from '../Logo.jsx';
 import { readDirection } from '../../utils/direction.js';
 
@@ -36,11 +38,13 @@ function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerI
             <span className={`block truncate text-base font-semibold tracking-tight text-ink lg:hidden ${!back && showLogo ? 'sr-only' : ''}`}>{pageTitle}</span>
             <span className="hidden truncate text-sm font-medium text-muted lg:block">{pageTitle}</span>
           </div>
+          <SecureBadge />
           <AccountMenu hideSettings={hideSettingsLink} />
         </header>
         <main className="min-w-0 flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
       </div>
 
+      <SecureGuard />
       <BottomNav items={items} activeId={activeId} label={title || pageTitle} />
     </div>
   );
