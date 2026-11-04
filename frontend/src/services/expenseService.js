@@ -19,5 +19,6 @@ export const listExpenseCategories = async () => {
   const data = await run(() => api.get('/categories'));
   return data.categories.filter((category) => category.type === 'expense');
 };
-export const createExpenseCategory = (name) => run(() => api.post('/categories', { name, type: 'expense' }));
+export const createExpenseCategory = (name, icon = '') => run(() => api.post('/categories', { name, type: 'expense', icon }));
+export const updateExpenseCategory = (id, patch) => run(() => api.patch(`/categories/${id}`, patch));
 export const deleteExpenseCategory = (id) => run(() => api.delete(`/categories/${id}`));

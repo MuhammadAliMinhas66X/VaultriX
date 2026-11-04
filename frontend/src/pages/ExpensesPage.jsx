@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Receipt, Search } from 'lucide-react';
+import { Plus, Receipt, Search, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import Drawer from '../components/Drawer.jsx';
-import Combobox from '../components/Combobox.jsx';
 import MonthOverview from '../components/expenses/MonthOverview.jsx';
+import CategoryBreakdown from '../components/expenses/CategoryBreakdown.jsx';
+import { CategoryIcon } from '../components/expenses/categoryIcons.jsx';
 import ExpenseForm from '../components/expenses/ExpenseForm.jsx';
 import { ExpensesSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -21,10 +22,11 @@ import {
   deleteExpense,
   listExpenseCategories,
   createExpenseCategory,
+  updateExpenseCategory,
   deleteExpenseCategory,
 } from '../services/expenseService.js';
 import { listLoans } from '../services/loanService.js';
-import { analyze, convertAmount, dayKey, shiftDay, shiftMonth, sumExpenses } from '../utils/expenseMath.js';
+import { analyze, breakdown, convertAmount, dayKey, shiftDay, shiftMonth, sumExpenses } from '../utils/expenseMath.js';
 import { keyFor, customFor, todayLocal } from '../components/loans/loanOptions.js';
 
 const REMEMBER_KEY = 'vaultrix.lastExpense';
@@ -68,6 +70,7 @@ function ExpensesPage() {
   const [panel, setPanel] = useState(null);
   const [busy, setBusy] = useState(false);
   const requestId = useRef(0);
+  const listRef = useRef(null);
 
   const load = useCallback(
     async (target, first = false) => {
@@ -108,7 +111,16 @@ function ExpensesPage() {
   }, []);
 
   const names = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
+  const byId = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   const nameOf = (id) => (id && names.get(id)) || t('expenses.uncategorized');
+  const rows = useMemo(
+    () =>
+      breakdown(expenses, rates, currency).map((row) => {
+        const category = row.key === 'none' ? null : byId.get(row.key) || null;
+        return { ...row, id: row.key === 'none' ? '' : row.key, category, name: category ? category.name : t('expenses.uncategorized') };
+      }),
+    [expenses, rates, currency, byId]
+  );
 
   const others = useMemo(() => sumExpenses(expenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total, [expenses, rates, currency]);
 
@@ -217,15 +229,31 @@ function ExpensesPage() {
     }
   };
 
-  const addCategory = async (name) => {
+  const addCategory = async (name, icon = '') => {
     try {
-      const { category } = await createExpenseCategory(name);
+      const { category } = await createExpenseCategory(name, icon);
       setCategories((prev) => [...prev, category].sort((a, b) => a.name.localeCompare(b.name)));
       return category;
     } catch (error) {
       notify.error(tServer(error), { title: t('expenses.categoryFailedTitle') });
       return null;
     }
+  };
+
+  const updateCategory = async (id, patch) => {
+    try {
+      const { category } = await updateExpenseCategory(id, patch);
+      setCategories((prev) => prev.map((item) => (item.id === id ? category : item)).sort((a, b) => a.name.localeCompare(b.name)));
+      return category;
+    } catch (error) {
+      notify.error(tServer(error), { title: t('expenses.categoryFailedTitle') });
+      return null;
+    }
+  };
+
+  const pickCategory = (id) => {
+    setCategoryFilter(id);
+    if (id) setTimeout(() => listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
   const removeCategory = async (category) => {
@@ -241,21 +269,8 @@ function ExpensesPage() {
   const money = (value, decimals = 0) => formatMoney(value, { decimals, currency });
   const hasMonth = expenses.length > 0;
   const rangeLabels = { all: t('expenses.filterAll'), today: t('expenses.filterToday'), week: t('expenses.filterWeek') };
-  const categoryItems = [{ value: '', label: t('expenses.allCategories') }, ...categories.map((category) => ({ value: category.id, label: category.name }))];
   const change = stats.change;
   const todayDay = month === nowMonth ? Number(todayKey.slice(8, 10)) : null;
-
-  const insights = [
-    { key: 'top', label: t('expenses.insightTop'), value: stats.top ? nameOf(stats.top.key === 'none' ? null : stats.top.key) : '-', sub: stats.top ? money(stats.top.value) : '' },
-    { key: 'avg', label: t('expenses.insightAvg'), value: money(stats.perDay), sub: '' },
-    {
-      key: 'big',
-      label: t('expenses.insightBiggest'),
-      value: stats.biggest ? money(stats.biggest.value) : '-',
-      sub: stats.biggest ? stats.biggest.expense.note || nameOf(stats.biggest.expense.categoryId) : '',
-    },
-    { key: 'vs', label: t('expenses.insightVs'), value: change === null ? '-' : `${change > 0 ? '+' : ''}${Math.round(change)}%`, sub: '' },
-  ];
 
   return (
     <AppShell showLogo pageTitle={t('expenses.title')} items={items} activeId={activeId}>
@@ -282,6 +297,10 @@ function ExpensesPage() {
               days={stats.days}
               todayDay={todayDay}
               currency={currency}
+              perDay={stats.perDay}
+              change={change}
+              biggest={stats.biggest}
+              count={expenses.length}
               busy={refreshing}
               canNext={month < nowMonth}
               onPrev={() => setMonth(shiftMonth(month, -1))}
@@ -301,16 +320,9 @@ function ExpensesPage() {
               </div>
             ) : (
               <>
-                <div className={`grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4 ${refreshing ? 'opacity-50' : ''}`}>
-                  {insights.map((item) => (
-                    <div key={item.key} className="min-w-0 rounded-2xl border border-border bg-white px-4 py-3.5">
-                      <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{item.label}</p>
-                      <p className="mt-2 truncate text-base font-bold tabular-nums tracking-tight text-ink sm:text-lg">{item.value}</p>
-                      <p className="mt-0.5 h-4 truncate text-xs tabular-nums text-muted">{item.sub}</p>
-                    </div>
-                  ))}
-                </div>
+                {rows.length > 0 && <CategoryBreakdown rows={rows} activeKey={categoryFilter} onPick={pickCategory} money={(value) => money(value)} />}
 
+                <div ref={listRef} className="scroll-mt-20" />
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div role="group" aria-label={t('expenses.title')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
                     {['all', 'today', 'week'].map((name) => (
@@ -328,9 +340,6 @@ function ExpensesPage() {
                     ))}
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <div className="sm:w-48">
-                      <Combobox items={categoryItems} ariaLabel={t('expenses.categoryLabel')} placeholder={t('expenses.allCategories')} value={categoryFilter} onChange={setCategoryFilter} />
-                    </div>
                     <label className="relative block sm:w-52">
                       <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                       <input
@@ -344,6 +353,20 @@ function ExpensesPage() {
                     </label>
                   </div>
                 </div>
+
+                {categoryFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setCategoryFilter('')}
+                    className="-mt-1 flex w-fit max-w-full items-center gap-2 rounded-full bg-ink py-1.5 pe-2 ps-3 text-sm font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  >
+                    <CategoryIcon category={byId.get(categoryFilter)} className="h-4 w-4" />
+                    <span className="truncate">{nameOf(categoryFilter)}</span>
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+                      <X className="h-3 w-3" strokeWidth={3} />
+                    </span>
+                  </button>
+                )}
 
                 {groups.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center text-sm text-muted">{t('expenses.noMatches')}</div>
@@ -363,6 +386,9 @@ function ExpensesPage() {
                                 onClick={() => setPanel({ mode: 'edit', expense })}
                                 className="flex w-full items-center gap-3 px-5 py-3.5 text-start outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60"
                               >
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink">
+                                  <CategoryIcon category={byId.get(expense.categoryId)} name={nameOf(expense.categoryId)} />
+                                </span>
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
@@ -428,6 +454,7 @@ function ExpensesPage() {
             }}
             onDelete={handleDelete}
             onAddCategory={addCategory}
+            onUpdateCategory={updateCategory}
             onRemoveCategory={removeCategory}
           />
         )}

@@ -7,20 +7,18 @@ import Combobox from '../Combobox.jsx';
 import FieldError from '../FieldError.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
+import CategoryPicker from './CategoryPicker.jsx';
 import { splitKey, isOtherKey, todayLocal } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { initialsFromName } from '../../utils/avatar.js';
 import { dateOptions } from '../../utils/dates.js';
 
-function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onRemoveCategory, onCancel, busy }) {
+function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onUpdateCategory, onRemoveCategory, onCancel, busy }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
-  const [adding, setAdding] = useState(false);
-  const [managing, setManaging] = useState(false);
-  const [newName, setNewName] = useState('');
   const [confirming, setConfirming] = useState(false);
 
   const payerItems = useMemo(
@@ -71,22 +69,6 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
     });
   };
 
-  const addCategory = async () => {
-    const name = newName.trim();
-    if (!name) return;
-    const created = await onAddCategory(name);
-    if (created) {
-      set('categoryId')(created.id);
-      setNewName('');
-      setAdding(false);
-    }
-  };
-
-  const chip = (active) =>
-    `flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
-      active ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'
-    }`;
-
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-6 rounded-2xl border border-border bg-white p-4 sm:p-6">
       <div className="flex flex-col gap-2">
@@ -113,81 +95,17 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
         <FieldError>{errors.amount || errors.currency}</FieldError>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-ink">{t('expenses.categoryLabel')}</p>
-          {categories.length > 0 && (
-            <button type="button" onClick={() => setManaging((prev) => !prev)} className="text-xs font-medium text-muted underline-offset-4 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-accent/40">
-              {managing ? t('expenses.doneEditing') : t('expenses.editCategories')}
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <span key={category.id} className="flex">
-              <button
-                type="button"
-                onClick={() => (managing ? undefined : set('categoryId')(form.categoryId === category.id ? '' : category.id))}
-                aria-pressed={form.categoryId === category.id}
-                className={chip(form.categoryId === category.id)}
-              >
-                {category.name}
-                {managing && (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t('expenses.removeCategory', { name: category.name })}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onRemoveCategory(category);
-                      if (form.categoryId === category.id) set('categoryId')('');
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onRemoveCategory(category);
-                        if (form.categoryId === category.id) set('categoryId')('');
-                      }
-                    }}
-                    className="-me-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-xs leading-none"
-                  >
-                    x
-                  </span>
-                )}
-              </button>
-            </span>
-          ))}
-          {!adding && (
-            <button type="button" onClick={() => setAdding(true)} className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3.5 py-2 text-sm font-medium text-muted outline-none transition hover:border-ink/40 hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40">
-              + {t('expenses.newCategory')}
-            </button>
-          )}
-        </div>
-        {adding && (
-          <div className="flex items-center gap-2">
-            <input
-              autoFocus
-              value={newName}
-              maxLength={40}
-              onChange={(event) => setNewName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addCategory();
-                }
-              }}
-              placeholder={t('expenses.categoryPlaceholder')}
-              className="min-w-0 flex-1 rounded-lg border border-border px-3.5 py-2.5 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
-            />
-            <button type="button" onClick={addCategory} className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
-              {t('expenses.addCategory')}
-            </button>
-            <button type="button" onClick={() => { setAdding(false); setNewName(''); }} className="rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink">
-              {t('common.cancel')}
-            </button>
-          </div>
-        )}
-      </div>
+      <CategoryPicker
+        categories={categories}
+        value={form.categoryId}
+        onChange={set('categoryId')}
+        onAdd={onAddCategory}
+        onUpdate={onUpdateCategory}
+        onRemove={(category) => {
+          if (form.categoryId === category.id) set('categoryId')('');
+          return onRemoveCategory(category);
+        }}
+      />
 
       <div className="flex flex-col gap-3">
         <div className="flex min-w-0 flex-col gap-1.5">

@@ -76,3 +76,21 @@ export const analyze = (expenses, previous, month, todayKey, rates, baseCurrency
     change: prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : null,
   };
 };
+
+export const breakdown = (expenses, rates, baseCurrency) => {
+  const map = new Map();
+  let total = 0;
+  expenses.forEach((expense) => {
+    const value = convertAmount(expense, rates, baseCurrency);
+    if (value === null) return;
+    const key = expense.categoryId || 'none';
+    const row = map.get(key) || { key, value: 0, count: 0 };
+    row.value += value;
+    row.count += 1;
+    total += value;
+    map.set(key, row);
+  });
+  return [...map.values()]
+    .sort((a, b) => b.value - a.value)
+    .map((row) => ({ ...row, share: total > 0 ? row.value / total : 0 }));
+};
