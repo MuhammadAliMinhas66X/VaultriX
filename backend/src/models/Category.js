@@ -11,6 +11,7 @@ const categorySchema = new mongoose.Schema(
     name: { type: String, required: true },
     type: { type: String, enum: CATEGORY_TYPES, required: true },
     color: { type: String, default: '#111114' },
+    icon: { type: String, default: '' },
     isArchived: { type: Boolean, default: false },
     isDefault: { type: Boolean, default: false }, // seeded, not user-created - still editable/archivable
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

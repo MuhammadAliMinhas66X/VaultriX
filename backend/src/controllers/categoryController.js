@@ -1,5 +1,6 @@
 import Category, { CATEGORY_TYPE_VALUES } from '../models/Category.js';
 import { cleanLabel, isHexColor } from '../utils/validators.js';
+import { isCategoryIcon } from '../utils/categoryIcons.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
@@ -11,6 +12,7 @@ const toCategoryDto = (category) => ({
   name: category.name,
   type: category.type,
   color: category.color,
+  icon: category.icon || '',
   isArchived: category.isArchived,
   isDefault: category.isDefault,
 });
@@ -21,18 +23,18 @@ const toCategoryDto = (category) => ({
 // seeds this starter set. They're ordinary categories after that (editable,
 // archivable, not protected) - isDefault just marks where they came from.
 const DEFAULT_CATEGORIES = [
-  { name: 'Salary', type: 'income', color: '#16a34a' },
-  { name: 'Freelance', type: 'income', color: '#0d9488' },
-  { name: 'Gifts received', type: 'income', color: '#65a30d' },
-  { name: 'Other income', type: 'income', color: '#4d7c0f' },
-  { name: 'Food & Dining', type: 'expense', color: '#dc2626' },
-  { name: 'Transport', type: 'expense', color: '#ea580c' },
-  { name: 'Housing', type: 'expense', color: '#b45309' },
-  { name: 'Utilities', type: 'expense', color: '#0891b2' },
-  { name: 'Entertainment', type: 'expense', color: '#7c3aed' },
-  { name: 'Shopping', type: 'expense', color: '#db2777' },
-  { name: 'Health', type: 'expense', color: '#059669' },
-  { name: 'Other expense', type: 'expense', color: '#6b7280' },
+  { name: 'Salary', icon: 'work', type: 'income', color: '#16a34a' },
+  { name: 'Freelance', icon: 'work', type: 'income', color: '#0d9488' },
+  { name: 'Gifts received', icon: 'gifts', type: 'income', color: '#65a30d' },
+  { name: 'Other income', icon: 'savings', type: 'income', color: '#4d7c0f' },
+  { name: 'Food & Dining', icon: 'food', type: 'expense', color: '#dc2626' },
+  { name: 'Transport', icon: 'transport', type: 'expense', color: '#ea580c' },
+  { name: 'Housing', icon: 'home', type: 'expense', color: '#b45309' },
+  { name: 'Utilities', icon: 'bills', type: 'expense', color: '#0891b2' },
+  { name: 'Entertainment', icon: 'entertainment', type: 'expense', color: '#7c3aed' },
+  { name: 'Shopping', icon: 'shopping', type: 'expense', color: '#db2777' },
+  { name: 'Health', icon: 'health', type: 'expense', color: '#059669' },
+  { name: 'Other expense', icon: 'other', type: 'expense', color: '#6b7280' },
 ];
 
 export const listCategories = async (req, res, next) => {
@@ -58,19 +60,21 @@ export const listCategories = async (req, res, next) => {
 
 export const createCategory = async (req, res, next) => {
   try {
-    const { name, type, color } = req.body || {};
+    const { name, type, color, icon } = req.body || {};
 
     const cleanedName = cleanLabel(name);
     if (!cleanedName) return fail(res, 400, GENERIC_INVALID);
     if (!CATEGORY_TYPE_VALUES.includes(type)) return fail(res, 400, GENERIC_INVALID);
 
     const resolvedColor = isHexColor(color) ? color : '#111114';
+    if (icon !== undefined && icon !== '' && !isCategoryIcon(icon)) return fail(res, 400, GENERIC_INVALID);
 
     const category = await Category.create({
       orgId: req.user.orgId,
       name: cleanedName,
       type,
       color: resolvedColor,
+      icon: icon || '',
       createdBy: req.user.id,
     });
 
@@ -85,7 +89,7 @@ export const updateCategory = async (req, res, next) => {
     const category = await Category.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!category) return fail(res, 404, NOT_FOUND);
 
-    const { name, type, color, isArchived } = req.body || {};
+    const { name, type, color, icon, isArchived } = req.body || {};
     const update = {};
 
     if (name !== undefined) {
@@ -100,6 +104,10 @@ export const updateCategory = async (req, res, next) => {
     if (color !== undefined) {
       if (!isHexColor(color)) return fail(res, 400, GENERIC_INVALID);
       update.color = color;
+    }
+    if (icon !== undefined) {
+      if (icon !== '' && !isCategoryIcon(icon)) return fail(res, 400, GENERIC_INVALID);
+      update.icon = icon;
     }
     if (isArchived !== undefined) {
       update.isArchived = Boolean(isArchived);
