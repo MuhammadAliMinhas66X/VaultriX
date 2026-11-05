@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, Plus, StickyNote } from 'lucide-react';
 import Button from '../Button.jsx';
 import FormField from '../FormField.jsx';
 import Combobox from '../Combobox.jsx';
@@ -6,15 +7,17 @@ import FieldError from '../FieldError.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import BrandMark from '../BrandMark.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
-import CategoryPicker from '../expenses/CategoryPicker.jsx';
+import NewCategorySheet from './NewCategorySheet.jsx';
+import { CategoryIcon } from '../expenses/categoryIcons.jsx';
 import { FREQUENCY_KEY } from './BillStatus.jsx';
 import { splitKey, isOtherKey, keyFor, customFor } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
-import { BILLERS, BILLER_GROUPS, billerById } from '../../utils/billers.js';
+import { BILLERS, billerById } from '../../utils/billers.js';
 import { FREQUENCIES } from '../../utils/billMath.js';
-import { shiftDay } from '../../utils/expenseMath.js';
-import { dateOptions } from '../../utils/dates.js';
+import { addPeriods, addDaysKey, toDate } from '../../utils/billDates.js';
+import { readBillerPrefs } from '../../utils/billPrefs.js';
+import { todayInput, dateOptions } from '../../utils/dates.js';
 
 const GROUP_KEY = {
   electricity: 'bills.groupElectricity',
@@ -25,19 +28,30 @@ const GROUP_KEY = {
   other: 'bills.groupOther',
 };
 
+const DESC_KEY = {
+  none: 'bills.descNone',
+  daily: 'bills.descDaily',
+  weekly: 'bills.descWeekly',
+  monthly: 'bills.descMonthly',
+  quarterly: 'bills.descQuarterly',
+  yearly: 'bills.descYearly',
+};
+
+const QUICK_DAYS = [0, 7, 15, 30];
+const NOTE_MAX = 200;
 const OTHER = '__other__';
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 
 export const emptyBillForm = (currency, last = {}, categories = []) => ({
   billerKey: '',
   billerName: '',
-  categoryId: categories.some((category) => category.id === last.categoryId) ? last.categoryId : '',
+  categoryId: '',
   amount: '',
   currency: last.currency || currency,
   dueAt: '',
   periodStart: '',
   periodEnd: '',
-  frequency: 'none',
+  frequency: FREQUENCIES.includes(last.frequency) ? last.frequency : 'none',
   nextBill: '',
   installation: '',
   payKey: last.payKey || '',
@@ -68,15 +82,46 @@ export const formFromBill = (bill) => {
   };
 };
 
-function BillForm({ initial, mode, bill, categories, currencies, onSubmit, onCancel, busy, onAddCategory, onUpdateCategory, onRemoveCategory }) {
+function Section({ title, children }) {
+  return (
+    <section className="flex min-w-0 flex-col gap-4">
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function Label({ children, optional }) {
+  const { t } = useTranslation();
+  return (
+    <span className="text-sm font-medium text-ink">
+      {children}
+      {optional && <span className="font-normal text-muted"> ({t('loans.optional')})</span>}
+    </span>
+  );
+}
+
+function BillForm({ initial, mode, bill, categories, currencies, preferredCurrencies = [], onSubmit, onCancel, busy, onAddCategory }) {
   const { t } = useTranslation();
   const { formatDate } = useFormat();
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
+  const [moreOpen, setMoreOpen] = useState(() => mode === 'edit' && Boolean(initial.periodStart || initial.installation || initial.account || initial.nextBill));
+  const [sheet, setSheet] = useState(null);
+  const [filledFrom, setFilledFrom] = useState('');
+  const touched = useRef(new Set());
+  const rootRef = useRef(null);
+  const again = useRef(false);
 
   const locked = mode === 'edit' && bill.payments.length > 0;
   const lockRepeat = mode === 'edit' && bill.frequency !== 'none' && !bill.isHead;
   const allowInstallation = mode === 'add' || bill.sequence === 1;
+  const recurring = form.frequency !== 'none';
+  const today = todayInput();
+
+  useEffect(() => {
+    if (mode === 'add') rootRef.current?.scrollIntoView({ block: 'start' });
+  }, [mode]);
 
   const billerItems = useMemo(
     () => [
@@ -86,13 +131,56 @@ function BillForm({ initial, mode, bill, categories, currencies, onSubmit, onCan
     [t]
   );
 
+  const categoryItems = useMemo(
+    () => categories.map((category) => ({ value: category.id, label: category.name, icon: <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-ink"><CategoryIcon category={category} className="h-4 w-4" /></span> })),
+    [categories]
+  );
+
+  const currencyItems = useMemo(() => {
+    const mine = new Set([...preferredCurrencies, form.currency].filter(Boolean));
+    const first = currencies.filter((item) => mine.has(item.value)).map((item) => ({ ...item, group: t('bills.yourCurrencies') }));
+    const rest = currencies.filter((item) => !mine.has(item.value)).map((item) => ({ ...item, group: first.length ? t('bills.otherCurrencies') : undefined }));
+    return [...first, ...rest];
+  }, [currencies, preferredCurrencies, form.currency, t]);
+
+  const frequencyItems = useMemo(
+    () => FREQUENCIES.map((value) => ({ value, label: t(FREQUENCY_KEY[value]), sub: t(DESC_KEY[value]) })),
+    [t]
+  );
+
   const set = (key) => (value) => {
+    touched.current.add(key);
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
   };
 
-  const calculated = form.dueAt || form.periodEnd ? shiftDay(form.periodEnd || form.dueAt, 1) : '';
-  const recurring = form.frequency !== 'none';
+  const pickBiller = (key) => {
+    setErrors((prev) => ({ ...prev, biller: '' }));
+    setForm((prev) => {
+      const next = { ...prev, billerKey: key };
+      if (mode !== 'add') return next;
+      const known = billerById(key);
+      const prefs = known ? readBillerPrefs(known.id) : null;
+      if (!prefs) return next;
+      const keep = (field) => touched.current.has(field);
+      if (!keep('categoryId') && categories.some((category) => category.id === prefs.categoryId)) next.categoryId = prefs.categoryId;
+      if (!keep('amount') && prefs.amount) next.amount = String(prefs.amount);
+      if (!keep('currency') && prefs.currency) next.currency = prefs.currency;
+      if (!keep('account') && prefs.account) next.account = prefs.account;
+      if (!keep('frequency') && FREQUENCIES.includes(prefs.frequency)) next.frequency = prefs.frequency;
+      if (!keep('payKey') && prefs.payKey) {
+        next.payKey = prefs.payKey;
+        next.payCustom = prefs.payCustom || '';
+      }
+      return next;
+    });
+    const known = billerById(key);
+    setFilledFrom(mode === 'add' && known && readBillerPrefs(known.id) ? known.name : '');
+  };
+
+  const nextDue = recurring && form.dueAt ? addPeriods(form.dueAt, form.frequency, 1) : '';
+  const calculated = form.dueAt || form.periodEnd ? addDaysKey(form.periodEnd || form.dueAt, 1) : '';
+  const fmt = (key) => (key ? formatDate(toDate(key), { ...dateOptions, timeZone: 'UTC' }) : '');
 
   const submit = (event) => {
     event.preventDefault();
@@ -108,7 +196,10 @@ function BillForm({ initial, mode, bill, categories, currencies, onSubmit, onCan
     if (recurring && form.nextBill && form.nextBill < '2000-01-01') found.nextBill = t('bills.errDate');
     if (isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
     setErrors(found);
-    if (Object.keys(found).length) return;
+    if (Object.keys(found).length) {
+      if (found.period || found.installation || found.nextBill) setMoreOpen(true);
+      return;
+    }
     const where = splitKey(form.payKey, form.payCustom);
     const payload = {
       billerName,
@@ -129,137 +220,177 @@ function BillForm({ initial, mode, bill, categories, currencies, onSubmit, onCan
       payload.frequency = form.frequency;
       if (recurring) payload.nextBillAt = form.nextBill || calculated;
     }
-    onSubmit(payload, { payKey: form.payKey, payCustom: form.payCustom });
+    const wantsAnother = again.current;
+    again.current = false;
+    onSubmit(payload, { ...form, billerId: known ? known.id : '' }, wantsAnother);
   };
 
+  const missingBiller = !form.billerKey && errors.biller;
+
   return (
-    <form onSubmit={submit} noValidate className="flex min-w-0 flex-col gap-6 rounded-2xl border border-border bg-white p-4 sm:p-6">
-      <div className="flex min-w-0 flex-col gap-3">
+    <form ref={rootRef} onSubmit={submit} noValidate className="flex min-w-0 flex-col gap-7 rounded-2xl border border-border bg-white p-4 sm:p-6">
+      <Section title={t('bills.sectionBill')}>
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <Label>{t('bills.billerLabel')}</Label>
+            <Combobox items={billerItems} ariaLabel={t('bills.billerLabel')} placeholder={t('bills.billerPlaceholder')} searchPlaceholder={t('common.search')} value={form.billerKey} onChange={pickBiller} error={missingBiller ? errors.biller : undefined} />
+            {filledFrom && <p className="text-xs text-muted">{t('bills.autofilled', { name: filledFrom })}</p>}
+          </div>
+          {form.billerKey === OTHER && (
+            <FormField label={t('bills.billerNameLabel')} value={form.billerName} maxLength={60} onChange={(event) => set('billerName')(event.target.value)} placeholder={t('bills.billerNamePlaceholder')} error={errors.biller} />
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="bill-amount" className="text-sm font-medium text-ink">{t('bills.amountLabel')}</label>
+          <div className="flex items-end gap-3">
+            <input
+              id="bill-amount"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={form.amount}
+              onChange={(event) => set('amount')(event.target.value)}
+              placeholder="0"
+              className="min-w-0 flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none border-b-2 border-border bg-transparent pb-2 text-[2.25rem] font-bold leading-none tracking-tight tabular-nums text-ink outline-none transition placeholder:text-border focus:border-ink"
+            />
+            <div className="w-36 shrink-0">
+              <Combobox items={currencyItems} ariaLabel={t('income.currencyLabel')} placeholder={t('income.currencyPlaceholder')} searchPlaceholder={t('common.search')} value={form.currency} onChange={locked ? () => null : set('currency')} />
+            </div>
+          </div>
+          <FieldError>{errors.amount || errors.currency}</FieldError>
+        </div>
+
         <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">{t('bills.billerLabel')}</span>
-          <Combobox items={billerItems} ariaLabel={t('bills.billerLabel')} placeholder={t('bills.billerPlaceholder')} searchPlaceholder={t('common.search')} value={form.billerKey} onChange={set('billerKey')} error={form.billerKey ? undefined : errors.biller} />
-        </div>
-        {form.billerKey === OTHER && (
-          <FormField label={t('bills.billerNameLabel')} value={form.billerName} maxLength={60} onChange={(event) => set('billerName')(event.target.value)} placeholder={t('bills.billerNamePlaceholder')} error={errors.biller} />
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="bill-amount" className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-          {t('bills.amountLabel')}
-        </label>
-        <div className="flex items-center gap-3">
-          <input
-            id="bill-amount"
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            autoFocus={mode === 'add'}
-            value={form.amount}
-            onChange={(event) => set('amount')(event.target.value)}
-            placeholder="0"
-            className="min-w-0 flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none border-b-2 border-border bg-transparent pb-2 text-[2.25rem] font-bold leading-none tracking-tight tabular-nums text-ink outline-none transition placeholder:text-border focus:border-ink"
+          <Label optional>{t('bills.categoryLabel')}</Label>
+          <Combobox
+            items={categoryItems}
+            ariaLabel={t('bills.categoryLabel')}
+            placeholder={t('bills.categoryPlaceholder')}
+            searchPlaceholder={t('bills.categorySearch')}
+            value={form.categoryId}
+            onChange={set('categoryId')}
+            footer={{
+              icon: <Plus className="h-4 w-4" strokeWidth={2.5} />,
+              label: t('bills.newCategory'),
+              labelWithQuery: (name) => t('bills.newCategoryNamed', { name }),
+              onClick: (name) => setSheet({ name }),
+            }}
           />
-          <div className="w-36 shrink-0">
-            <Combobox items={currencies} ariaLabel={t('income.currencyLabel')} placeholder={t('income.currencyPlaceholder')} value={form.currency} onChange={locked ? () => null : set('currency')} />
+        </div>
+      </Section>
+
+      <Section title={t('bills.sectionWhen')}>
+        <div className="flex min-w-0 flex-col gap-2.5">
+          <FormField label={t('bills.dueDateLabel')} type="date" value={form.dueAt} onChange={(event) => set('dueAt')(event.target.value)} error={errors.dueAt} />
+          <div className="flex flex-wrap gap-2">
+            {QUICK_DAYS.map((days) => {
+              const key = addDaysKey(today, days);
+              return (
+                <button
+                  key={days}
+                  type="button"
+                  aria-pressed={form.dueAt === key}
+                  onClick={() => set('dueAt')(key)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${form.dueAt === key ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'}`}
+                >
+                  {days === 0 ? t('bills.quickToday') : t('bills.quickDays', { count: days })}
+                </button>
+              );
+            })}
           </div>
         </div>
-        <FieldError>{errors.amount || errors.currency}</FieldError>
-      </div>
 
-      <CategoryPicker
-        categories={categories}
-        value={form.categoryId}
-        onChange={set('categoryId')}
-        onAdd={onAddCategory}
-        onUpdate={onUpdateCategory}
-        onRemove={(category) => {
-          if (form.categoryId === category.id) set('categoryId')('');
-          return onRemoveCategory(category);
-        }}
-      />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label={t('bills.dueDateLabel')} type="date" value={form.dueAt} onChange={(event) => set('dueAt')(event.target.value)} error={errors.dueAt} />
-        {allowInstallation && (
-          <FormField
-            label={<span>{t('bills.installationLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></span>}
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={form.installation}
-            onChange={(event) => set('installation')(event.target.value)}
-            placeholder="0"
-            error={errors.installation}
-          />
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-ink">{t('bills.periodLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></span>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodStart')}</span>} type="date" value={form.periodStart} onChange={(event) => set('periodStart')(event.target.value)} />
-          <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodEnd')}</span>} type="date" value={form.periodEnd} onChange={(event) => set('periodEnd')(event.target.value)} />
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label>{t('bills.repeatLabel')}</Label>
+          {lockRepeat ? (
+            <p className="text-sm text-muted">{t(FREQUENCY_KEY[form.frequency])} · {t('bills.repeatLockedNote')}</p>
+          ) : (
+            <Combobox items={frequencyItems} searchable={false} ariaLabel={t('bills.repeatLabel')} value={form.frequency} onChange={set('frequency')} />
+          )}
+          {recurring && nextDue && !lockRepeat && (
+            <p className="rounded-xl bg-surface px-3.5 py-3 text-[13px] leading-snug text-muted">
+              {t('bills.nextDueLine', { due: fmt(nextDue), date: fmt(form.nextBill || calculated) })}
+            </p>
+          )}
         </div>
-        <FieldError>{errors.period}</FieldError>
-      </div>
+      </Section>
 
-      <div className="flex min-w-0 flex-col gap-3">
-        <span className="text-sm font-medium text-ink">{t('bills.repeatLabel')}</span>
-        {lockRepeat ? (
-          <p className="text-sm text-muted">{t(FREQUENCY_KEY[form.frequency])} · {t('bills.repeatLockedNote')}</p>
-        ) : (
-          <div role="group" aria-label={t('bills.repeatLabel')} className="flex flex-wrap gap-2">
-            {FREQUENCIES.map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={form.frequency === value}
-                onClick={() => set('frequency')(value)}
-                className={`rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                  form.frequency === value ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'
-                }`}
-              >
-                {t(FREQUENCY_KEY[value])}
-              </button>
-            ))}
+      <Section title={t('bills.sectionPay')}>
+        <WherePicker
+          optional
+          label={<Label optional>{t('bills.sourceLabel')}</Label>}
+          value={form.payKey}
+          custom={form.payCustom}
+          onChange={set('payKey')}
+          onCustomChange={set('payCustom')}
+          customError={errors.payCustom}
+        />
+
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <Label optional>{t('bills.noteLabel')}</Label>
+          <div className="rounded-xl border border-border bg-white transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 hover:border-ink/30">
+            <div className="flex items-start gap-2.5 px-3.5 pt-3">
+              <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} />
+              <textarea
+                value={form.note}
+                rows={2}
+                maxLength={NOTE_MAX}
+                onChange={(event) => set('note')(event.target.value)}
+                placeholder={t('bills.notePlaceholder')}
+                aria-label={t('bills.noteLabel')}
+                className="min-h-[3rem] w-full resize-none bg-transparent text-base leading-snug text-ink outline-none placeholder:text-muted sm:text-sm"
+              />
+            </div>
+            <p className="px-3.5 pb-2 text-end text-[11px] tabular-nums text-muted">{form.note.length}/{NOTE_MAX}</p>
           </div>
-        )}
-        {recurring && !lockRepeat && (
-          <div className="flex flex-col gap-2 rounded-xl bg-surface px-4 py-3.5">
-            <FormField label={t('bills.nextBillLabel')} type="date" value={form.nextBill || calculated} onChange={(event) => set('nextBill')(event.target.value)} error={errors.nextBill} />
-            {calculated && (
-              <p className="text-xs text-muted">
-                {t('bills.nextBillHint', { date: formatDate(new Date(`${calculated}T00:00:00Z`), dateOptions) })}
+        </div>
+      </Section>
+
+      <div className="flex flex-col gap-4">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((prev) => !prev)}
+          aria-expanded={moreOpen}
+          className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3 text-start outline-none transition hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-ink">{moreOpen ? t('bills.lessOptions') : t('bills.moreOptions')}</span>
+            {!moreOpen && <span className="block truncate text-xs text-muted">{t('bills.moreOptionsHint')}</span>}
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition ${moreOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {moreOpen && (
+          <div className="flex min-w-0 flex-col gap-4">
+            <FormField label={<Label optional>{t('bills.accountLabel')}</Label>} value={form.account} maxLength={60} onChange={(event) => set('account')(event.target.value)} placeholder={t('bills.accountPlaceholder')} />
+            {allowInstallation && (
+              <FormField label={<Label optional>{t('bills.installationLabel')}</Label>} type="number" inputMode="decimal" step="0.01" min="0" value={form.installation} onChange={(event) => set('installation')(event.target.value)} placeholder="0" error={errors.installation} />
+            )}
+            <div className="flex flex-col gap-1.5">
+              <Label optional>{t('bills.periodLabel')}</Label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodStart')}</span>} type="date" value={form.periodStart} onChange={(event) => set('periodStart')(event.target.value)} />
+                <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodEnd')}</span>} type="date" value={form.periodEnd} onChange={(event) => set('periodEnd')(event.target.value)} />
+              </div>
+              <FieldError>{errors.period}</FieldError>
+            </div>
+            {recurring && !lockRepeat && (
+              <div className="flex flex-col gap-2">
+                <FormField label={<Label>{t('bills.nextBillLabel')}</Label>} type="date" value={form.nextBill || calculated} onChange={(event) => set('nextBill')(event.target.value)} error={errors.nextBill} />
                 {form.nextBill && form.nextBill !== calculated && (
-                  <button type="button" onClick={() => set('nextBill')('')} className="ms-2 font-semibold text-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent/40">
+                  <button type="button" onClick={() => set('nextBill')('')} className="self-start text-xs font-semibold text-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent/40">
                     {t('bills.useCalculated')}
                   </button>
                 )}
-              </p>
+              </div>
             )}
           </div>
         )}
       </div>
 
-      <WherePicker
-        optional
-        label={<span className="text-sm font-medium text-ink">{t('bills.sourceLabel')}</span>}
-        value={form.payKey}
-        custom={form.payCustom}
-        onChange={set('payKey')}
-        onCustomChange={set('payCustom')}
-        customError={errors.payCustom}
-      />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField label={<span>{t('bills.accountLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></span>} value={form.account} maxLength={60} onChange={(event) => set('account')(event.target.value)} placeholder={t('bills.accountPlaceholder')} />
-        <FormField label={<span>{t('bills.noteLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></span>} value={form.note} maxLength={200} onChange={(event) => set('note')(event.target.value)} />
-      </div>
-
-      <p className="-mt-3 text-xs text-muted">{t('loans.enteredOn', { date: formatDate(new Date(mode === 'edit' ? bill.createdAt : Date.now()), dateOptions) })}</p>
+      <p className="text-xs text-muted">{t('loans.enteredOn', { date: formatDate(new Date(mode === 'edit' ? bill.createdAt : Date.now()), dateOptions) })}</p>
 
       <ErrorSlot />
 
@@ -267,12 +398,36 @@ function BillForm({ initial, mode, bill, categories, currencies, onSubmit, onCan
         <button type="button" onClick={onCancel} className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink">
           {t('common.cancel')}
         </button>
+        {mode === 'add' && (
+          <button
+            type="submit"
+            disabled={busy}
+            onClick={() => {
+              again.current = true;
+            }}
+            className="rounded-lg border border-ink px-5 py-2.5 text-sm font-semibold text-ink outline-none transition hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50"
+          >
+            {t('bills.saveAnother')}
+          </button>
+        )}
         <div className="sm:w-44">
-          <Button type="submit" loading={busy} loadingLabel={t('common.saving')}>
+          <Button type="submit" loading={busy} loadingLabel={t('common.saving')} onClick={() => { again.current = false; }}>
             {t('bills.save')}
           </Button>
         </div>
       </div>
+
+      {sheet && (
+        <NewCategorySheet
+          initialName={sheet.name}
+          categories={categories}
+          onCreate={onAddCategory}
+          onClose={(created) => {
+            setSheet(null);
+            if (created && created.id) set('categoryId')(created.id);
+          }}
+        />
+      )}
     </form>
   );
 }

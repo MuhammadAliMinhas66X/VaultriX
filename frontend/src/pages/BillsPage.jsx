@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Receipt, Search } from 'lucide-react';
+import { Plus, Receipt, Repeat, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
@@ -21,24 +21,7 @@ import useExpenseCategories from '../hooks/useExpenseCategories.js';
 import { listBills, createBill, updateBill, deleteBill, addBillPayment, deleteBillPayment, setBillCancelled, changeBillRecurring } from '../services/billService.js';
 import { VIEWS, countByView, matchesView, sortBills, summarizeBills } from '../utils/billMath.js';
 import { todayInput } from '../utils/dates.js';
-
-const REMEMBER_KEY = 'vaultrix.lastBill';
-
-const readRemembered = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(REMEMBER_KEY)) || {};
-  } catch (error) {
-    return {};
-  }
-};
-
-const remember = (value) => {
-  try {
-    window.localStorage.setItem(REMEMBER_KEY, JSON.stringify(value));
-  } catch (error) {
-    return;
-  }
-};
+import { readLastPrefs, rememberBill } from '../utils/billPrefs.js';
 
 const VIEW_KEY = {
   all: 'bills.viewAll',
@@ -65,9 +48,9 @@ function BillsPage() {
   const { t, tServer } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const { currencies } = useLocalizedOptions();
-  const { rates } = useIncome();
+  const { rates, streams } = useIncome();
   const { items, activeId } = useAppNav();
-  const { categories, byId, nameOf, addCategory, updateCategory, removeCategory } = useExpenseCategories();
+  const { categories, byId, nameOf, addCategory } = useExpenseCategories();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -81,6 +64,7 @@ function BillsPage() {
   const [share, setShare] = useState(null);
   const [busy, setBusy] = useState(false);
   const [paymentBusy, setPaymentBusy] = useState(false);
+  const [addRound, setAddRound] = useState(0);
   const linkHandled = useRef(false);
 
   const load = useCallback(async () => {
@@ -133,6 +117,11 @@ function BillsPage() {
     [bills, selected]
   );
 
+  const preferredCurrencies = useMemo(
+    () => [...new Set([currency, ...streams.map((item) => item.currency), ...bills.map((bill) => bill.currency)].filter(Boolean))],
+    [currency, streams, bills]
+  );
+
   const money = (value) => formatMoney(value, { decimals: 0, currency });
   const categoryItems = useMemo(
     () => [{ value: '', label: t('bills.allCategories') }, ...categories.map((category) => ({ value: category.id, label: category.name }))],
@@ -142,14 +131,19 @@ function BillsPage() {
   const replaceBill = (bill) => setBills((prev) => (prev.some((item) => item.id === bill.id) ? prev.map((item) => (item.id === bill.id ? bill : item)) : [...prev, bill]));
   const closePanel = () => setPanel(null);
 
-  const handleCreate = async (payload, extra) => {
+  const handleCreate = async (payload, extra, another) => {
     setBusy(true);
     try {
       const { bill } = await createBill(payload);
-      remember({ categoryId: payload.categoryId || '', currency: payload.currency, payKey: extra.payKey, payCustom: extra.payCustom });
+      rememberBill(extra.billerId || '', extra);
       replaceBill(bill);
-      notify.success(t('bills.addedTitle'));
-      setPanel({ mode: 'detail', id: bill.id });
+      if (another) {
+        notify.success(t('bills.savedNext'), { title: t('bills.addedTitle') });
+        setAddRound((round) => round + 1);
+      } else {
+        notify.success(t('bills.addedTitle'));
+        setPanel({ mode: 'detail', id: bill.id });
+      }
     } catch (error) {
       notify.error(tServer(error), { title: t('bills.addFailedTitle') });
     } finally {
@@ -283,10 +277,32 @@ function BillsPage() {
               <Stat label={t('bills.statPaidMonth')} value={summary ? money(summary.paidMonthTotal) : '-'} sub={summary ? t('bills.statPaidCount', { count: summary.paidMonthCount }) : ''} />
             </div>
             {summary && summary.excluded > 0 && <p className="text-xs text-muted">{t('loans.excludedNote', { count: summary.excluded })}</p>}
-            <p className="-mt-1 text-xs text-muted">{t('bills.nextRecurringLine', { date: nextText })}</p>
+            {summary?.nextRecurring && (
+              <p className="-mt-1 flex items-center gap-2 text-xs text-muted">
+                <Repeat className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                {t('bills.nextRecurringLine', { date: nextText })}
+              </p>
+            )}
 
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div role="tablist" aria-label={t('bills.title')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:pb-0">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label className="relative block min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={t('bills.searchPlaceholder')}
+                    aria-label={t('bills.searchPlaceholder')}
+                    className="w-full rounded-xl border border-border bg-white py-3 pe-3.5 ps-10 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
+                  />
+                </label>
+                <div className="sm:w-56 sm:shrink-0">
+                  <Combobox items={categoryItems} ariaLabel={t('bills.categoryLabel')} placeholder={t('bills.allCategories')} searchPlaceholder={t('bills.categorySearch')} value={categoryFilter} onChange={setCategoryFilter} />
+                </div>
+              </div>
+
+              <div role="tablist" aria-label={t('bills.title')} className="-mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
                 {VIEWS.map((name) => (
                   <button
                     key={name}
@@ -294,7 +310,7 @@ function BillsPage() {
                     role="tab"
                     aria-selected={view === name}
                     onClick={() => setView(name)}
-                    className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                    className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
                       view === name ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'
                     }`}
                   >
@@ -303,28 +319,12 @@ function BillsPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="sm:w-48">
-                  <Combobox items={categoryItems} ariaLabel={t('bills.categoryLabel')} placeholder={t('bills.allCategories')} searchPlaceholder={t('common.search')} value={categoryFilter} onChange={setCategoryFilter} />
-                </div>
-                <label className="relative block sm:w-52">
-                  <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={t('bills.searchPlaceholder')}
-                    aria-label={t('bills.searchPlaceholder')}
-                    className="w-full rounded-lg border border-border bg-white py-2.5 pe-3.5 ps-9 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
-                  />
-                </label>
-              </div>
             </div>
 
             {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center text-sm text-muted">{t('bills.noMatches')}</div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
                 {filtered.map((bill) => (
                   <BillCard key={bill.id} bill={bill} today={today} category={byId.get(bill.categoryId)} categoryName={nameOf(bill.categoryId)} onSelect={() => setPanel({ mode: 'detail', id: bill.id })} />
                 ))}
@@ -355,17 +355,16 @@ function BillsPage() {
       <Drawer open={Boolean(panel) && (panel.mode === 'add' || Boolean(selected))} onClose={closePanel} title={drawerTitle} label={drawerTitle}>
         {panel?.mode === 'add' && (
           <BillForm
-            key="add"
+            key={`add-${addRound}`}
             mode="add"
-            initial={emptyBillForm(currency, readRemembered(), categories)}
+            initial={emptyBillForm(currency, readLastPrefs(), categories)}
+            preferredCurrencies={preferredCurrencies}
             categories={categories}
             currencies={currencies}
             busy={busy}
             onCancel={closePanel}
             onSubmit={handleCreate}
             onAddCategory={addCategory}
-            onUpdateCategory={updateCategory}
-            onRemoveCategory={removeCategory}
           />
         )}
         {panel?.mode === 'edit' && selected && (
@@ -380,8 +379,7 @@ function BillsPage() {
             onCancel={() => setPanel({ mode: 'detail', id: selected.id })}
             onSubmit={handleUpdate}
             onAddCategory={addCategory}
-            onUpdateCategory={updateCategory}
-            onRemoveCategory={removeCategory}
+            preferredCurrencies={preferredCurrencies}
           />
         )}
         {panel?.mode === 'detail' && selected && (
