@@ -27,7 +27,7 @@ const loadManifest = () => {
 const initialsOf = (name) =>
   String(name || '')
     .replace(/\(.*?\)/g, '')
-    .split(/\s+/)
+    .split(/[\s-]+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((word) => word[0].toUpperCase())
@@ -43,6 +43,11 @@ const sourcesFor = (brand, manifest) => {
   brand.domains.forEach((domain) => {
     list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
     list.push(`https://icons.duckduckgo.com/ip3/www.${domain}.ico`);
+  });
+  brand.domains.forEach((domain) => {
+    list.push(`https://${domain}/apple-touch-icon.png`);
+    list.push(`https://www.${domain}/apple-touch-icon.png`);
+    list.push(`https://${domain}/favicon.ico`);
   });
   return list;
 };
@@ -75,7 +80,8 @@ function BrandMark({ method, name, size = 'md' }) {
   const current = sources[attempt];
   const cap = natural > 0 && natural < SHARP_WIDTH ? natural : 0;
   const Fallback = FALLBACK_ICON[method] || Landmark;
-  const boxClass = `relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-white text-muted ${dim.box}`;
+  const tinted = !loaded && method === 'biller' && Boolean(brand?.color);
+  const boxClass = `relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border ${tinted ? 'border-transparent text-white' : 'border-border bg-white text-muted'} ${dim.box}`;
 
   const placeholder =
     method !== 'cash' && name ? (
@@ -85,7 +91,7 @@ function BrandMark({ method, name, size = 'md' }) {
     );
 
   return (
-    <span className={boxClass}>
+    <span className={boxClass} style={tinted ? { backgroundColor: brand.color } : undefined}>
       {!loaded && placeholder}
       {current && (
         <img
