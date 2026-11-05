@@ -19,6 +19,8 @@ function Combobox({
   searchPlaceholder,
   loading = false,
   error,
+  footer,
+  searchable = true,
   className = '',
   menuClassName = 'left-0 w-full',
 }) {
@@ -104,7 +106,7 @@ function Combobox({
   useEffect(() => {
     if (open) {
       const fine = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
-      if (fine) inputRef.current?.focus();
+      if (fine || !searchable) inputRef.current?.focus({ preventScroll: true });
       setHighlighted(0);
     }
   }, [open, query]);
@@ -191,7 +193,7 @@ function Combobox({
             }
             className="z-[80] flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-[0_18px_50px_-12px_rgba(0,0,0,0.35)]"
           >
-            <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2.5">
+            <div className={searchable ? 'flex shrink-0 items-center gap-2 border-b border-border px-3 py-2.5' : 'sr-only'}>
               <Search className="h-3.5 w-3.5 flex-shrink-0 text-muted" />
               <input
                 ref={inputRef}
@@ -224,13 +226,31 @@ function Combobox({
                       {item.icon}
                       {item.flag && <span className="text-base leading-none">{item.flag}</span>}
                       {item.symbol && <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>}
-                      <span className="truncate">{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.label}
+                        {item.sub && <span className="block truncate text-xs font-normal text-muted">{item.sub}</span>}
+                      </span>
                       {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}
                     </button>
                   </Fragment>
                 );
               })}
             </div>
+
+            {footer && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setQuery('');
+                  footer.onClick(query.trim());
+                }}
+                className="flex w-full shrink-0 items-center gap-2.5 border-t border-border bg-surface/70 px-3.5 py-3 text-start text-[15px] font-semibold text-ink outline-none transition hover:bg-surface focus-visible:bg-surface sm:py-2.5 sm:text-sm"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-white">{footer.icon}</span>
+                <span className="truncate">{query.trim() && footer.labelWithQuery ? footer.labelWithQuery(query.trim()) : footer.label}</span>
+              </button>
+            )}
           </div>,
           document.body
         )}
