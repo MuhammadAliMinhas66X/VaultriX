@@ -8,6 +8,7 @@ import Category, { CATEGORY_TYPE_VALUES } from '../../src/models/Category.js';
 import Account from '../../src/models/Account.js';
 import Expense from '../../src/models/Expense.js';
 import IncomeStream from '../../src/models/IncomeStream.js';
+import Bill from '../../src/models/Bill.js';
 
 const { default: app } = await import('../../src/app.js');
 
@@ -50,6 +51,18 @@ const cases = [
     make: (owner) => Expense.create({ orgId: owner.user.orgId, createdBy: owner.user._id, amountMinor: 5000, currency: 'PKR', spentAt: new Date(), note: 'Original' }),
     exists: async (id) => Boolean(await Expense.exists({ _id: id })),
     changed: async (id) => (await Expense.findById(id)).note !== 'Original',
+  },
+  {
+    name: 'bills',
+    path: '/api/bills',
+    patch: { billerName: 'Hacked' },
+    make: async (owner) => {
+      const bill = new Bill({ orgId: owner.user.orgId, createdBy: owner.user._id, billerName: 'Original', amountMinor: 100000, currency: 'PKR', dueAt: new Date() });
+      bill.seriesId = bill._id;
+      return bill.save();
+    },
+    exists: async (id) => Boolean(await Bill.exists({ _id: id })),
+    changed: async (id) => (await Bill.findById(id)).billerName !== 'Original',
   },
   {
     name: 'income streams',
