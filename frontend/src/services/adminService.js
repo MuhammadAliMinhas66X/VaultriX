@@ -55,27 +55,29 @@ export const reactivateAdminUser = async (id) => {
   }
 };
 
-export const deleteAdminUser = async (id) => {
+const stepUpHeaders = (password) => (password ? { headers: { 'x-confirm-password': password } } : {});
+
+export const deleteAdminUser = async (id, password) => {
   try {
-    const { data } = await api.delete(`/admin/users/${id}`);
+    const { data } = await api.delete(`/admin/users/${id}`, stepUpHeaders(password));
     return data;
   } catch (error) {
     throw toApiError(error);
   }
 };
 
-export const forceAdminPasswordReset = async (id) => {
+export const forceAdminPasswordReset = async (id, password) => {
   try {
-    const { data } = await api.post(`/admin/users/${id}/force-password-reset`);
+    const { data } = await api.post(`/admin/users/${id}/force-password-reset`, null, stepUpHeaders(password));
     return data;
   } catch (error) {
     throw toApiError(error);
   }
 };
 
-export const disableAdminUserMfa = async (id) => {
+export const disableAdminUserMfa = async (id, password) => {
   try {
-    const { data } = await api.post(`/admin/users/${id}/disable-mfa`);
+    const { data } = await api.post(`/admin/users/${id}/disable-mfa`, null, stepUpHeaders(password));
     return data;
   } catch (error) {
     throw toApiError(error);
@@ -121,9 +123,9 @@ export const unlockAdminUser = async (id) => {
 // Returns the raw CSV text, not JSON - the caller wraps it in a Blob and
 // triggers a browser download. responseType 'text' avoids axios trying
 // (and failing) to JSON.parse a CSV body.
-export const exportAdminUsersCsv = async ({ search = '', status = 'all' } = {}) => {
+export const exportAdminUsersCsv = async ({ search = '', status = 'all', password } = {}) => {
   try {
-    const { data } = await api.get('/admin/users/export', { params: { search, status }, responseType: 'text' });
+    const { data } = await api.get('/admin/users/export', { params: { search, status }, responseType: 'text', ...stepUpHeaders(password) });
     return data;
   } catch (error) {
     throw toApiError(error);

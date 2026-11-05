@@ -4,11 +4,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import rateLimit from 'express-rate-limit';
 import errorHandler from './middleware/errorHandler.js';
 import { sanitizeInput, noStore, allowedOrigins } from './middleware/security.js';
 import { attachDeviceId } from './middleware/deviceId.js';
 import authRoutes from './routes/authRoutes.js';
+import { apiLimiter } from './middleware/rateLimiters.js';
+import { originGuard } from './middleware/originGuard.js';
 import securityRoutes from './routes/securityRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -88,14 +89,7 @@ app.use(
   })
 );
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many attempts. Please wait a moment and try again.' },
-});
-
+app.use('/api', originGuard(origins));
 app.use('/api', apiLimiter, noStore);
 
 app.use('/api/auth', authRoutes);

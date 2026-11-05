@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Receipt, Search, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -54,6 +55,7 @@ function ExpensesPage() {
   const { currencies } = useLocalizedOptions();
   const { rates } = useIncome();
   const { items, activeId } = useAppNav();
+  const navigate = useNavigate();
 
   const todayKey = todayLocal();
   const nowMonth = todayKey.slice(0, 7);
@@ -383,7 +385,7 @@ function ExpensesPage() {
                             <li key={expense.id} className="border-b border-border last:border-b-0">
                               <button
                                 type="button"
-                                onClick={() => setPanel({ mode: 'edit', expense })}
+                                onClick={() => (expense.billId ? navigate(`/bills?bill=${expense.billId}`) : setPanel({ mode: 'edit', expense }))}
                                 className="flex w-full items-center gap-3 px-5 py-3.5 text-start outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60"
                               >
                                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink">
@@ -392,6 +394,7 @@ function ExpensesPage() {
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
+                                    {expense.billId && <span className="shrink-0 rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('bills.fromBill')}</span>}
                                     {expense.paidBy === 'other' && (
                                       <span className="max-w-[55%] shrink-0 truncate rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('expenses.paidByName', { name: expense.payerName })}</span>
                                     )}

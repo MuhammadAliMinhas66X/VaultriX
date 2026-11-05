@@ -36,9 +36,8 @@ export const emailChangeLimiter = build(15 * 60 * 1000, 20);
 export const accountDeleteLimiter = build(60 * 60 * 1000, 10);
 export const mfaLimiter = build(15 * 60 * 1000, 20);
 export const securityEventLimiter = build(5 * 60 * 1000, 40);
-// Generous - this gates the whole admin router, used by one trusted
-// operator account, not a per-action limit like the others above.
-export const adminLimiter = build(5 * 60 * 1000, 300);
+export const apiLimiter = build(15 * 60 * 1000, 1500, { skip: (req) => req.originalUrl.startsWith('/api/admin') });
+export const stepUpLimiter = build(15 * 60 * 1000, 10, { skipSuccessfulRequests: true });
 // Accounts/Categories writes - ordinary product usage (adding a few
 // accounts, editing one) shouldn't come close to this; it's here purely
 // to match the rest of the app's "every mutation is rate limited" posture.

@@ -16,10 +16,14 @@ const expenseSchema = new mongoose.Schema(
     paidBy: { type: String, enum: ['self', 'other'], default: 'self' },
     payerName: { type: String, default: '' },
     loanId: { type: mongoose.Schema.Types.ObjectId, ref: 'Loan', default: null },
+    billId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bill', default: null },
+    billPaymentId: { type: mongoose.Schema.Types.ObjectId, default: null },
   },
   { timestamps: true }
 );
 
 expenseSchema.index({ orgId: 1, spentAt: -1 });
+expenseSchema.index({ billPaymentId: 1 }, { unique: true, partialFilterExpression: { billPaymentId: { $type: 'objectId' } } });
+expenseSchema.index({ billId: 1 });
 
 export default mongoose.model('Expense', expenseSchema);

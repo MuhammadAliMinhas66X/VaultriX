@@ -20,7 +20,8 @@ import { validatePassword, cleanName, isNonEmptyString, NAME_MESSAGE } from '../
 import { securityLog } from '../utils/securityLog.js';
 import { checkCaptcha } from '../middleware/captcha.js';
 import { sendMail } from '../utils/mailer.js';
-import { signupOtpEmail, deviceLoginEmail, googleUnlinkedEmail } from '../utils/mailTemplates.js';
+import { signupOtpEmail, deviceLoginEmail, googleUnlinkedEmail, newDeviceSignedInEmail } from '../utils/mailTemplates.js';
+import { describeDevice } from '../utils/deviceLabel.js';
 import { decryptSecret } from '../utils/mfaCrypto.js';
 import { cooldownLockedUntilIso, googleLinkLockedUntilIso, googleLinkLockedUntil } from '../utils/cooldown.js';
 import { deviceAccountLimitReached } from '../utils/deviceLimit.js';
@@ -255,6 +256,11 @@ export const verifyDeviceLogin = async (req, res, next) => {
     const session = await createSession(req, user);
     const accessToken = signAccessToken(user, session._id);
     const refreshToken = signRefreshToken(user, session._id);
+
+    sendOtpInBackground(
+      newDeviceSignedInEmail({ name: user.name, device: describeDevice(req.get('user-agent')), time: new Date().toUTCString() }),
+      user.email
+    );
 
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.json({ success: true, accessToken, user: publicUser(user) });

@@ -105,3 +105,33 @@ export function ExpenseIcon({ className = '', strokeWidth = 1.75 }) {
     </svg>
   );
 }
+
+export function BillsIcon({ className = '', strokeWidth = 1.75 }) {
+  const id = useId().replace(/:/g, '');
+  return (
+    <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
+      <defs>
+        <mask id={`${id}-cut`} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+          <rect width="24" height="24" fill="white" />
+          <circle cx="17.6" cy="17.4" r="6.6" fill="black" />
+        </mask>
+        <mask id={`${id}-tick`} maskUnits="userSpaceOnUse" x="12" y="12" width="12" height="12">
+          <rect x="12" y="12" width="12" height="12" fill="white" />
+          <g className="ni-arrow" fill="none" stroke="black" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15.2 17.6l1.7 1.7 3.1-3.4" />
+          </g>
+        </mask>
+      </defs>
+      <g mask={`url(#${id}-cut)`}>
+        <g className="ni-note">
+          <path d="M5 2.5h9l4.5 4.5v13.5H5z" fill="currentColor" fillOpacity="0.1" />
+          <path d="M14 2.5V7h4.5" />
+          <path d="M8 11h7M8 14.5h4" strokeWidth={strokeWidth * 0.9} />
+        </g>
+      </g>
+      <g className="ni-badge">
+        <circle cx="17.6" cy="17.4" r="4.9" fill="currentColor" stroke="none" mask={`url(#${id}-tick)`} />
+      </g>
+    </svg>
+  );
+}

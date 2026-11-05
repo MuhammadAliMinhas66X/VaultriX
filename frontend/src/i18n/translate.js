@@ -20,6 +20,11 @@ export const translate = (language, key, vars) => {
 };
 
 const SERVER_MESSAGE_KEYS = {
+  'This bill already has payments, so its currency cannot be changed.': 'errors.billCurrencyLocked',
+  'The total cannot be lower than what is already paid.': 'errors.billTotalLow',
+  'This bill is cancelled, so it cannot take payments.': 'errors.billCancelled',
+  'This bill has payments. Delete the payments first, or cancel the bill instead.': 'errors.billDeletePaid',
+  'This expense comes from a bill payment. Change it from Bills.': 'errors.expenseBillLinked',
   'An account with this email already exists.': 'errors.duplicateEmail',
   'An account with this email already exists. Try signing in instead.': 'errors.emailExistsSignIn',
   'Choose an image to upload.': 'errors.chooseImage',

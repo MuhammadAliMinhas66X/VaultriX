@@ -58,6 +58,8 @@ import {
   unlockAdminUser,
   exportAdminUsersCsv,
 } from '../services/adminService.js';
+import AdminPasswordPrompt from '../components/admin/AdminPasswordPrompt.jsx';
+import { askAdminPassword } from '../services/adminPassword.js';
 
 const formatDateTime = (value) => {
   if (!value) return '—';
@@ -74,14 +76,10 @@ const formatDateTime = (value) => {
 const onError = (error) => notify.error(error?.message || 'Something went wrong.');
 
 // --- Live polling -----------------------------------------------------------
-// The brief was "updates without me refreshing, basically instantly". A
-// literal 1-second poll per open tab, across overview + users + audit log +
-// an open user panel, would run the admin account up against its own
-// adminLimiter (300 requests / 5 minutes - see rateLimiters.js) with just
-// ONE tab open. 2.5s keeps every section feeling live while staying well
-// under that ceiling even with several sections' timers running at once,
-// and it pauses entirely while the tab isn't visible so it isn't burning
-// requests in a background tab either.
+// The brief was "updates without me refreshing, basically instantly". The
+// admin API has no request limit, so this only trades speed for load: 2.5s
+// keeps every section feeling live, and polling pauses entirely while the
+// tab isn't visible so a background tab isn't burning requests.
 const LIVE_INTERVAL_MS = 2500;
 
 function usePolling(callback, { enabled = true, intervalMs = LIVE_INTERVAL_MS } = {}) {
@@ -436,11 +434,17 @@ function UserDetailPanel({ userId, onClose, onChanged }) {
   // what they're typing out from under them.
   usePolling(() => load(true), { enabled: !editing });
 
-  const run = async (key, action, confirmMessage) => {
-    if (confirmMessage && !window.confirm(confirmMessage)) return;
+  const run = async (key, action, confirmMessage, { password = false } = {}) => {
+    let typedPassword;
+    if (password) {
+      typedPassword = await askAdminPassword(confirmMessage);
+      if (!typedPassword) return;
+    } else if (confirmMessage && !window.confirm(confirmMessage)) {
+      return;
+    }
     setBusy(key);
     try {
-      await action();
+      await action(typedPassword);
       notify.success('Done.');
       await load(false);
       onChanged?.();
@@ -605,7 +609,7 @@ function UserDetailPanel({ userId, onClose, onChanged }) {
                 <button
                   type="button"
                   disabled={busy === 'mfa' || !detail.user.mfaEnabled}
-                  onClick={() => run('mfa', () => disableAdminUserMfa(userId), 'Turn off 2-step verification for this account? They will be signed out everywhere.')}
+                  onClick={() => run('mfa', (pw) => disableAdminUserMfa(userId, pw), 'Turn off 2-step verification for this account? They will be signed out everywhere.', { password: true })}
                   className="flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-start text-sm font-medium text-ink hover:bg-surface disabled:opacity-40"
                 >
                   <ShieldOff className="h-4 w-4 shrink-0" /> Turn off 2-step verification
@@ -613,7 +617,7 @@ function UserDetailPanel({ userId, onClose, onChanged }) {
                 <button
                   type="button"
                   disabled={busy === 'reset' || !detail.user.hasPassword}
-                  onClick={() => run('reset', () => forceAdminPasswordReset(userId), 'Email this user a password reset code?')}
+                  onClick={() => run('reset', (pw) => forceAdminPasswordReset(userId, pw), 'Email this user a password reset code?', { password: true })}
                   className="flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-start text-sm font-medium text-ink hover:bg-surface disabled:opacity-40"
                 >
                   <KeyRound className="h-4 w-4 shrink-0" /> Send password reset code
@@ -643,11 +647,12 @@ function UserDetailPanel({ userId, onClose, onChanged }) {
                   onClick={() =>
                     run(
                       'delete',
-                      async () => {
-                        await deleteAdminUser(userId);
+                      async (pw) => {
+                        await deleteAdminUser(userId, pw);
                         onClose();
                       },
-                      `Permanently delete ${detail.user.email}? This cannot be undone.`
+                      `Permanently delete ${detail.user.email}? This cannot be undone.`,
+                      { password: true }
                     )
                   }
                   className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-start text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-40"
@@ -761,9 +766,11 @@ function UsersSection() {
   usePolling(() => load(true), { enabled: !selectedId });
 
   const exportCsv = async () => {
+    const password = await askAdminPassword('Exporting the user list downloads every matching account. Enter your password to continue.');
+    if (!password) return;
     setExporting(true);
     try {
-      const csv = await exportAdminUsersCsv({ search: debouncedSearch, status });
+      const csv = await exportAdminUsersCsv({ search: debouncedSearch, status, password });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1102,6 +1109,7 @@ function AdminPage() {
           </motion.div>
         </AnimatePresence>
       </div>
+      <AdminPasswordPrompt />
     </AppShell>
   );
 }

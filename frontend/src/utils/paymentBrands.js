@@ -1,3 +1,5 @@
+import { BILLERS } from './billers.js';
+
 export const PAKISTANI_BANKS = [
   { id: 'hbl', name: 'Habib Bank Limited (HBL)', domains: ['hbl.com'] },
   { id: 'ubl', name: 'United Bank Limited (UBL)', domains: ['ubl.com.pk', 'ubldigital.com'] },
@@ -31,6 +33,6 @@ export const DIGITAL_WALLETS = [
   { id: 'zindigi', name: 'Zindigi', domains: ['zindigi.com.pk', 'zindigi.pk'] },
 ];
 
-const brandByName = new Map([...PAKISTANI_BANKS, ...DIGITAL_WALLETS].map((item) => [item.name, item]));
+const brandByName = new Map([...PAKISTANI_BANKS, ...DIGITAL_WALLETS, ...BILLERS].map((item) => [item.name, item]));
 
 export const findBrand = (name) => brandByName.get(name) || null;

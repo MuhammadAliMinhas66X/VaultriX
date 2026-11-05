@@ -5,6 +5,7 @@ import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import BalanceCard from '../components/dashboard/BalanceCard.jsx';
+import BillsPanel from '../components/dashboard/BillsPanel.jsx';
 import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -12,8 +13,10 @@ import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { amountForTotal, isDeducted } from '../utils/salaryCuts.js';
 import { byReceivedDesc, summarize, toBase } from '../utils/incomeMath.js';
-import { dateOptions } from '../utils/dates.js';
+import { dateOptions, todayInput } from '../utils/dates.js';
 import { listExpenses } from '../services/expenseService.js';
+import { listBills } from '../services/billService.js';
+import { summarizeBills } from '../utils/billMath.js';
 import { monthKey, sumExpenses } from '../utils/expenseMath.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
 
@@ -28,6 +31,7 @@ function DashboardPage() {
 
   const summary = useMemo(() => (rates ? summarize(streams, rates) : null), [streams, rates]);
   const [monthExpenses, setMonthExpenses] = useState(null);
+  const [bills, setBills] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -38,6 +42,19 @@ function DashboardPage() {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    listBills(todayInput())
+      .then((data) => alive && setBills(data.bills))
+      .catch(() => alive && setBills([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const billsToday = todayInput();
+  const billSummary = useMemo(() => (bills && rates ? summarizeBills(bills, rates, currency, billsToday) : null), [bills, rates, currency, billsToday]);
 
   const spent = useMemo(() => (monthExpenses && rates ? sumExpenses(monthExpenses, rates, currency).total : 0), [monthExpenses, rates, currency]);
   const spentByOthers = useMemo(
@@ -220,6 +237,7 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
+            {bills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
             {latestCard}
           </div>
         )}

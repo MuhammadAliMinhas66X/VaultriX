@@ -61,6 +61,16 @@ export const passwordChangedEmail = ({ name }) => ({
   ),
 });
 
+export const newDeviceSignedInEmail = ({ name, device, time }) => ({
+  subject: 'New sign-in to your Vaultrix account',
+  text: `Hi ${name || 'there'},\n\nYour Vaultrix account was just signed in from ${device} (${time}).\n\nIf this was you, no action is needed. If not, change your password right away and sign out other devices in Settings.\n`,
+  html: shell(
+    'New sign-in',
+    `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#3b3b40;">Hi ${escapeHtml(name || 'there')}, your Vaultrix account was just signed in from <strong>${escapeHtml(device)}</strong> (${escapeHtml(time)}).</p>
+     <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If this was you, no action is needed. If not, change your password right away and sign out other devices in Settings.</p>`
+  ),
+});
+
 export const deviceLoginEmail = ({ name, code, minutes }) => ({
   subject: `${code} is your Vaultrix sign-in code`,
   text: `Hi ${name || 'there'},\n\nYou're already signed in to Vaultrix on 2 devices, so we need to confirm it's really you before adding a 3rd. Use this code to continue: ${code}.\nIt expires in ${minutes} minutes. Your oldest signed-in device will be signed out to make room.\n\nIf this was not you, change your password right away.\n`,

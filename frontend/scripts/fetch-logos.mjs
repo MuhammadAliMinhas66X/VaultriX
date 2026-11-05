@@ -3,6 +3,7 @@ import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PAKISTANI_BANKS, DIGITAL_WALLETS } from '../src/utils/paymentBrands.js';
+import { BILLERS } from '../src/utils/billers.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SHARP = 128;
@@ -214,7 +215,7 @@ const isWeak = (url) => /google\.com\/s2\/favicons|icons\.duckduckgo\.com/.test(
 export const run = async ({
   fetchFn = globalThis.fetch,
   outDir = path.resolve(here, '../public/logos'),
-  brands = [...PAKISTANI_BANKS, ...DIGITAL_WALLETS],
+  brands = [...PAKISTANI_BANKS, ...DIGITAL_WALLETS, ...BILLERS],
   force = false,
   audit = false,
   log = console.log,

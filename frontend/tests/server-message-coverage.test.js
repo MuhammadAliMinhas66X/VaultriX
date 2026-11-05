@@ -16,6 +16,11 @@ import { translations } from '../src/i18n/translations.js';
 // confused user. Keep this list in sync with the backend's MESSAGES
 // objects and inline fail()/res.json(...) calls.
 const KNOWN_BACKEND_MESSAGES = [
+  'This bill already has payments, so its currency cannot be changed.',
+  'The total cannot be lower than what is already paid.',
+  'This bill is cancelled, so it cannot take payments.',
+  'This bill has payments. Delete the payments first, or cancel the bill instead.',
+  'This expense comes from a bill payment. Change it from Bills.',
   '2-step verification is already off.',
   '2-step verification is already on.',
   'An account with this email already exists.',
