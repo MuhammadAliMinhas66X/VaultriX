@@ -21,26 +21,26 @@ const build = (windowMs, max, extra = {}) =>
     ...extra,
   });
 
-export const loginLimiter = build(15 * 60 * 1000, 10, { skipSuccessfulRequests: true });
-export const signupLimiter = build(60 * 60 * 1000, 10);
-export const googleLimiter = build(15 * 60 * 1000, 40);
-export const refreshLimiter = build(15 * 60 * 1000, 120);
-export const forgotLimiter = build(60 * 60 * 1000, 15);
-export const verifyCodeLimiter = build(15 * 60 * 1000, 30);
-export const resetLimiter = build(15 * 60 * 1000, 15);
-export const emailCheckLimiter = build(5 * 60 * 1000, 80);
-export const passwordChangeLimiter = build(15 * 60 * 1000, 10);
-export const loginStatusLimiter = build(5 * 60 * 1000, 60);
-export const sessionsLimiter = build(15 * 60 * 1000, 60);
+export const loginLimiter = build(15 * 60 * 1000, 30, { skipSuccessfulRequests: true });
+export const signupLimiter = build(60 * 60 * 1000, 30);
+export const googleLimiter = build(15 * 60 * 1000, 120);
+export const refreshLimiter = build(15 * 60 * 1000, 600);
+export const forgotLimiter = build(60 * 60 * 1000, 20);
+export const verifyCodeLimiter = build(15 * 60 * 1000, 60);
+export const resetLimiter = build(15 * 60 * 1000, 30);
+export const emailCheckLimiter = build(5 * 60 * 1000, 300);
+export const passwordChangeLimiter = build(15 * 60 * 1000, 20);
+export const loginStatusLimiter = build(5 * 60 * 1000, 300);
+export const sessionsLimiter = build(15 * 60 * 1000, 300);
 export const emailChangeLimiter = build(15 * 60 * 1000, 20);
 export const accountDeleteLimiter = build(60 * 60 * 1000, 10);
 export const mfaLimiter = build(15 * 60 * 1000, 20);
 export const securityEventLimiter = build(5 * 60 * 1000, 40);
-export const apiLimiter = build(15 * 60 * 1000, 1500, { skip: (req) => req.originalUrl.startsWith('/api/admin') });
+export const apiLimiter = build(15 * 60 * 1000, 6000, { skip: (req) => req.originalUrl.startsWith('/api/admin') });
 export const stepUpLimiter = build(15 * 60 * 1000, 10, { skipSuccessfulRequests: true });
 // Accounts/Categories writes - ordinary product usage (adding a few
 // accounts, editing one) shouldn't come close to this; it's here purely
 // to match the rest of the app's "every mutation is rate limited" posture.
-export const financeLimiter = build(15 * 60 * 1000, 120);
-export const uploadLimiter = build(15 * 60 * 1000, 40);
-export const fxLimiter = build(15 * 60 * 1000, 300);
+export const financeLimiter = build(15 * 60 * 1000, 600);
+export const uploadLimiter = build(15 * 60 * 1000, 100);
+export const fxLimiter = build(15 * 60 * 1000, 3000);

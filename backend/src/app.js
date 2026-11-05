@@ -29,6 +29,8 @@ app.disable('x-powered-by');
 if (process.env.TRUST_PROXY) {
   const value = Number(process.env.TRUST_PROXY);
   app.set('trust proxy', Number.isNaN(value) ? process.env.TRUST_PROXY : value);
+} else if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
 }
 
 app.use(

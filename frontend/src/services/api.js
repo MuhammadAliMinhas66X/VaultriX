@@ -37,6 +37,15 @@ export const setTokenRefreshedHandler = (handler) => {
   onTokenRefreshed = handler;
 };
 
+const DEFAULT_RETRY_MS = 3000;
+const MAX_AUTO_RETRY_MS = 8000;
+
+export const retryAfterSeconds = (error) => {
+  const headers = error?.response?.headers || {};
+  const value = Number(headers['retry-after'] ?? headers['ratelimit-reset']);
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value) : 0;
+};
+
 const NOT_A_SESSION_EXPIRY = ['/auth/login', '/auth/signup', '/auth/refresh', '/auth/logout', '/auth/google', '/users/me/password'];
 
 // The access token lives 15 minutes (see backend/src/utils/tokens.js); the
@@ -77,6 +86,15 @@ api.interceptors.response.use(
     // answer (wrong password, no session yet), not an expired access
     // token on an otherwise-valid session, so none of this applies to them.
     const isAppRequest = !NOT_A_SESSION_EXPIRY.some((path) => url.includes(path));
+
+    if (status === 429 && String(config.method).toLowerCase() === 'get' && !config._retriedAfterLimit) {
+      const wait = retryAfterSeconds(error) * 1000 || DEFAULT_RETRY_MS;
+      if (wait <= MAX_AUTO_RETRY_MS) {
+        config._retriedAfterLimit = true;
+        await new Promise((resolve) => setTimeout(resolve, wait));
+        return api(config);
+      }
+    }
 
     if (status === 401 && isAppRequest && !config._retriedAfterRefresh) {
       config._retriedAfterRefresh = true;

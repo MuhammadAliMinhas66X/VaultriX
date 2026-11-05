@@ -20,11 +20,6 @@ export const translate = (language, key, vars) => {
 };
 
 const SERVER_MESSAGE_KEYS = {
-  'This bill already has payments, so its currency cannot be changed.': 'errors.billCurrencyLocked',
-  'The total cannot be lower than what is already paid.': 'errors.billTotalLow',
-  'This bill is cancelled, so it cannot take payments.': 'errors.billCancelled',
-  'This bill has payments. Delete the payments first, or cancel the bill instead.': 'errors.billDeletePaid',
-  'This expense comes from a bill payment. Change it from Bills.': 'errors.expenseBillLinked',
   'An account with this email already exists.': 'errors.duplicateEmail',
   'An account with this email already exists. Try signing in instead.': 'errors.emailExistsSignIn',
   'Choose an image to upload.': 'errors.chooseImage',
@@ -114,6 +109,13 @@ export const translateError = (language, error) => {
   const known = serverMessageKey(error);
   if (known) return translate(language, known);
   if (error?.isNetwork) return translate(language, 'errors.network');
-  if (error?.status === 429) return translate(language, 'errors.tooManyRequests');
+  if (error?.status === 429) {
+    const seconds = Number(error.retryAfter) || 0;
+    if (seconds > 0) {
+      const time = seconds < 90 ? `${seconds}s` : `${Math.ceil(seconds / 60)} min`;
+      return translate(language, 'errors.tooManyRequestsWait', { time });
+    }
+    return translate(language, 'errors.tooManyRequests');
+  }
   return translate(language, error?.fallbackKey || 'errors.somethingWrong');
 };
