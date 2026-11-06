@@ -433,6 +433,7 @@ export default {
   'info.forgotPasswordSoon': 'إعادة تعيين كلمة المرور غير متاحة بعد. ستتوفر قريبًا.',
   'errors.network': 'تعذّر الوصول إلى الخادم. تحقق من اتصالك وحاول مرة أخرى.',
   'errors.tooManyRequests': 'محاولات كثيرة جدًا. يُرجى الانتظار قليلًا ثم المحاولة مرة أخرى.',
+  'errors.tooManyRequestsWait': 'محاولات كثيرة. حاول مرة أخرى بعد {time}.',
   'dashboard.notSet': 'غير محدد',
   'settings.currentPasswordRequired': 'أدخل كلمة المرور الحالية.',
   'v.overview': 'نظرة عامة',

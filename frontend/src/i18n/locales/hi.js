@@ -433,6 +433,7 @@ export default {
   'info.forgotPasswordSoon': 'पासवर्ड रीसेट अभी उपलब्ध नहीं है। यह जल्द आ रहा है।',
   'errors.network': 'सर्वर से संपर्क नहीं हो सका। अपना कनेक्शन जांचें और फिर से प्रयास करें।',
   'errors.tooManyRequests': 'बहुत ज़्यादा प्रयास हो गए। कृपया थोड़ी देर रुककर फिर से प्रयास करें।',
+  'errors.tooManyRequestsWait': 'बहुत ज़्यादा प्रयास। {time} बाद फिर कोशिश करें।',
   'dashboard.notSet': 'सेट नहीं है',
   'settings.currentPasswordRequired': 'अपना वर्तमान पासवर्ड दर्ज करें।',
   'v.overview': 'अवलोकन',

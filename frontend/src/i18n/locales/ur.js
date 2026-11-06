@@ -433,6 +433,7 @@ export default {
   'info.forgotPasswordSoon': 'پاس ورڈ ری سیٹ ابھی دستیاب نہیں ہے۔ یہ جلد آ رہا ہے۔',
   'errors.network': 'سرور تک رسائی نہیں ہو سکی۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔',
   'errors.tooManyRequests': 'بہت زیادہ کوششیں ہو گئیں۔ براہ کرم تھوڑا انتظار کریں اور دوبارہ کوشش کریں۔',
+  'errors.tooManyRequestsWait': 'بہت زیادہ کوششیں۔ {time} بعد دوبارہ کوشش کریں۔',
   'dashboard.notSet': 'سیٹ نہیں ہے',
   'settings.currentPasswordRequired': 'اپنا موجودہ پاس ورڈ درج کریں۔',
   'v.overview': 'جائزہ',

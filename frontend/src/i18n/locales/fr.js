@@ -433,6 +433,7 @@ export default {
   'info.forgotPasswordSoon': 'La réinitialisation du mot de passe n’est pas encore disponible. Elle arrive bientôt.',
   'errors.network': 'Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.',
   'errors.tooManyRequests': 'Trop de tentatives. Patientez un instant et réessayez.',
+  'errors.tooManyRequestsWait': 'Trop de tentatives. Réessayez dans {time}.',
   'dashboard.notSet': 'Non défini',
   'settings.currentPasswordRequired': 'Saisissez votre mot de passe actuel.',
   'v.overview': 'Aperçu',

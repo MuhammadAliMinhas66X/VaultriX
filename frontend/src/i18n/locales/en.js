@@ -434,6 +434,7 @@ export default {
   'info.slowRequest': 'This is taking longer than usual. Please keep this page open.',
   'errors.network': 'Could not reach the server. Check your internet and try again.',
   'errors.tooManyRequests': 'Too many tries. Wait a moment, then try again.',
+  'errors.tooManyRequestsWait': 'Too many tries. Try again in {time}.',
   'dashboard.notSet': 'Not set',
   'settings.currentPasswordRequired': 'Enter your current password.',
   'v.overview': 'Overview',

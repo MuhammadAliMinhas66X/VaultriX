@@ -433,6 +433,7 @@ export default {
   'info.forgotPasswordSoon': 'El restablecimiento de contraseña aún no está disponible. Llegará pronto.',
   'errors.network': 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
   'errors.tooManyRequests': 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+  'errors.tooManyRequestsWait': 'Demasiados intentos. Inténtalo de nuevo en {time}.',
   'dashboard.notSet': 'Sin definir',
   'settings.currentPasswordRequired': 'Introduce tu contraseña actual.',
   'v.overview': 'Resumen',
