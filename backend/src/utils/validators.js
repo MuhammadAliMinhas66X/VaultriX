@@ -1,3 +1,5 @@
+import { isSupportedCurrency } from './currencies.js';
+
 const SPECIAL_CHAR_PATTERN = /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/;
 
 export const PASSWORD_MESSAGES = {
@@ -34,7 +36,7 @@ export const cleanName = (raw) => {
 };
 
 export const isCountryCode = (value) => typeof value === 'string' && /^[A-Z]{2}$/.test(value);
-export const isCurrencyCode = (value) => typeof value === 'string' && /^[A-Z]{3}$/.test(value);
+export const isCurrencyCode = (value) => isSupportedCurrency(value);
 
 // Free-text labels (account names, category names) - looser than cleanName
 // above, which is letters-only and meant for a person's own name. "Chase

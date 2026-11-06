@@ -1,3 +1,5 @@
+import { SUPPORTED_CURRENCIES } from '../utils/currencies.js';
+
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const LIVE_TTL_MS = 20 * 1000;
 const FETCH_TIMEOUT_MS = 8000;
@@ -5,10 +7,7 @@ const LIVE_TIMEOUT_MS = 5000;
 const MAX_LIVE_SYMBOLS = 40;
 const LIVE_CONCURRENCY = 8;
 
-export const LIVE_CURRENCIES = [
-  'USD', 'EUR', 'GBP', 'PKR', 'INR', 'AED', 'SAR', 'CNY', 'JPY', 'CAD', 'AUD', 'CHF', 'TRY', 'ZAR',
-  'NGN', 'BDT', 'IDR', 'MYR', 'SGD', 'KRW', 'RUB', 'BRL', 'MXN', 'EGP', 'KES', 'QAR', 'KWD',
-];
+export const LIVE_CURRENCIES = SUPPORTED_CURRENCIES;
 
 const cache = new Map();
 const liveCache = new Map();
