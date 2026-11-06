@@ -13,6 +13,8 @@ const sessionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   lastUsedAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, required: true },
+  refreshVersion: { type: Number, default: 0 },
+  refreshRotatedAt: { type: Date, default: null },
 });
 
 sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

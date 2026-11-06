@@ -618,6 +618,8 @@ export const logout = async (req, res) => {
   res.json({ success: true });
 };
 
+const REFRESH_GRACE_MS = 30 * 1000;
+
 export const refresh = async (req, res) => {
   const token = req.cookies?.[REFRESH_COOKIE_NAME];
 
@@ -644,6 +646,33 @@ export const refresh = async (req, res) => {
       return fail(res, 401, 'Please sign in again.');
     }
 
+    // Every refresh hands out a new token and retires the old one. If an
+    // old token shows up again after the short window below, two parties
+    // hold the same token, which means it was copied: the session is
+    // closed and the owner has to sign in again. The window covers two
+    // tabs refreshing at the same moment.
+    const claimed = Number(payload.rv || 0);
+    const current = session.refreshVersion || 0;
+    const rotatedRecently = session.refreshRotatedAt && Date.now() - session.refreshRotatedAt.getTime() < REFRESH_GRACE_MS;
+
+    if (claimed > current) {
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      return fail(res, 401, 'Please sign in again.');
+    }
+
+    if (claimed < current && !(claimed === current - 1 && rotatedRecently)) {
+      await Session.deleteOne({ _id: session._id });
+      securityLog('refresh_reuse', req, { userId: String(user._id) });
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      return fail(res, 401, 'Please sign in again.');
+    }
+
+    const nextVersion = claimed === current ? current + 1 : current;
+    if (nextVersion !== current) {
+      session.refreshVersion = nextVersion;
+      session.refreshRotatedAt = new Date();
+    }
+
     session.lastUsedAt = new Date();
     session.ip = req.ip;
     if (req.headers['user-agent']) session.userAgent = req.headers['user-agent'];
@@ -651,7 +680,7 @@ export const refresh = async (req, res) => {
     await session.save();
 
     const accessToken = signAccessToken(user, session._id);
-    const refreshToken = signRefreshToken(user, session._id);
+    const refreshToken = signRefreshToken(user, session._id, nextVersion);
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.json({ success: true, accessToken, user: publicUser(user) });
   } catch (error) {

@@ -23,8 +23,8 @@ export const signAccessToken = (user, sessionId) =>
 // kept as a separate, coarser kill switch: bumping it (password change,
 // "log out everywhere") invalidates every refresh token at once, even ones
 // whose Session row hasn't been individually deleted yet.
-export const signRefreshToken = (user, sessionId) =>
-  jwt.sign({ sub: user._id, tokenVersion: user.tokenVersion || 0, jti: String(sessionId) }, process.env.JWT_REFRESH_SECRET, {
+export const signRefreshToken = (user, sessionId, version = 0) =>
+  jwt.sign({ sub: user._id, tokenVersion: user.tokenVersion || 0, jti: String(sessionId), rv: version }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: '30d',
     algorithm: 'HS256',
   });
