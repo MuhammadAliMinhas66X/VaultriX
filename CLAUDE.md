@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_112 (bills redesign, 5-day lead, pay-now, filter button). v1_111 was the CLAUDE.md and bills-fix round.
+6. Version numbers continue from the last round. Last delivered: v1_115 (request storm fix, duplicate request layer, per-user rate limits, one currency list, refresh token replay detection). v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -72,6 +72,9 @@ Multi-tenancy and security
 - Every new model must be added to `utils/organizations.js` `removeOrganizationIfEmpty` so deleting an account does not leave data behind.
 - Mutating routes: `authenticate`, `canWrite`, `financeLimiter`. Never trust client-computed status or totals.
 - Do not weaken origin guard, rate limits, sanitising, or admin password checks (another agent owns these).
+- Rate limits (`middleware/rateLimiters.js`) count per signed-in person (`userKey`) when the route is behind `authenticate`, and per IP otherwise. Data routes allow thousands per 15 minutes; only brute-force guards (login, admin password, account delete) stay small. The owner wants no "Too many tries" in normal use, so raise a number before lowering one, and keep new limiters per user.
+- Refresh tokens rotate and carry `rv`. An old token replayed after 30 seconds closes that session and logs `refresh_reuse` (`authController.refresh`, `Session.refreshVersion`).
+- One currency list: `frontend/src/utils/options.js CURRENCIES` equals `backend/src/utils/currencies.js SUPPORTED_CURRENCIES` equals live rates. `currencies-consistent.test.js` fails if they drift. Every dropdown (onboarding, settings, income, expenses, bills, loans) uses `useLocalizedOptions().currencies`, never its own list.
 
 i18n (six languages, flat keys)
 - Every user-visible string goes through `t('key')`. Add the key to ALL six locale files. `i18n-parity.test.js` checks keys and `{placeholders}` match.
@@ -82,6 +85,8 @@ i18n (six languages, flat keys)
 Frontend habits
 - Dates are `YYYY-MM-DD` keys in UTC (`utils/dates.js`, `utils/expenseMath.js shiftDay`). "Today" comes from the local date (`todayInput()`), never `new Date().toISOString()`.
 - Money inputs: `MoneyInput` (no spinner arrows).
+- Never fetch from an effect whose dependencies change every render. `t` and `tServer` from `useTranslation` are stable (memoized on language); any new hook or context value used in a dependency list must be too. An unstable dependency caused the Bills request storm (v1_115).
+- GET requests go through `services/requestCache.js` (same request at the same time is sent once, answers are reused for 8 seconds, any save clears it, admin/auth/security are never cached). Do not add your own caching on top.
 - Dropdowns: use `Combobox` (portal, searchable, grouped, supports `footer`, `searchable={false}`, item `sub`). Do not hand-roll new select popups.
 - Toasts: single animation only (Framer). Do not add a CSS fade on top of it (that caused the blink).
 - Mobile first. No horizontal page scroll at 390 px. Bottom nav is fixed; leave bottom padding.
