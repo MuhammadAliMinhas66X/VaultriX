@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_110 (add-bill form rework). The CLAUDE.md round is v1_111 (see section 11).
+6. Version numbers continue from the last round. Last delivered: v1_112 (bills redesign, 5-day lead, pay-now, filter button). v1_111 was the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -81,11 +81,57 @@ i18n (six languages, flat keys)
 
 Frontend habits
 - Dates are `YYYY-MM-DD` keys in UTC (`utils/dates.js`, `utils/expenseMath.js shiftDay`). "Today" comes from the local date (`todayInput()`), never `new Date().toISOString()`.
+- Money inputs: `MoneyInput` (no spinner arrows).
 - Dropdowns: use `Combobox` (portal, searchable, grouped, supports `footer`, `searchable={false}`, item `sub`). Do not hand-roll new select popups.
 - Toasts: single animation only (Framer). Do not add a CSS fade on top of it (that caused the blink).
 - Mobile first. No horizontal page scroll at 390 px. Bottom nav is fixed; leave bottom padding.
 
-## 7. Features and decisions (so I do not redo them)
+## 6A. Feature catalogue (one block per feature)
+
+Status words: DONE (built, in use), HANDS-OFF (another agent owns it), PLANNED (not built). Names in backticks are the files to open first.
+
+1. Sign up and sign in - DONE. `authController`, `LoginPage`, `SignupPage`.
+   - Email + password signup with an emailed code (max 5 sends per hour, 5 wrong tries). Disposable email domains are blocked (`utils/disposableDomains.js`, `EXTRA_BLOCKED_EMAIL_DOMAINS`).
+   - Login has a captcha (Cloudflare Turnstile), lockout (5 failed tries locks 15 min, then 2 failed tries lock 60 min), a new-device email check (`PendingDeviceLogin`), and optional MFA code.
+   - Max 3 accounts per device (`utils/deviceLimit.js`, device cookie plus `X-Device-Fallback-Id` header).
+   - Google sign in, link and unlink. Forgot password: email code, then reset. Refresh token cookie keeps the session; the access token lives in memory.
+2. Onboarding - DONE. `OnboardingPage`, `components/onboarding/*`. First-run steps in this order: country, language, currency, photo (photo skipped if the user already has one). `RequireOnboarding` blocks the app until `onboardingCompleted`.
+3. Settings - DONE. `SettingsPage` (sections: Profile, Security, Devices, Preferences, Danger zone).
+   - Profile: name, avatar (upload). Security: change password, change email (code to the new address), MFA setup with QR and backup codes, Google link.
+   - Devices: list sessions, revoke one, log out everywhere. Preferences: country, app language and currency. Danger: delete account (request code, then confirm; cleans the organisation).
+   - Secure mode and lock screen: `hooks/useSecureMode.js`, `LockScreen`, `SecureGuard`, `SecureBadge`.
+4. Admin area - DONE (owned by the other agent). `AdminPage`, `adminController`, `requireAdmin`, `requireAdminPassword`.
+   - Overview, audit log, security overview, users list and detail, edit, deactivate, reactivate, unlock. Delete user, force password reset, disable MFA and CSV export need the admin password again (step-up). Admin routes have no rate limit by design. Admin email comes from `ADMIN_EMAIL`.
+5. Income streams - DONE. `IncomeStream` model, `IncomePage`, `components/income/*`, `utils/incomeMath.js`.
+   - Types: salaried, business, freelance, bonus, gift, profit, sale, other. Frequency: once, daily, weekly, monthly, yearly, variable. Fields: payer, received date, expected amount, destination (cash, bank, wallet and which one), archive flag.
+   - Tax and deductions (`utils/taxRules.js`, `utils/salaryCuts.js`, `SalaryCutsPanel`): tax estimate per currency rule, deductions as percent or fixed, `deductFromTotal` switches totals between "after deductions" and "before deductions".
+   - Everything is summed in the user's base currency with live rates.
+6. Accounts - API only. `Account` model and `/api/accounts`; there is no page for it yet. Do not build UI unless asked.
+7. Categories - DONE. `Category` model, `/api/categories`, `utils/categoryIcons.js`, `components/expenses/categoryIcons.jsx` (about 30 icon keys, name-based icon guess).
+   - Shared by Expenses and Bills. Expenses use the tile grid `CategoryPicker`; Bills use the `Combobox` dropdown with "+ New category" (`NewCategorySheet`).
+8. Expenses - DONE. `ExpensesPage`, `components/expenses/*`, `utils/expenseMath.js`, `expenseController`.
+   - Month view with previous-month comparison, daily chart, category breakdown, add and edit form.
+   - Each expense has amount, currency, category, date, note, payment source (cash, bank, wallet and name), "paid by" (self or someone else with a name), and optional links to a loan (`loanId`) or a bill (`billId`, `billPaymentId`).
+   - Expenses created by a bill payment show a "Bill" pill and open the bill; they cannot be edited here.
+9. Loans - HANDS-OFF. `Loan` model, `LoansPage`, `components/loans/*`, `utils/loanMath.js`.
+   - Borrowed or lent, person name, amount (scale 10^4), date, due date, payments with optional proof photos (Cloudinary), received-proof photo, states open, done and critical (due within 7 days), filters, overview, payment charts.
+   - Shared pieces other features use: `WherePicker`, `loanOptions.js` (`keyFor`, `splitKey`, `customFor`, `isOtherKey`). Do not change their behaviour.
+10. Bills - DONE (v1_109, v1_110). See section 7 "Bills" for the design. Page: `BillsPage`; Dashboard section: `BillsPanel`.
+    - Add and edit bill, recurring series (daily, weekly, monthly, quarterly, yearly; next one shows 5 days before it is due) with pause, resume, cancel, full and partial and multiple payments each creating an expense, "already paid" switch and Pay buttons, statuses, PDF bill, receipt and partial summary with preview, download, share, search and one filter button, grouped list, detail drawer, remembered choices and recent companies, Save and add another, Add again.
+11. Live exchange rates - DONE. `exchangeRateService`, `fxController`, `IncomeContext`. 27 currencies, refreshed live; see section 7 "Live rates".
+12. Dashboard - DONE. `DashboardPage`, `components/dashboard/*`.
+    - Balance card (net, before deductions, deductions with 2-decimal share), rate line with update time, spent this month, latest income, Bills section.
+    - Mobile-only premium card is PLANNED (section 11).
+13. Navigation and layout - DONE. `components/layout/*` (`AppShell`, `Sidebar`, `BottomNav`, `AccountMenu`, `useAppNav.jsx`).
+    - Sidebar on desktop, floating bottom bar on phones. Items: Dashboard, Income Stream (expandable with streams), Expenses, Bills, Loans. Pages are wrapped in `IncomeLayout` so income data and rates are shared.
+14. Languages - DONE. English, French, Spanish, Arabic, Hindi, Urdu. Language switcher on auth pages and in settings; direction switches to RTL for Arabic and Urdu (`utils/direction.js`); currency and country names come from `Intl.DisplayNames` (`i18n/useLocalizedOptions.js`).
+15. Messages and errors - DONE. `i18n/notifications.js`.
+    - `notify.success/error/warning/info` shows toasts (max 3, same message stacks, errors may show inline in the form via `ErrorSlot` when one is on screen). `OfflineBanner` for lost connection. A slow request (8 s) shows an info toast. Server messages are translated through `SERVER_MESSAGE_KEYS`.
+16. Security hardening - DONE. helmet, `sanitizeInput`, `originGuard`, `apiLimiter`, per-route limiters, MFA secret encryption (`utils/mfaCrypto.js`), security event log (`SecurityEvent`, `utils/securityLog.js`, `/api/security/events`), `docs/CLOUDFLARE-SETUP.md` (set `TRUST_PROXY=1` behind Cloudflare). Do not weaken any of it.
+17. Background cleanup - DONE. Empty organisations are removed after a grace period and on a 6-hour sweep (`utils/organizations.js`); scripts in `backend/scripts` (`cleanupEmptyOrganizations`, `unlockAccount`, `wipeAllAccounts`).
+18. PLANNED modules (README list, not built): budgeting and goals, rental management, group and shared expense splitting, committees and ROSCA, notifications and feedback centre, reports. Salary and tax exists inside income streams only.
+
+## 7. Deep notes for rates and bills (so I do not redo them)
 
 Live rates (v1_104 to v1_108)
 - Server `exchangeRateService.js` reads Yahoo chart quotes for 27 currencies, each pair as its own live quote with a USD cross fallback. Live TTL 20 s, general cache 10 min, `fxLimiter` on `/api/fx`.
@@ -93,15 +139,19 @@ Live rates (v1_104 to v1_108)
 - Dashboard rate line reads like Yahoo: `1 USD = 276.4500 PKR` plus time to the second. The client polls every 30 s. Two numbers read minutes apart will differ; only compare at the same moment.
 - Yahoo is unofficial and I cannot reach it from the sandbox. A Google Sheets CSV or Twelve Data source was offered and is waiting for his decision.
 
-Bills (v1_109, v1_110)
+Bills (v1_109, v1_110, v1_112)
 - Each Bill document is ONE occurrence of a series: `seriesId`, `sequence`, `anchor`, `generated`, `seriesState` (active|paused), `frequency` (none, daily, weekly, monthly, quarterly, yearly), `payments[]`, `installationMinor`.
-- Next due dates come from the anchor (21 Nov monthly -> 21 Dec; 31 Jan -> 28 Feb -> 31 Mar). "Bill coming date" (`nextBillAt`) is when the next occurrence appears in the list; default is day after period end or due date. Unique index `(orgId, seriesId, sequence)` plus claim-by-flag means no duplicate generation.
+- Next due dates come from the anchor (21 Nov monthly -> 21 Dec; 31 Jan -> 28 Feb -> 31 Mar). A repeating bill's next occurrence APPEARS IN THE LIST 5 DAYS BEFORE ITS DUE DATE (`LEAD_DAYS` in `billRecurrence.js`: weekly, monthly, quarterly, yearly = 5, daily = 0), never a month early. `generationDate` = occurrence due date minus lead; `defaultNextBillAt(bill, frequency)`. The form no longer sends `nextBillAt` or a billing period (the server still supports both). Unique index `(orgId, seriesId, sequence)` plus claim-by-flag means no duplicate generation.
 - Resume uses `skipMissed`. A bill with payments cannot be deleted. Currency locks once paid. Status (Upcoming, Due Today, Overdue, Partially Paid, Paid, Cancelled) is computed on the client from local today.
 - Each payment creates an Expense (`billId`, `billPaymentId`, unique partial index). Bill-linked expenses cannot be edited or deleted from `/expenses`. Payment failure rolls back.
+- Add and pay are not two chores: the add form has an "I already paid this bill" switch (records a full payment today from the chosen source, client makes create then payment), every unpaid row has a "Pay" button, and the detail view has "Add again" (copies the bill one period later). Note field is NOT in the form anymore (the field still exists on the model).
+- Add-bill form order: recently used companies (chips), Company, Amount + Currency, Category (optional, dropdown with "+ New category" -> `NewCategorySheet`), Due date (+ quick chips), Repeats (dropdown, shows the next 3 due dates), Payment source, paid switch, "More options" (Installation charges, Account / reference / bill number), "Entered in Vaultrix", Save bill, Save & add another.
+- Money boxes use `components/MoneyInput.jsx` (text box, no up/down arrows, digits and one dot, 2 decimals). Never use `type="number"` for money.
+- Choices are remembered per company in localStorage (`utils/billPrefs.js`: last values, `recent` list of 8). "Save & add another" resets the form.
+- Bills page layout (v1_112): `BillsSummary` (one animated card: outstanding count-up, proportion bar, Overdue / Due today / Next 7 days / Paid this month), search + one small filter button (`BillFilter` sheet: status and category, badge shows active count, removable chips under the search), then sections from `groupBills` (Overdue, Due today, Next 7 days, Later, Paid, Cancelled) with `BillRow` rows (relative due text like "Overdue by 3d", Pay button). There is NO "next recurring bill" line anywhere (removed on request). Animations respect `useAppReducedMotion`.
+- Biller list is `utils/billers.js` (about 45 Pakistani companies: electricity, gas, water, internet, mobile, insurance, government). Logos: `BrandMark` tries `public/logos/index.json`, Google and DuckDuckGo favicons, the site's own icons, then a coloured monogram tile. I cannot download logos here; run `node scripts/fetch-logos.mjs` on his PC.
 - PDFs (bill, receipt, partial summary) use the dependency-free `pdfWriter.js`, always English and Latin letters only. Preview is an HTML replica. Share uses `navigator.share({files})` with WhatsApp, email and copy fallbacks.
-- Add-bill form: sections Bill / When / Payment, "More options" holds account number, installation, billing period, bill coming date. Choices are remembered per company in localStorage (`utils/billPrefs.js`); "Save & add another" resets the form. Category dropdown has a pinned "+ New category" that opens `NewCategorySheet`.
-- Biller logos: `BrandMark` tries `public/logos/index.json` manifest, then Google and DuckDuckGo favicons, then the site's own icon, then a coloured monogram tile (colour in `billers.js`). Real logos need `node scripts/fetch-logos.mjs` on his PC.
-- Dashboard shows `BillsPanel` between the hero card and latest income.
+- Dashboard shows `BillsPanel` between the hero card and latest income (no next-recurring line).
 
 Toast blink (fixed in v1_109): two fade-ins on one element. Keep one animation.
 

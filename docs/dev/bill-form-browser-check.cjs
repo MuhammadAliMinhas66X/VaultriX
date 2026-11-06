@@ -19,6 +19,8 @@ const respond = (url, method, body) => {
     const b = { id: 'b' + (++seq), ...body, installation: body.installation || 0, total: body.amount + (body.installation || 0), paid: 0, remaining: body.amount, dueAt: body.dueAt + 'T00:00:00.000Z', periodStart: null, periodEnd: null, nextBillAt: null, seriesState: 'active', isHead: body.frequency !== 'none', seriesId: 'b' + seq, sequence: 1, cancelledAt: null, createdAt: new Date().toISOString(), payments: [], frequency: body.frequency || 'none' };
     bills.push(b); return { success: true, bill: b };
   }
+  const pm = /^\/bills\/(b\d+)\/payments$/.exec(path);
+  if (pm && method === 'POST') { const b = bills.find((x) => x.id === pm[1]); b.paid = body.amount; b.remaining = 0; b.payments = [{ id: 'p1', amount: body.amount, paidAt: body.paidAt + 'T00:00:00.000Z', payMethod: body.payMethod, payName: body.payName, note: '', expenseId: 'e1', createdAt: new Date().toISOString() }]; return { success: true, bill: b }; }
   if (path === '/bills') return { success: true, bills };
   return { success: true, expenses: [], loans: [] };
 };
@@ -40,43 +42,48 @@ const respond = (url, method, body) => {
     await page.waitForSelector('text=Bill amount');
     await page.waitForTimeout(600);
     await page.screenshot({ path: `${out}form-${name}-1.png` });
-    // pick biller
     await page.locator('button[aria-label="Company"]').click();
-    await page.fill('input[placeholder="Search"]', 'k-el').catch(() => {});
     await page.getByRole('option', { name: /K-Electric/ }).click();
-    await page.fill('#bill-amount', '18450');
-    // category dropdown
-    await page.locator('div[role=dialog] button[aria-label="Category"], [role=dialog] button[aria-label="Category"]').click();
-    await page.waitForTimeout(300);
+    await page.fill('#bill-amount', '18450.555');
+    const typed = await page.inputValue('#bill-amount');
+    if (typed !== '18450.55') problems.push(`${name} money input kept "${typed}"`);
+    await page.fill('#bill-amount', '18450abc');
+    if ((await page.inputValue('#bill-amount')) !== '18450') problems.push(`${name} money input accepted letters`);
+    if (await page.locator('textarea').count()) problems.push(`${name} note box still present`);
+    await page.locator('[role=dialog] button[aria-label="Category"]').click();
+    await page.waitForTimeout(250);
     await page.screenshot({ path: `${out}form-${name}-cat.png` });
     await page.getByText('New category', { exact: false }).last().click();
     await page.waitForSelector('[aria-label="New category"]');
     await page.fill('[aria-label="New category"] input', 'Electricity');
-    await page.screenshot({ path: `${out}form-${name}-newcat.png` });
     await page.getByRole('button', { name: 'Create category' }).click();
     await page.waitForSelector('[aria-label="New category"]', { state: 'detached' });
-    // quick due + repeat
     await page.getByRole('button', { name: 'In 15 days' }).click();
     await page.locator('button[aria-label="Repeats"]').click();
-    await page.waitForTimeout(250);
-    await page.screenshot({ path: `${out}form-${name}-repeat.png` });
     await page.getByRole('option', { name: /Monthly/ }).click();
+    await page.waitForSelector('text=Next due dates');
+    await page.screenshot({ path: `${out}form-${name}-repeat.png` });
     await page.getByRole('button', { name: /More options/ }).click();
-    await page.fill('textarea', 'Meter reading 4521');
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: `${out}form-${name}-2.png`, fullPage: false });
+    await page.fill('#bill-installation', '2500');
+    await page.getByPlaceholder(/Customer or reference/).fill('0400 1234 5678');
+    await page.screenshot({ path: `${out}form-${name}-2.png` });
     const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (ov > 0) problems.push(`${name} overflow ${ov}`);
     await page.getByRole('button', { name: 'Save & add another' }).click();
     await page.waitForFunction(() => document.querySelector('#bill-amount') && document.querySelector('#bill-amount').value === '');
-    // remembered: re-pick same biller, check autofill
-    await page.locator('button[aria-label="Company"]').click();
-    await page.getByRole('option', { name: /K-Electric/ }).click();
-    const amount = await page.inputValue('#bill-amount');
-    if (amount !== '18450') problems.push(`${name} autofill amount was "${amount}"`);
-    const catText = await page.locator('div[role=dialog] button[aria-label="Category"], [role=dialog] button[aria-label="Category"]').innerText();
-    if (!/Electricity/.test(catText)) problems.push(`${name} autofill category was "${catText}"`);
+    // quick add chip
+    await page.waitForSelector('text=Recently used');
+    await page.locator('[role=dialog] button[aria-pressed]').filter({ hasText: 'K-Electric' }).first().click();
+    if ((await page.inputValue('#bill-amount')) !== '18450') problems.push(`${name} chip did not fill amount`);
     await page.screenshot({ path: `${out}form-${name}-3.png` });
+    // already paid
+    await page.getByRole('button', { name: 'In 7 days' }).click();
+    await page.getByRole('switch').click();
+    await page.getByRole('button', { name: 'Save bill' }).click();
+    await page.waitForSelector('text=Paid', { timeout: 10000 });
+    if (!bills[1] || bills[1].remaining !== 0) problems.push(`${name} paid-now did not record a payment`);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${out}form-${name}-paid.png` });
     await ctx.close();
   }
   console.log(problems.length ? problems.join('\n') : 'no problems');

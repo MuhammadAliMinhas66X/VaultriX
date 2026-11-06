@@ -24,6 +24,8 @@ export const readLastPrefs = () => read().last || {};
 
 export const readBillerPrefs = (billerKey) => (billerKey ? read().billers?.[billerKey] || null : null);
 
+export const readRecent = () => (Array.isArray(read().recent) ? read().recent : []);
+
 export const rememberBill = (billerKey, values) => {
   const data = read();
   data.last = { currency: values.currency, payKey: values.payKey, payCustom: values.payCustom, frequency: values.frequency };
@@ -38,10 +40,16 @@ export const rememberBill = (billerKey, values) => {
       frequency: values.frequency,
       payKey: values.payKey,
       payCustom: values.payCustom,
+      installation: values.installation || '',
     };
     const keys = Object.keys(billers);
     if (keys.length > MAX_BILLERS) keys.slice(0, keys.length - MAX_BILLERS).forEach((key) => delete billers[key]);
     data.billers = billers;
+  }
+  const entry = { key: billerKey || '', name: values.billerName || '' };
+  if (entry.key || entry.name) {
+    const same = (item) => item.key === entry.key && item.name === entry.name;
+    data.recent = [entry, ...(Array.isArray(data.recent) ? data.recent : []).filter((item) => !same(item))].slice(0, 8);
   }
   write(data);
 };

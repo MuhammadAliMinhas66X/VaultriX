@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Plus, StickyNote } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import Button from '../Button.jsx';
 import FormField from '../FormField.jsx';
+import MoneyInput from '../MoneyInput.jsx';
 import Combobox from '../Combobox.jsx';
 import FieldError from '../FieldError.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
@@ -16,7 +17,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { BILLERS, billerById } from '../../utils/billers.js';
 import { FREQUENCIES } from '../../utils/billMath.js';
 import { addPeriods, addDaysKey, toDate } from '../../utils/billDates.js';
-import { readBillerPrefs } from '../../utils/billPrefs.js';
+import { readBillerPrefs, readRecent } from '../../utils/billPrefs.js';
 import { todayInput, dateOptions } from '../../utils/dates.js';
 
 const GROUP_KEY = {
@@ -25,6 +26,8 @@ const GROUP_KEY = {
   water: 'bills.groupWater',
   internet: 'bills.groupInternet',
   mobile: 'bills.groupMobile',
+  insurance: 'bills.groupInsurance',
+  government: 'bills.groupGovernment',
   other: 'bills.groupOther',
 };
 
@@ -38,7 +41,7 @@ const DESC_KEY = {
 };
 
 const QUICK_DAYS = [0, 7, 15, 30];
-const NOTE_MAX = 200;
+const LEAD = { daily: 0, weekly: 5, monthly: 5, quarterly: 5, yearly: 5 };
 const OTHER = '__other__';
 const day = (value) => (value ? String(value).slice(0, 10) : '');
 
@@ -85,7 +88,7 @@ export const formFromBill = (bill) => {
 function Section({ title, children }) {
   return (
     <section className="flex min-w-0 flex-col gap-4">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{title}</h3>
+      {title && <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{title}</h3>}
       {children}
     </section>
   );
@@ -101,14 +104,17 @@ function Label({ children, optional }) {
   );
 }
 
+const prefKey = (billerId, name) => billerId || (name ? `c:${name.trim().toLowerCase()}` : '');
+
 function BillForm({ initial, mode, bill, categories, currencies, preferredCurrencies = [], onSubmit, onCancel, busy, onAddCategory }) {
   const { t } = useTranslation();
   const { formatDate } = useFormat();
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
-  const [moreOpen, setMoreOpen] = useState(() => mode === 'edit' && Boolean(initial.periodStart || initial.installation || initial.account || initial.nextBill));
+  const [moreOpen, setMoreOpen] = useState(() => mode === 'edit' && Boolean(initial.installation || initial.account));
   const [sheet, setSheet] = useState(null);
   const [filledFrom, setFilledFrom] = useState('');
+  const [paidNow, setPaidNow] = useState(false);
   const touched = useRef(new Set());
   const rootRef = useRef(null);
   const again = useRef(false);
@@ -118,6 +124,7 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
   const allowInstallation = mode === 'add' || bill.sequence === 1;
   const recurring = form.frequency !== 'none';
   const today = todayInput();
+  const recent = useMemo(() => (mode === 'add' ? readRecent().slice(0, 6) : []), [mode]);
 
   useEffect(() => {
     if (mode === 'add') rootRef.current?.scrollIntoView({ block: 'start' });
@@ -143,10 +150,7 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
     return [...first, ...rest];
   }, [currencies, preferredCurrencies, form.currency, t]);
 
-  const frequencyItems = useMemo(
-    () => FREQUENCIES.map((value) => ({ value, label: t(FREQUENCY_KEY[value]), sub: t(DESC_KEY[value]) })),
-    [t]
-  );
+  const frequencyItems = useMemo(() => FREQUENCIES.map((value) => ({ value, label: t(FREQUENCY_KEY[value]), sub: t(DESC_KEY[value]) })), [t]);
 
   const set = (key) => (value) => {
     touched.current.add(key);
@@ -154,19 +158,21 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
     setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
   };
 
-  const pickBiller = (key) => {
+  // Fill what the user has not typed yet from the last bill for this company.
+  const applyBiller = (key, customName = '') => {
     setErrors((prev) => ({ ...prev, biller: '' }));
+    const known = billerById(key);
+    const prefs = mode === 'add' ? readBillerPrefs(prefKey(known ? known.id : '', customName)) : null;
     setForm((prev) => {
       const next = { ...prev, billerKey: key };
-      if (mode !== 'add') return next;
-      const known = billerById(key);
-      const prefs = known ? readBillerPrefs(known.id) : null;
+      if (key === OTHER && customName) next.billerName = customName;
       if (!prefs) return next;
       const keep = (field) => touched.current.has(field);
       if (!keep('categoryId') && categories.some((category) => category.id === prefs.categoryId)) next.categoryId = prefs.categoryId;
       if (!keep('amount') && prefs.amount) next.amount = String(prefs.amount);
       if (!keep('currency') && prefs.currency) next.currency = prefs.currency;
       if (!keep('account') && prefs.account) next.account = prefs.account;
+      if (!keep('installation') && prefs.installation) next.installation = String(prefs.installation);
       if (!keep('frequency') && FREQUENCIES.includes(prefs.frequency)) next.frequency = prefs.frequency;
       if (!keep('payKey') && prefs.payKey) {
         next.payKey = prefs.payKey;
@@ -174,13 +180,15 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
       }
       return next;
     });
-    const known = billerById(key);
-    setFilledFrom(mode === 'add' && known && readBillerPrefs(known.id) ? known.name : '');
+    setFilledFrom(prefs ? (known ? known.name : customName) : '');
   };
 
-  const nextDue = recurring && form.dueAt ? addPeriods(form.dueAt, form.frequency, 1) : '';
-  const calculated = form.dueAt || form.periodEnd ? addDaysKey(form.periodEnd || form.dueAt, 1) : '';
+  const nextDates = useMemo(() => {
+    if (!recurring || !form.dueAt) return [];
+    return [1, 2, 3].map((step) => addPeriods(form.dueAt, form.frequency, step));
+  }, [recurring, form.dueAt, form.frequency]);
   const fmt = (key) => (key ? formatDate(toDate(key), { ...dateOptions, timeZone: 'UTC' }) : '');
+  const lead = LEAD[form.frequency] || 0;
 
   const submit = (event) => {
     event.preventDefault();
@@ -191,13 +199,11 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
     if (!form.amount || !(Number(form.amount) > 0)) found.amount = t('loans.errAmount');
     if (!form.currency) found.currency = t('income.errCurrency');
     if (!form.dueAt) found.dueAt = t('bills.errDue');
-    if (Boolean(form.periodStart) !== Boolean(form.periodEnd) || (form.periodStart && form.periodStart > form.periodEnd)) found.period = t('bills.errPeriod');
     if (form.installation && !(Number(form.installation) >= 0)) found.installation = t('loans.errAmount');
-    if (recurring && form.nextBill && form.nextBill < '2000-01-01') found.nextBill = t('bills.errDate');
     if (isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
     setErrors(found);
     if (Object.keys(found).length) {
-      if (found.period || found.installation || found.nextBill) setMoreOpen(true);
+      if (found.installation) setMoreOpen(true);
       return;
     }
     const where = splitKey(form.payKey, form.payCustom);
@@ -208,32 +214,52 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
       amount: Number(form.amount),
       currency: form.currency,
       dueAt: form.dueAt,
-      periodStart: form.periodStart || null,
-      periodEnd: form.periodEnd || null,
       billerAccount: form.account.trim(),
       payMethod: where.method,
       payName: where.name,
       note: form.note.trim(),
     };
     if (allowInstallation) payload.installation = form.installation ? Number(form.installation) : 0;
-    if (!lockRepeat) {
-      payload.frequency = form.frequency;
-      if (recurring) payload.nextBillAt = form.nextBill || calculated;
-    }
+    if (!lockRepeat) payload.frequency = form.frequency;
     const wantsAnother = again.current;
     again.current = false;
-    onSubmit(payload, { ...form, billerId: known ? known.id : '' }, wantsAnother);
+    onSubmit(payload, { ...form, billerName, billerId: known ? known.id : '', prefKey: prefKey(known ? known.id : '', billerName) }, wantsAnother, mode === 'add' && paidNow);
   };
 
   const missingBiller = !form.billerKey && errors.biller;
 
   return (
     <form ref={rootRef} onSubmit={submit} noValidate className="flex min-w-0 flex-col gap-7 rounded-2xl border border-border bg-white p-4 sm:p-6">
-      <Section title={t('bills.sectionBill')}>
+      {recent.length > 0 && (
+        <div className="flex min-w-0 flex-col gap-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{t('bills.recentLabel')}</p>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+            {recent.map((item) => {
+              const known = billerById(item.key);
+              const name = known ? known.name : item.name;
+              const active = known ? form.billerKey === known.id : form.billerKey === OTHER && form.billerName === name;
+              return (
+                <button
+                  key={`${item.key}|${item.name}`}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => applyBiller(known ? known.id : OTHER, known ? '' : name)}
+                  className={`flex shrink-0 items-center gap-2 rounded-full border py-1.5 pe-3.5 ps-1.5 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${active ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink hover:border-ink/40'}`}
+                >
+                  <BrandMark method="biller" name={name} size="sm" />
+                  <span className="max-w-[9rem] truncate">{name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <Section>
         <div className="flex min-w-0 flex-col gap-3">
           <div className="flex min-w-0 flex-col gap-1.5">
             <Label>{t('bills.billerLabel')}</Label>
-            <Combobox items={billerItems} ariaLabel={t('bills.billerLabel')} placeholder={t('bills.billerPlaceholder')} searchPlaceholder={t('common.search')} value={form.billerKey} onChange={pickBiller} error={missingBiller ? errors.biller : undefined} />
+            <Combobox items={billerItems} ariaLabel={t('bills.billerLabel')} placeholder={t('bills.billerPlaceholder')} searchPlaceholder={t('common.search')} value={form.billerKey} onChange={(key) => applyBiller(key)} error={missingBiller ? errors.biller : undefined} />
             {filledFrom && <p className="text-xs text-muted">{t('bills.autofilled', { name: filledFrom })}</p>}
           </div>
           {form.billerKey === OTHER && (
@@ -244,16 +270,12 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
         <div className="flex flex-col gap-2">
           <label htmlFor="bill-amount" className="text-sm font-medium text-ink">{t('bills.amountLabel')}</label>
           <div className="flex items-end gap-3">
-            <input
+            <MoneyInput
               id="bill-amount"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
               value={form.amount}
-              onChange={(event) => set('amount')(event.target.value)}
+              onChange={set('amount')}
               placeholder="0"
-              className="min-w-0 flex-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none border-b-2 border-border bg-transparent pb-2 text-[2.25rem] font-bold leading-none tracking-tight tabular-nums text-ink outline-none transition placeholder:text-border focus:border-ink"
+              className="min-w-0 flex-1 border-b-2 border-border bg-transparent pb-2 text-[2.25rem] font-bold leading-none tracking-tight tabular-nums text-ink outline-none transition placeholder:text-border focus:border-ink"
             />
             <div className="w-36 shrink-0">
               <Combobox items={currencyItems} ariaLabel={t('income.currencyLabel')} placeholder={t('income.currencyPlaceholder')} searchPlaceholder={t('common.search')} value={form.currency} onChange={locked ? () => null : set('currency')} />
@@ -281,7 +303,7 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
         </div>
       </Section>
 
-      <Section title={t('bills.sectionWhen')}>
+      <Section>
         <div className="flex min-w-0 flex-col gap-2.5">
           <FormField label={t('bills.dueDateLabel')} type="date" value={form.dueAt} onChange={(event) => set('dueAt')(event.target.value)} error={errors.dueAt} />
           <div className="flex flex-wrap gap-2">
@@ -309,15 +331,27 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
           ) : (
             <Combobox items={frequencyItems} searchable={false} ariaLabel={t('bills.repeatLabel')} value={form.frequency} onChange={set('frequency')} />
           )}
-          {recurring && nextDue && !lockRepeat && (
-            <p className="rounded-xl bg-surface px-3.5 py-3 text-[13px] leading-snug text-muted">
-              {t('bills.nextDueLine', { due: fmt(nextDue), date: fmt(form.nextBill || calculated) })}
-            </p>
+          {recurring && !lockRepeat && (
+            <div className="flex flex-col gap-2 rounded-xl bg-surface px-3.5 py-3">
+              {nextDates.length > 0 ? (
+                <>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{t('bills.nextDates')}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {nextDates.map((key) => (
+                      <span key={key} className="rounded-full bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-ink ring-1 ring-border">{fmt(key)}</span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-[13px] text-muted">{t('bills.pickDueFirst')}</p>
+              )}
+              <p className="text-xs leading-snug text-muted">{lead > 0 ? t('bills.appearsBefore', { count: lead }) : t('bills.appearsOnDay')}</p>
+            </div>
           )}
         </div>
       </Section>
 
-      <Section title={t('bills.sectionPay')}>
+      <Section>
         <WherePicker
           optional
           label={<Label optional>{t('bills.sourceLabel')}</Label>}
@@ -327,25 +361,23 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
           onCustomChange={set('payCustom')}
           customError={errors.payCustom}
         />
-
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <Label optional>{t('bills.noteLabel')}</Label>
-          <div className="rounded-xl border border-border bg-white transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 hover:border-ink/30">
-            <div className="flex items-start gap-2.5 px-3.5 pt-3">
-              <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-muted" strokeWidth={1.75} />
-              <textarea
-                value={form.note}
-                rows={2}
-                maxLength={NOTE_MAX}
-                onChange={(event) => set('note')(event.target.value)}
-                placeholder={t('bills.notePlaceholder')}
-                aria-label={t('bills.noteLabel')}
-                className="min-h-[3rem] w-full resize-none bg-transparent text-base leading-snug text-ink outline-none placeholder:text-muted sm:text-sm"
-              />
-            </div>
-            <p className="px-3.5 pb-2 text-end text-[11px] tabular-nums text-muted">{form.note.length}/{NOTE_MAX}</p>
-          </div>
-        </div>
+        {mode === 'add' && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={paidNow}
+            onClick={() => setPaidNow((prev) => !prev)}
+            className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3 text-start outline-none transition hover:border-ink/30 focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-medium text-ink">{t('bills.paidNowLabel')}</span>
+              <span className="block text-xs text-muted">{t('bills.paidNowHint')}</span>
+            </span>
+            <span className={`relative h-6 w-10 shrink-0 rounded-full transition-colors ${paidNow ? 'bg-ink' : 'bg-border'}`}>
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${paidNow ? 'start-[1.125rem]' : 'start-0.5'}`} />
+            </span>
+          </button>
+        )}
       </Section>
 
       <div className="flex flex-col gap-4">
@@ -364,28 +396,14 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
 
         {moreOpen && (
           <div className="flex min-w-0 flex-col gap-4">
-            <FormField label={<Label optional>{t('bills.accountLabel')}</Label>} value={form.account} maxLength={60} onChange={(event) => set('account')(event.target.value)} placeholder={t('bills.accountPlaceholder')} />
             {allowInstallation && (
-              <FormField label={<Label optional>{t('bills.installationLabel')}</Label>} type="number" inputMode="decimal" step="0.01" min="0" value={form.installation} onChange={(event) => set('installation')(event.target.value)} placeholder="0" error={errors.installation} />
-            )}
-            <div className="flex flex-col gap-1.5">
-              <Label optional>{t('bills.periodLabel')}</Label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodStart')}</span>} type="date" value={form.periodStart} onChange={(event) => set('periodStart')(event.target.value)} />
-                <FormField label={<span className="text-xs font-normal text-muted">{t('bills.periodEnd')}</span>} type="date" value={form.periodEnd} onChange={(event) => set('periodEnd')(event.target.value)} />
-              </div>
-              <FieldError>{errors.period}</FieldError>
-            </div>
-            {recurring && !lockRepeat && (
-              <div className="flex flex-col gap-2">
-                <FormField label={<Label>{t('bills.nextBillLabel')}</Label>} type="date" value={form.nextBill || calculated} onChange={(event) => set('nextBill')(event.target.value)} error={errors.nextBill} />
-                {form.nextBill && form.nextBill !== calculated && (
-                  <button type="button" onClick={() => set('nextBill')('')} className="self-start text-xs font-semibold text-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent/40">
-                    {t('bills.useCalculated')}
-                  </button>
-                )}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="bill-installation" className="text-sm font-medium text-ink">{t('bills.installationLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></label>
+                <MoneyInput id="bill-installation" value={form.installation} onChange={set('installation')} placeholder="0" className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-muted hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm" />
+                <FieldError>{errors.installation}</FieldError>
               </div>
             )}
+            <FormField label={<Label optional>{t('bills.accountLabel')}</Label>} value={form.account} maxLength={60} onChange={(event) => set('account')(event.target.value)} placeholder={t('bills.accountPlaceholder')} />
           </div>
         )}
       </div>

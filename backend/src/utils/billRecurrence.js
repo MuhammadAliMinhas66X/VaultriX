@@ -26,7 +26,12 @@ export const addSteps = (date, frequency, steps) => {
 
 export const addDays = (date, days) => new Date(new Date(date).getTime() + days * DAY_MS);
 
-export const defaultNextBillAt = (bill) => addDays(bill.periodEnd || bill.dueAt, 1);
+// A repeating bill's next occurrence shows up in the list a few days before it
+// is due, never a whole month early. Daily bills show up on their own day.
+export const LEAD_DAYS = { daily: 0, weekly: 5, monthly: 5, quarterly: 5, yearly: 5 };
+export const leadDays = (frequency) => LEAD_DAYS[frequency] ?? 0;
+
+export const defaultNextBillAt = (bill, frequency) => addDays(addSteps(bill.dueAt, frequency, 1), -leadDays(frequency));
 
 export const makeAnchor = (bill) => ({
   seq: bill.sequence,
@@ -45,7 +50,7 @@ export const occurrenceDates = (anchor, frequency, sequence) => {
   };
 };
 
-export const generationDate = (anchor, frequency, sequence) => addSteps(anchor.nextBillAt, frequency, sequence - anchor.seq - 1);
+export const generationDate = (anchor, frequency, sequence) => addDays(addSteps(anchor.dueAt, frequency, sequence - anchor.seq), -leadDays(frequency));
 
 export const skipMissed = (anchor, frequency, nextSeq, today) => {
   let seq = nextSeq;

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarClock, CreditCard, History, ListChecks, Plus, Receipt } from 'lucide-react';
+import { ArrowRight, CreditCard, History, ListChecks, Plus, Receipt } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import { StatusBadge } from '../bills/BillStatus.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -50,7 +50,6 @@ function BillsPanel({ bills, summary, currency, today }) {
   }
 
   const urgent = attention(bills, today, 3);
-  const next = summary?.nextRecurring ? formatDate(new Date(`${summary.nextRecurring.key}T00:00:00Z`), dateOptions) : t('bills.none');
 
   return (
     <section className="rounded-2xl border border-border bg-white" aria-label={t('bills.dashTitle')}>
@@ -72,11 +71,6 @@ function BillsPanel({ bills, summary, currency, today }) {
           <Mini label={t('bills.statOverdue')} value={summary ? summary.overdueCount : '-'} strong={Boolean(summary && summary.overdueCount > 0)} />
           <Mini label={t('bills.statUpcoming')} value={summary ? summary.upcomingCount : '-'} />
         </div>
-
-        <p className="flex items-center gap-2 text-xs text-muted">
-          <CalendarClock className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-          {t('bills.nextRecurringLine', { date: next })}
-        </p>
 
         {summary && summary.excluded > 0 && <p className="text-xs text-muted">{t('loans.excludedNote', { count: summary.excluded })}</p>}
 

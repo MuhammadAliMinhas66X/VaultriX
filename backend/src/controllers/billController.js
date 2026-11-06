@@ -253,7 +253,7 @@ export const createBill = async (req, res, next) => {
     if (frequency !== 'none') {
       const given = optionalDay(body.nextBillAt);
       if (given === false) return fail(res, 400, GENERIC_INVALID);
-      nextBillAt = given || defaultNextBillAt({ ...period, dueAt });
+      nextBillAt = given || defaultNextBillAt({ ...period, dueAt }, frequency);
     }
 
     const _id = new mongoose.Types.ObjectId();
@@ -394,7 +394,7 @@ export const updateBill = async (req, res, next) => {
       }
     } else if (frequencyChanged && bill.frequency === 'none') {
       bill.frequency = frequency;
-      bill.nextBillAt = nextBillAt || defaultNextBillAt(bill);
+      bill.nextBillAt = nextBillAt || defaultNextBillAt(bill, frequency);
       bill.nextSeq = bill.sequence + 1;
       bill.generated = false;
       bill.anchor = makeAnchor(bill);
@@ -405,7 +405,7 @@ export const updateBill = async (req, res, next) => {
       }
       if (head) {
         if (nextBillAt) bill.nextBillAt = nextBillAt;
-        else if (datesChanged || frequencyChanged || !bill.nextBillAt) bill.nextBillAt = defaultNextBillAt(bill);
+        else if (datesChanged || frequencyChanged || !bill.nextBillAt) bill.nextBillAt = defaultNextBillAt(bill, frequency);
         bill.nextSeq = bill.sequence + 1;
         bill.anchor = makeAnchor(bill);
       }

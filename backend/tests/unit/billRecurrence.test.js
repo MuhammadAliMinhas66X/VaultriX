@@ -19,9 +19,11 @@ describe('billRecurrence', () => {
     expect(text(addSteps(day('2028-02-29'), 'yearly', 1))).toBe('2029-02-28');
   });
 
-  it('calculates the next bill date as the day after the period ends', () => {
-    expect(text(defaultNextBillAt({ periodEnd: day('2026-10-31'), dueAt: day('2026-11-10') }))).toBe('2026-11-01');
-    expect(text(defaultNextBillAt({ periodEnd: null, dueAt: day('2026-11-10') }))).toBe('2026-11-11');
+  it('shows the next bill 5 days before it is due, not a month early', () => {
+    expect(text(defaultNextBillAt({ dueAt: day('2026-11-21') }, 'monthly'))).toBe('2026-12-16');
+    expect(text(defaultNextBillAt({ dueAt: day('2026-11-21') }, 'weekly'))).toBe('2026-11-23');
+    expect(text(defaultNextBillAt({ dueAt: day('2026-11-21') }, 'daily'))).toBe('2026-11-22');
+    expect(text(defaultNextBillAt({ dueAt: day('2026-01-31') }, 'monthly'))).toBe('2026-02-23');
   });
 
   it('builds later occurrences from the anchor without drift', () => {
@@ -32,8 +34,8 @@ describe('billRecurrence', () => {
     expect(text(second.periodEnd)).toBe('2026-02-28');
     const third = occurrenceDates(anchor, 'monthly', 3);
     expect(text(third.dueAt)).toBe('2026-03-31');
-    expect(text(generationDate(anchor, 'monthly', 2))).toBe('2026-02-01');
-    expect(text(generationDate(anchor, 'monthly', 3))).toBe('2026-03-01');
+    expect(text(generationDate(anchor, 'monthly', 2))).toBe('2026-02-23');
+    expect(text(generationDate(anchor, 'monthly', 3))).toBe('2026-03-26');
   });
 
   it('skips missed periods when a paused series resumes', () => {

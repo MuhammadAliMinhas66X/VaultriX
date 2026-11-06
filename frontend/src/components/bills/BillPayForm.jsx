@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Button from '../Button.jsx';
 import FormField from '../FormField.jsx';
+import MoneyInput from '../MoneyInput.jsx';
+import FieldError from '../FieldError.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
 import { splitKey, isOtherKey, keyFor, customFor } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -42,16 +44,14 @@ function BillPayForm({ bill, busy, onCancel, onSubmit }) {
     <form onSubmit={submit} noValidate className="flex flex-col gap-4 rounded-xl border border-border bg-surface/60 p-4">
       <p className="text-sm font-semibold text-ink">{t('bills.payTitle')}</p>
       <div className="flex flex-col gap-1.5">
-        <FormField
-          label={t('bills.payAmount')}
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
+        <label htmlFor="bill-pay-amount" className="text-sm font-medium text-ink">{t('bills.payAmount')}</label>
+        <MoneyInput
+          id="bill-pay-amount"
           value={form.amount}
-          onChange={(event) => set('amount')(event.target.value)}
-          error={errors.amount}
+          onChange={set('amount')}
+          className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-base tabular-nums text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
         />
+        <FieldError>{errors.amount}</FieldError>
         {Number(form.amount) !== bill.remaining && (
           <button type="button" onClick={() => set('amount')(String(bill.remaining))} className="w-fit text-xs font-semibold text-ink underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-accent/40">
             {t('bills.payFull')} · {formatMoney(bill.remaining, { decimals: 2, currency: bill.currency })}

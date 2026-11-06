@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Receipt, Repeat, Search } from 'lucide-react';
+import { Plus, Receipt, Search, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import Drawer from '../components/Drawer.jsx';
-import Combobox from '../components/Combobox.jsx';
 import { Bone } from '../components/Skeletons.jsx';
-import BillCard from '../components/bills/BillCard.jsx';
+import BillRow from '../components/bills/BillRow.jsx';
+import BillsSummary from '../components/bills/BillsSummary.jsx';
+import BillFilter from '../components/bills/BillFilter.jsx';
 import BillDetail from '../components/bills/BillDetail.jsx';
 import BillForm, { emptyBillForm, formFromBill } from '../components/bills/BillForm.jsx';
 import BillShare from '../components/bills/BillShare.jsx';
@@ -17,9 +18,11 @@ import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
 import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
+import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
 import { listBills, createBill, updateBill, deleteBill, addBillPayment, deleteBillPayment, setBillCancelled, changeBillRecurring } from '../services/billService.js';
-import { VIEWS, countByView, matchesView, sortBills, summarizeBills } from '../utils/billMath.js';
+import { VIEWS, countByView, groupBills, matchesView, sortBills, summarizeBills } from '../utils/billMath.js';
+import { addPeriods } from '../utils/billDates.js';
 import { todayInput } from '../utils/dates.js';
 import { readLastPrefs, rememberBill } from '../utils/billPrefs.js';
 
@@ -33,18 +36,26 @@ const VIEW_KEY = {
   cancelled: 'bills.viewCancelled',
 };
 
-function Stat({ label, value, sub, strong = false }) {
-  return (
-    <div className={`flex min-w-0 flex-col justify-between rounded-2xl border p-4 ${strong ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink'}`}>
-      <p className={`text-[11px] font-semibold uppercase tracking-[0.12em] ${strong ? 'text-white/65' : 'text-muted'}`}>{label}</p>
-      <p className="mt-2 break-words text-xl font-bold leading-tight tracking-tight tabular-nums sm:text-2xl">{value}</p>
-      <p className={`mt-1 min-h-[1rem] text-xs ${strong ? 'text-white/65' : 'text-muted'}`}>{sub}</p>
-    </div>
-  );
-}
+// "Add again": the same bill, one period later, ready to save.
+const similarForm = (bill) => ({
+  ...formFromBill(bill),
+  dueAt: addPeriods(String(bill.dueAt).slice(0, 10), bill.frequency !== 'none' ? bill.frequency : 'monthly', 1),
+  note: '',
+  installation: '',
+});
+
+const SECTION_KEY = {
+  overdue: 'bills.secOverdue',
+  today: 'bills.secToday',
+  soon: 'bills.secSoon',
+  later: 'bills.secLater',
+  paid: 'bills.secPaid',
+  cancelled: 'bills.secCancelled',
+};
 
 function BillsPage() {
   const { currency } = useAuth();
+  const reduced = useAppReducedMotion();
   const { t, tServer } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const { currencies } = useLocalizedOptions();
@@ -123,25 +134,32 @@ function BillsPage() {
   );
 
   const money = (value) => formatMoney(value, { decimals: 0, currency });
-  const categoryItems = useMemo(
-    () => [{ value: '', label: t('bills.allCategories') }, ...categories.map((category) => ({ value: category.id, label: category.name }))],
-    [categories, t]
-  );
+  const groups = useMemo(() => groupBills(filtered, today), [filtered, today]);
 
   const replaceBill = (bill) => setBills((prev) => (prev.some((item) => item.id === bill.id) ? prev.map((item) => (item.id === bill.id ? bill : item)) : [...prev, bill]));
   const closePanel = () => setPanel(null);
 
-  const handleCreate = async (payload, extra, another) => {
+  const handleCreate = async (payload, extra, another, payNow) => {
     setBusy(true);
     try {
-      const { bill } = await createBill(payload);
-      rememberBill(extra.billerId || '', extra);
+      let { bill } = await createBill(payload);
+      rememberBill(extra.prefKey || '', extra);
       replaceBill(bill);
+      if (payNow) {
+        try {
+          const paid = await addBillPayment(bill.id, { amount: bill.remaining, paidAt: todayInput(), payMethod: payload.payMethod, payName: payload.payName, note: '' });
+          bill = paid.bill;
+          replaceBill(bill);
+        } catch (error) {
+          notify.error(tServer(error), { title: t('bills.paidNowFailed') });
+          payNow = false;
+        }
+      }
       if (another) {
-        notify.success(t('bills.savedNext'), { title: t('bills.addedTitle') });
+        notify.success(t(payNow ? 'bills.savedPaidNext' : 'bills.savedNext'), { title: t('bills.addedTitle') });
         setAddRound((round) => round + 1);
       } else {
-        notify.success(t('bills.addedTitle'));
+        notify.success(payNow ? t('bills.addedPaidTitle') : t('bills.addedTitle'));
         setPanel({ mode: 'detail', id: bill.id });
       }
     } catch (error) {
@@ -223,7 +241,6 @@ function BillsPage() {
   };
 
   const hasBills = bills.length > 0;
-  const nextText = summary?.nextRecurring ? formatDate(new Date(`${summary.nextRecurring.key}T00:00:00Z`), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : t('bills.none');
 
   const drawerTitle = panel?.mode === 'add' ? t('bills.add') : panel?.mode === 'edit' ? t('bills.editTitle') : selected ? selected.billerName : t('bills.title');
 
@@ -270,63 +287,84 @@ function BillsPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Stat strong label={t('bills.statOutstanding')} value={summary ? money(summary.unpaidTotal) : '-'} sub={summary ? t('bills.statUnpaidCount', { count: summary.unpaidCount }) : ''} />
-              <Stat label={t('bills.statDueToday')} value={summary ? String(summary.dueTodayCount) : '-'} sub={summary && summary.dueTodayCount > 0 ? money(summary.dueTodayTotal) : ''} />
-              <Stat label={t('bills.statOverdue')} value={summary ? String(summary.overdueCount) : '-'} sub={summary && summary.overdueCount > 0 ? money(summary.overdueTotal) : ''} />
-              <Stat label={t('bills.statPaidMonth')} value={summary ? money(summary.paidMonthTotal) : '-'} sub={summary ? t('bills.statPaidCount', { count: summary.paidMonthCount }) : ''} />
-            </div>
+            {summary ? <BillsSummary summary={summary} money={money} /> : null}
             {summary && summary.excluded > 0 && <p className="text-xs text-muted">{t('loans.excludedNote', { count: summary.excluded })}</p>}
-            {summary?.nextRecurring && (
-              <p className="-mt-1 flex items-center gap-2 text-xs text-muted">
-                <Repeat className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-                {t('bills.nextRecurringLine', { date: nextText })}
-              </p>
+
+            <div className="flex items-center gap-2.5">
+              <label className="relative block min-w-0 flex-1">
+                <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t('bills.searchPlaceholder')}
+                  aria-label={t('bills.searchPlaceholder')}
+                  className="h-[46px] w-full rounded-xl border border-border bg-white pe-3.5 ps-10 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:h-[44px] sm:text-sm"
+                />
+              </label>
+              <BillFilter
+                views={VIEWS}
+                viewLabel={(name) => t(VIEW_KEY[name])}
+                counts={counts}
+                view={view}
+                onView={setView}
+                categories={categories}
+                category={categoryFilter}
+                onCategory={setCategoryFilter}
+                resultCount={filtered.length}
+              />
+            </div>
+
+            {(view !== 'all' || categoryFilter) && (
+              <div className="-mt-1 flex flex-wrap items-center gap-2">
+                {view !== 'all' && (
+                  <button type="button" onClick={() => setView('all')} className="flex items-center gap-1.5 rounded-full bg-ink py-1.5 pe-2.5 ps-3.5 text-xs font-semibold text-white outline-none transition hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/50">
+                    {t(VIEW_KEY[view])} <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {categoryFilter && (
+                  <button type="button" onClick={() => setCategoryFilter('')} className="flex items-center gap-1.5 rounded-full bg-ink py-1.5 pe-2.5 ps-3.5 text-xs font-semibold text-white outline-none transition hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/50">
+                    {nameOf(categoryFilter)} <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             )}
 
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <label className="relative block min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={t('bills.searchPlaceholder')}
-                    aria-label={t('bills.searchPlaceholder')}
-                    className="w-full rounded-xl border border-border bg-white py-3 pe-3.5 ps-10 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
-                  />
-                </label>
-                <div className="sm:w-56 sm:shrink-0">
-                  <Combobox items={categoryItems} ariaLabel={t('bills.categoryLabel')} placeholder={t('bills.allCategories')} searchPlaceholder={t('bills.categorySearch')} value={categoryFilter} onChange={setCategoryFilter} />
-                </div>
-              </div>
-
-              <div role="tablist" aria-label={t('bills.title')} className="-mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-                {VIEWS.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    role="tab"
-                    aria-selected={view === name}
-                    onClick={() => setView(name)}
-                    className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                      view === name ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'
-                    }`}
-                  >
-                    {t(VIEW_KEY[name])}
-                    <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${view === name ? 'bg-white/20 text-white' : 'bg-surface text-muted'}`}>{counts[name]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {filtered.length === 0 ? (
+            {groups.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-10 text-center text-sm text-muted">{t('bills.noMatches')}</div>
             ) : (
-              <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
-                {filtered.map((bill) => (
-                  <BillCard key={bill.id} bill={bill} today={today} category={byId.get(bill.categoryId)} categoryName={nameOf(bill.categoryId)} onSelect={() => setPanel({ mode: 'detail', id: bill.id })} />
+              <div className="flex flex-col gap-6">
+                {groups.map((group, groupIndex) => (
+                  <motion.section
+                    key={group.key}
+                    initial={reduced ? false : { opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: reduced ? 0 : 0.2 + groupIndex * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                    aria-label={t(SECTION_KEY[group.key])}
+                  >
+                    <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+                      <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+                        {t(SECTION_KEY[group.key])}
+                        <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted ring-1 ring-border">{group.bills.length}</span>
+                      </h2>
+                      {group.currency && <span className="text-xs tabular-nums text-muted">{formatMoney(group.total, { decimals: 0, currency: group.currency })}</span>}
+                    </div>
+                    <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-white">
+                      <AnimatePresence initial={false}>
+                        {group.bills.map((bill) => (
+                          <motion.div key={bill.id} layout="position" exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}>
+                            <BillRow
+                              bill={bill}
+                              today={today}
+                              categoryName={bill.categoryId ? nameOf(bill.categoryId) : ''}
+                              onSelect={() => setPanel({ mode: 'detail', id: bill.id })}
+                              onPay={() => setPanel({ mode: 'detail', id: bill.id, pay: true })}
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </motion.section>
                 ))}
               </div>
             )}
@@ -355,9 +393,9 @@ function BillsPage() {
       <Drawer open={Boolean(panel) && (panel.mode === 'add' || Boolean(selected))} onClose={closePanel} title={drawerTitle} label={drawerTitle}>
         {panel?.mode === 'add' && (
           <BillForm
-            key={`add-${addRound}`}
+            key={`add-${addRound}-${panel.template ? panel.template.id : ''}`}
             mode="add"
-            initial={emptyBillForm(currency, readLastPrefs(), categories)}
+            initial={panel.template ? similarForm(panel.template) : emptyBillForm(currency, readLastPrefs(), categories)}
             preferredCurrencies={preferredCurrencies}
             categories={categories}
             currencies={currencies}
@@ -400,6 +438,7 @@ function BillsPage() {
             onDelete={handleDelete}
             onRecurring={handleRecurring}
             onOpenBill={(id) => setPanel({ mode: 'detail', id })}
+            onAddSimilar={() => setPanel({ mode: 'add', template: selected })}
           />
         )}
       </Drawer>

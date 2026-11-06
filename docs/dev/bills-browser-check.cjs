@@ -44,7 +44,7 @@ const respond = (url, method) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (overflow > 0) problems.push(`${name} /bills horizontal overflow ${overflow}px`);
     await page.screenshot({ path: `${out}bills-${name}.png`, fullPage: false });
-    await page.click('text=K-Electric');
+    await page.click('button[aria-label="K-Electric"]');
     await page.waitForSelector('text=Left to pay');
     await page.waitForTimeout(700);
     await page.screenshot({ path: `${out}bill-detail-${name}.png` });

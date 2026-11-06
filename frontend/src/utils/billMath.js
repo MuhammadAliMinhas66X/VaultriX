@@ -6,6 +6,7 @@ export const FREQUENCIES = ['none', 'daily', 'weekly', 'monthly', 'quarterly', '
 
 const OPEN = ['upcoming', 'dueToday', 'overdue', 'partial'];
 const EPSILON = 0.004;
+export const SOON_DAYS = 7;
 
 export const billStatus = (bill, today) => {
   if (bill.cancelledAt) return 'cancelled';
@@ -65,6 +66,8 @@ export const summarizeBills = (bills, rates, base, today) => {
     dueTodayCount: 0,
     dueTodayTotal: 0,
     upcomingCount: 0,
+    soonCount: 0,
+    soonTotal: 0,
     partialCount: 0,
     paidMonthCount: 0,
     paidMonthTotal: 0,
@@ -103,6 +106,10 @@ export const summarizeBills = (bills, rates, base, today) => {
         if (value !== null) out.dueTodayTotal += value;
       }
       if (status === 'upcoming') out.upcomingCount += 1;
+      if ((status === 'upcoming' || status === 'partial') && !isPastDue(bill, today) && daysBetween(today, dayKey(bill.dueAt)) <= SOON_DAYS) {
+        out.soonCount += 1;
+        if (value !== null) out.soonTotal += value;
+      }
       if (status === 'partial') out.partialCount += 1;
     }
 
@@ -121,3 +128,46 @@ export const attention = (bills, today, limit = 3) =>
     'unpaid',
     today
   ).slice(0, limit);
+
+export const SECTIONS = ['overdue', 'today', 'soon', 'later', 'paid', 'cancelled'];
+
+export const sectionOf = (bill, today) => {
+  const status = billStatus(bill, today);
+  if (status === 'cancelled') return 'cancelled';
+  if (status === 'paid') return 'paid';
+  const due = dayKey(bill.dueAt);
+  if (due < today) return 'overdue';
+  if (due === today) return 'today';
+  return daysBetween(today, due) <= SOON_DAYS ? 'soon' : 'later';
+};
+
+// Groups bills the way a person thinks about them: what needs attention first.
+export const groupBills = (list, today) => {
+  const groups = SECTIONS.map((key) => ({ key, bills: [] }));
+  list.forEach((bill) => groups.find((group) => group.key === sectionOf(bill, today)).bills.push(bill));
+  groups.forEach((group) => {
+    group.bills.sort((a, b) => {
+      const order = dayKey(a.dueAt).localeCompare(dayKey(b.dueAt));
+      return group.key === 'paid' || group.key === 'cancelled' ? -order : order;
+    });
+    const currencies = new Set(group.bills.map((bill) => bill.currency));
+    group.currency = currencies.size === 1 ? [...currencies][0] : null;
+    group.total = group.bills.reduce((sum, bill) => sum + (group.key === 'paid' || group.key === 'cancelled' ? bill.total : bill.remaining), 0);
+  });
+  return groups.filter((group) => group.bills.length > 0);
+};
+
+// What to say next to a bill: relative to today, never a bare date.
+export const dueNote = (bill, today) => {
+  const status = billStatus(bill, today);
+  if (status === 'cancelled') return { key: 'bills.rowCancelled' };
+  if (status === 'paid') {
+    const last = bill.payments.reduce((max, payment) => (dayKey(payment.paidAt) > max ? dayKey(payment.paidAt) : max), '');
+    return { key: 'bills.rowPaidOn', date: last || dayKey(bill.dueAt) };
+  }
+  const gap = daysBetween(today, dayKey(bill.dueAt));
+  if (gap < 0) return { key: 'bills.rowOverdueDays', count: -gap, strong: true };
+  if (gap === 0) return { key: 'bills.rowDueToday', strong: true };
+  if (gap === 1) return { key: 'bills.rowDueTomorrow' };
+  return { key: 'bills.rowDueInDays', count: gap };
+};

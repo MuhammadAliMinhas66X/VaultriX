@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Ban, Copy, Pause, Pencil, Play, Plus, Repeat, RotateCcw, Share2, Trash2 } from 'lucide-react';
+import { Ban, Copy, CopyPlus, Pause, Pencil, Play, Plus, Repeat, RotateCcw, Share2, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import { CategoryIcon } from '../expenses/categoryIcons.jsx';
@@ -41,7 +41,7 @@ function Confirm({ message, confirmLabel, onCancel, onConfirm, tone = 'danger' }
   );
 }
 
-function BillDetail({ bill, today, category, categoryName, siblings, paymentBusy, autoPay, onEdit, onShare, onPay, onDeletePayment, onToggleCancel, onDelete, onRecurring, onOpenBill }) {
+function BillDetail({ bill, today, category, categoryName, siblings, paymentBusy, autoPay, onEdit, onShare, onPay, onDeletePayment, onToggleCancel, onDelete, onRecurring, onOpenBill, onAddSimilar }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [paying, setPaying] = useState(Boolean(autoPay));
@@ -83,6 +83,9 @@ function BillDetail({ bill, today, category, categoryName, siblings, paymentBusy
         <div className="flex shrink-0 items-center gap-2">
           <button type="button" onClick={onShare} title={t('bills.share')} aria-label={t('bills.share')} className={iconButton}>
             <Share2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </button>
+          <button type="button" onClick={onAddSimilar} title={t('bills.addSimilar')} aria-label={t('bills.addSimilar')} className={iconButton}>
+            <CopyPlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </button>
           <button type="button" onClick={onEdit} title={t('loans.edit')} aria-label={t('loans.edit')} className={iconButton}>
             <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
