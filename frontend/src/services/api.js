@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getDeviceFallbackId } from '../utils/deviceFallbackId.js';
+import { installRequestCache, clearRequestCache } from './requestCache.js';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
@@ -14,7 +15,10 @@ const api = axios.create({
   },
 });
 
+installRequestCache(api);
+
 export const setAuthToken = (token) => {
+  if (!token) clearRequestCache();
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
   } else {
