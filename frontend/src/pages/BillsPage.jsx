@@ -20,6 +20,7 @@ import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
 import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
+import { GROUP_KEY, billerById, groupOfBill } from '../utils/billers.js';
 import { createBill, updateBill, deleteBill, addBillPayment, deleteBillPayment, setBillCancelled, changeBillRecurring } from '../services/billService.js';
 import { VIEWS, countByView, groupBills, matchesView, sortBills, summarizeBills } from '../utils/billMath.js';
 import { addPeriods } from '../utils/billDates.js';
@@ -64,14 +65,14 @@ function BillsPage() {
   const { currencies } = useLocalizedOptions();
   const { rates, streams } = useIncome();
   const { items, activeId } = useAppNav();
-  const { categories, byId, nameOf, addCategory } = useExpenseCategories();
+  const { categories, nameOf, addCategory } = useExpenseCategories();
   const location = useLocation();
   const navigate = useNavigate();
 
   const today = todayInput();
   const [view, setView] = useState('all');
   const [query, setQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [panel, setPanel] = useState(null);
   const [share, setShare] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -109,12 +110,12 @@ function BillsPage() {
     const needle = query.trim().toLowerCase();
     const list = bills.filter((bill) => {
       if (!matchesView(bill, view, today)) return false;
-      if (categoryFilter && (bill.categoryId || '') !== categoryFilter) return false;
+      if (typeFilter && groupOfBill(bill) !== typeFilter) return false;
       if (needle && !`${bill.billerName} ${bill.billerAccount} ${bill.note}`.toLowerCase().includes(needle)) return false;
       return true;
     });
     return sortBills(list, view, today);
-  }, [bills, view, query, categoryFilter, today]);
+  }, [bills, view, query, typeFilter, today]);
 
   const selected = panel && panel.id ? bills.find((bill) => bill.id === panel.id) || null : null;
   const siblings = useMemo(
@@ -129,14 +130,27 @@ function BillsPage() {
 
   const money = (value) => formatMoney(value, { decimals: 0, currency });
   const groups = useMemo(() => groupBills(filtered, today), [filtered, today]);
+  const typeOptions = useMemo(() => [...new Set(bills.map((bill) => groupOfBill(bill)))], [bills]);
 
   const replaceBill = (bill) => setBills((prev) => (prev.some((item) => item.id === bill.id) ? prev.map((item) => (item.id === bill.id ? bill : item)) : [...prev, bill]));
   const closePanel = () => setPanel(null);
 
+  // The category comes from the company type (Electricity, Internet, ...). It is
+  // found by name or created once, so the expense a payment makes is filed right.
+  const categoryForType = async (billerId) => {
+    const known = billerById(billerId);
+    const name = t(GROUP_KEY[known ? known.group : 'other']);
+    const found = categories.find((item) => item.name.trim().toLowerCase() === name.toLowerCase());
+    if (found) return found.id;
+    const created = await addCategory(name);
+    return created ? created.id : null;
+  };
+
   const handleCreate = async (payload, extra, another, payNow) => {
     setBusy(true);
     try {
-      let { bill } = await createBill(payload);
+      const categoryId = await categoryForType(payload.billerId);
+      let { bill } = await createBill({ ...payload, categoryId });
       rememberBill(extra.prefKey || '', extra);
       replaceBill(bill);
       if (payNow) {
@@ -166,7 +180,9 @@ function BillsPage() {
   const handleUpdate = async (payload) => {
     setBusy(true);
     try {
-      const { bill } = await updateBill(selected.id, payload);
+      const retyped = payload.billerId !== selected.billerId || !selected.categoryId;
+      const categoryId = retyped ? await categoryForType(payload.billerId) : selected.categoryId;
+      const { bill } = await updateBill(selected.id, { ...payload, categoryId });
       await load();
       notify.success(t('bills.updatedTitle'));
       setPanel({ mode: 'detail', id: bill.id });
@@ -302,23 +318,23 @@ function BillsPage() {
                 counts={counts}
                 view={view}
                 onView={setView}
-                categories={categories}
-                category={categoryFilter}
-                onCategory={setCategoryFilter}
+                types={typeOptions}
+                type={typeFilter}
+                onType={setTypeFilter}
                 resultCount={filtered.length}
               />
             </div>
 
-            {(view !== 'all' || categoryFilter) && (
+            {(view !== 'all' || typeFilter) && (
               <div className="-mt-1 flex flex-wrap items-center gap-2">
                 {view !== 'all' && (
                   <button type="button" onClick={() => setView('all')} className="flex items-center gap-1.5 rounded-full bg-ink py-1.5 pe-2.5 ps-3.5 text-xs font-semibold text-white outline-none transition hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/50">
                     {t(VIEW_KEY[view])} <X className="h-3.5 w-3.5" />
                   </button>
                 )}
-                {categoryFilter && (
-                  <button type="button" onClick={() => setCategoryFilter('')} className="flex items-center gap-1.5 rounded-full bg-ink py-1.5 pe-2.5 ps-3.5 text-xs font-semibold text-white outline-none transition hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/50">
-                    {nameOf(categoryFilter)} <X className="h-3.5 w-3.5" />
+                {typeFilter && (
+                  <button type="button" onClick={() => setTypeFilter('')} className="flex items-center gap-1.5 rounded-full bg-ink py-1.5 pe-2.5 ps-3.5 text-xs font-semibold text-white outline-none transition hover:opacity-85 focus-visible:ring-2 focus-visible:ring-accent/50">
+                    {t(GROUP_KEY[typeFilter])} <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -350,7 +366,7 @@ function BillsPage() {
                             <BillRow
                               bill={bill}
                               today={today}
-                              categoryName={bill.categoryId ? nameOf(bill.categoryId) : ''}
+                              categoryName={t(GROUP_KEY[groupOfBill(bill)])}
                               onSelect={() => setPanel({ mode: 'detail', id: bill.id })}
                               onPay={() => setPanel({ mode: 'detail', id: bill.id, pay: true })}
                             />
@@ -389,14 +405,12 @@ function BillsPage() {
           <BillForm
             key={`add-${addRound}-${panel.template ? panel.template.id : ''}`}
             mode="add"
-            initial={panel.template ? similarForm(panel.template) : emptyBillForm(currency, readLastPrefs(), categories)}
+            initial={panel.template ? similarForm(panel.template) : emptyBillForm(currency, readLastPrefs())}
             preferredCurrencies={preferredCurrencies}
-            categories={categories}
             currencies={currencies}
             busy={busy}
             onCancel={closePanel}
             onSubmit={handleCreate}
-            onAddCategory={addCategory}
           />
         )}
         {panel?.mode === 'edit' && selected && (
@@ -405,12 +419,10 @@ function BillsPage() {
             mode="edit"
             bill={selected}
             initial={formFromBill(selected)}
-            categories={categories}
             currencies={currencies}
             busy={busy}
             onCancel={() => setPanel({ mode: 'detail', id: selected.id })}
             onSubmit={handleUpdate}
-            onAddCategory={addCategory}
             preferredCurrencies={preferredCurrencies}
           />
         )}
@@ -419,8 +431,7 @@ function BillsPage() {
             key={selected.id}
             bill={selected}
             today={today}
-            category={byId.get(selected.categoryId)}
-            categoryName={nameOf(selected.categoryId)}
+            categoryName={t(GROUP_KEY[groupOfBill(selected)])}
             siblings={siblings}
             paymentBusy={paymentBusy}
             autoPay={panel.pay}

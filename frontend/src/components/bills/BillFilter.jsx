@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { SlidersHorizontal, X, Check } from 'lucide-react';
-import { CategoryIcon } from '../expenses/categoryIcons.jsx';
+import { GROUP_KEY } from '../../utils/billers.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 
 const Chip = ({ active, onClick, children, count }) => (
@@ -17,11 +17,11 @@ const Chip = ({ active, onClick, children, count }) => (
 );
 
 // One small button for every filter. The count badge says how many are on.
-function BillFilter({ views, viewLabel, counts, view, onView, categories, category, onCategory, resultCount }) {
+function BillFilter({ views, viewLabel, counts, view, onView, types, type, onType, resultCount }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef(null);
-  const active = (view !== 'all' ? 1 : 0) + (category ? 1 : 0);
+  const active = (view !== 'all' ? 1 : 0) + (type ? 1 : 0);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -77,15 +77,14 @@ function BillFilter({ views, viewLabel, counts, view, onView, categories, catego
                 </div>
               </div>
 
-              {categories.length > 0 && (
+              {types.length > 1 && (
                 <div className="flex flex-col gap-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{t('bills.categoryLabel')}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{t('bills.typeLabel')}</p>
                   <div className="flex flex-wrap gap-2">
-                    <Chip active={!category} onClick={() => onCategory('')}>{t('bills.allCategories')}</Chip>
-                    {categories.map((item) => (
-                      <Chip key={item.id} active={category === item.id} onClick={() => onCategory(category === item.id ? '' : item.id)}>
-                        <CategoryIcon category={item} className="h-3.5 w-3.5" />
-                        {item.name}
+                    <Chip active={!type} onClick={() => onType('')}>{t('bills.allTypes')}</Chip>
+                    {types.map((item) => (
+                      <Chip key={item} active={type === item} onClick={() => onType(type === item ? '' : item)}>
+                        {t(GROUP_KEY[item])}
                       </Chip>
                     ))}
                   </div>
@@ -98,7 +97,7 @@ function BillFilter({ views, viewLabel, counts, view, onView, categories, catego
                   disabled={active === 0}
                   onClick={() => {
                     onView('all');
-                    onCategory('');
+                    onType('');
                   }}
                   className="rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted outline-none transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-40"
                 >

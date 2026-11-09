@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Plus } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import Button from '../Button.jsx';
 import FormField from '../FormField.jsx';
 import MoneyInput from '../MoneyInput.jsx';
@@ -8,28 +8,15 @@ import FieldError from '../FieldError.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import BrandMark from '../BrandMark.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
-import NewCategorySheet from './NewCategorySheet.jsx';
-import { CategoryIcon } from '../expenses/categoryIcons.jsx';
 import { FREQUENCY_KEY } from './BillStatus.jsx';
 import { splitKey, isOtherKey, keyFor, customFor } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
-import { BILLERS, billerById } from '../../utils/billers.js';
+import { BILLERS, GROUP_KEY, billerById } from '../../utils/billers.js';
 import { FREQUENCIES } from '../../utils/billMath.js';
 import { addPeriods, addDaysKey, toDate } from '../../utils/billDates.js';
 import { readBillerPrefs, readRecent } from '../../utils/billPrefs.js';
 import { todayInput, dateOptions } from '../../utils/dates.js';
-
-const GROUP_KEY = {
-  electricity: 'bills.groupElectricity',
-  gas: 'bills.groupGas',
-  water: 'bills.groupWater',
-  internet: 'bills.groupInternet',
-  mobile: 'bills.groupMobile',
-  insurance: 'bills.groupInsurance',
-  government: 'bills.groupGovernment',
-  other: 'bills.groupOther',
-};
 
 const DESC_KEY = {
   none: 'bills.descNone',
@@ -112,7 +99,6 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [moreOpen, setMoreOpen] = useState(() => mode === 'edit' && Boolean(initial.installation || initial.account));
-  const [sheet, setSheet] = useState(null);
   const [filledFrom, setFilledFrom] = useState('');
   const [paidNow, setPaidNow] = useState(false);
   const touched = useRef(new Set());
@@ -132,15 +118,10 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
 
   const billerItems = useMemo(
     () => [
-      ...BILLERS.map((biller) => ({ value: biller.id, label: biller.name, icon: <BrandMark method="biller" name={biller.name} size="sm" />, group: t(GROUP_KEY[biller.group]) })),
-      { value: OTHER, label: t('bills.billerOther'), icon: <BrandMark method="biller" size="sm" />, group: t(GROUP_KEY.other) },
+      ...BILLERS.map((biller) => ({ value: biller.id, label: biller.name, tag: t(GROUP_KEY[biller.group]), icon: <BrandMark method="biller" name={biller.name} size="sm" /> })),
+      { value: OTHER, label: t('bills.billerOther'), icon: <BrandMark method="biller" size="sm" /> },
     ],
     [t]
-  );
-
-  const categoryItems = useMemo(
-    () => categories.map((category) => ({ value: category.id, label: category.name, icon: <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-ink"><CategoryIcon category={category} className="h-4 w-4" /></span> })),
-    [categories]
   );
 
   const currencyItems = useMemo(() => {
@@ -168,7 +149,6 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
       if (key === OTHER && customName) next.billerName = customName;
       if (!prefs) return next;
       const keep = (field) => touched.current.has(field);
-      if (!keep('categoryId') && categories.some((category) => category.id === prefs.categoryId)) next.categoryId = prefs.categoryId;
       if (!keep('amount') && prefs.amount) next.amount = String(prefs.amount);
       if (!keep('currency') && prefs.currency) next.currency = prefs.currency;
       if (!keep('account') && prefs.account) next.account = prefs.account;
@@ -210,7 +190,6 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
     const payload = {
       billerName,
       billerId: known ? known.id : '',
-      categoryId: form.categoryId || null,
       amount: Number(form.amount),
       currency: form.currency,
       dueAt: form.dueAt,
@@ -282,24 +261,6 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
             </div>
           </div>
           <FieldError>{errors.amount || errors.currency}</FieldError>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <Label optional>{t('bills.categoryLabel')}</Label>
-          <Combobox
-            items={categoryItems}
-            ariaLabel={t('bills.categoryLabel')}
-            placeholder={t('bills.categoryPlaceholder')}
-            searchPlaceholder={t('bills.categorySearch')}
-            value={form.categoryId}
-            onChange={set('categoryId')}
-            footer={{
-              icon: <Plus className="h-4 w-4" strokeWidth={2.5} />,
-              label: t('bills.newCategory'),
-              labelWithQuery: (name) => t('bills.newCategoryNamed', { name }),
-              onClick: (name) => setSheet({ name }),
-            }}
-          />
         </div>
       </Section>
 
@@ -434,18 +395,6 @@ function BillForm({ initial, mode, bill, categories, currencies, preferredCurren
           </Button>
         </div>
       </div>
-
-      {sheet && (
-        <NewCategorySheet
-          initialName={sheet.name}
-          categories={categories}
-          onCreate={onAddCategory}
-          onClose={(created) => {
-            setSheet(null);
-            if (created && created.id) set('categoryId')(created.id);
-          }}
-        />
-      )}
     </form>
   );
 }

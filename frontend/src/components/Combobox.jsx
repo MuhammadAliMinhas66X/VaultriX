@@ -41,7 +41,7 @@ function Combobox({
   const selected = items.find((item) => item.value === value) || null;
   const needle = normalize(query.trim());
   const filtered = needle
-    ? items.filter((item) => (item.search || normalize(item.label)).includes(needle))
+    ? items.filter((item) => (item.search || normalize(`${item.label} ${item.tag || ''}`)).includes(needle))
     : items;
 
   const measure = useCallback(() => {
@@ -226,8 +226,11 @@ function Combobox({
                       {item.icon}
                       {item.flag && <span className="text-base leading-none">{item.flag}</span>}
                       {item.symbol && <span className="w-5 flex-shrink-0 text-xs font-medium text-muted">{item.symbol}</span>}
-                      <span className="min-w-0 flex-1 truncate">
-                        {item.label}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate">{item.label}</span>
+                          {item.tag && <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-border">{item.tag}</span>}
+                        </span>
                         {item.sub && <span className="block truncate text-xs font-normal text-muted">{item.sub}</span>}
                       </span>
                       {isSelected && <Check className="ml-auto h-4 w-4 flex-shrink-0 text-accent" strokeWidth={2.5} />}

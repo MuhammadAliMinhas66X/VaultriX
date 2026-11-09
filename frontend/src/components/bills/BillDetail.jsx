@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Ban, Copy, CopyPlus, Pause, Pencil, Play, Plus, Repeat, RotateCcw, Share2, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
-import { CategoryIcon } from '../expenses/categoryIcons.jsx';
 import BillPayForm from './BillPayForm.jsx';
 import { StatusBadge, FREQUENCY_KEY } from './BillStatus.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -41,7 +40,7 @@ function Confirm({ message, confirmLabel, onCancel, onConfirm, tone = 'danger' }
   );
 }
 
-function BillDetail({ bill, today, category, categoryName, siblings, paymentBusy, autoPay, onEdit, onShare, onPay, onDeletePayment, onToggleCancel, onDelete, onRecurring, onOpenBill, onAddSimilar }) {
+function BillDetail({ bill, today, categoryName, siblings, paymentBusy, autoPay, onEdit, onShare, onPay, onDeletePayment, onToggleCancel, onDelete, onRecurring, onOpenBill, onAddSimilar }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [paying, setPaying] = useState(Boolean(autoPay));
@@ -180,12 +179,7 @@ function BillDetail({ bill, today, category, categoryName, siblings, paymentBusy
         <dl className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3">
           <Detail label={t('bills.dueDateLabel')}>{day(bill.dueAt)}</Detail>
           <Detail label={t('bills.periodLabel')}>{bill.periodStart && bill.periodEnd ? `${day(bill.periodStart)} - ${day(bill.periodEnd)}` : '-'}</Detail>
-          <Detail label={t('bills.categoryLabel')}>
-            <span className="flex items-center gap-2">
-              <CategoryIcon category={category} name={categoryName} className="h-4 w-4 shrink-0" />
-              {categoryName}
-            </span>
-          </Detail>
+          <Detail label={t('bills.typeLabel')}>{categoryName}</Detail>
           <Detail label={t('bills.amountLabel')}>{money(bill.amount)}</Detail>
           {bill.installation > 0 && <Detail label={t('bills.installationLabel')}>{money(bill.installation)}</Detail>}
           <Detail label={t('bills.sourceLabel')}>{sourceText || '-'}</Detail>

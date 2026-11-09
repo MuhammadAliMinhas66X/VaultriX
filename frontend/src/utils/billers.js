@@ -54,3 +54,16 @@ const byId = new Map(BILLERS.map((biller) => [biller.id, biller]));
 
 export const findBiller = (name) => byName.get(name) || null;
 export const billerById = (id) => byId.get(id) || null;
+
+export const GROUP_KEY = {
+  electricity: 'bills.groupElectricity',
+  gas: 'bills.groupGas',
+  water: 'bills.groupWater',
+  internet: 'bills.groupInternet',
+  mobile: 'bills.groupMobile',
+  insurance: 'bills.groupInsurance',
+  government: 'bills.groupGovernment',
+  other: 'bills.groupOther',
+};
+
+export const groupOfBill = (bill) => (billerById(bill.billerId) ? billerById(bill.billerId).group : 'other');
