@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import StepChart from './StepChart.jsx';
+import PaymentBar from './PaymentBar.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { dateOptions } from '../../utils/dates.js';
@@ -29,6 +30,7 @@ function PaymentsChart({ loan }) {
 
   const { series } = chart;
   const percent = Math.round(loanState(loan, series.today).progress * 100);
+  const spansDays = new Set(chart.points.map((point) => point.day)).size > 2;
   const last = loan.payments[loan.payments.length - 1];
   const facts = [
     t('loans.chartPercent', { percent }),
@@ -45,7 +47,8 @@ function PaymentsChart({ loan }) {
           </li>
         ))}
       </ul>
-      <StepChart points={chart.points} dues={chart.dues} startDay={series.startDay} endDay={series.endDay} today={series.today} max={loan.amount} label={t('loans.chartLabel')} />
+      <PaymentBar loan={loan} />
+      {spansDays && <StepChart points={chart.points} dues={chart.dues} startDay={series.startDay} endDay={series.endDay} today={series.today} max={loan.amount} label={t('loans.chartLabel')} />}
     </div>
   );
 }
