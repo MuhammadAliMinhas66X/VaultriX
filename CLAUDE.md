@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
+6. Version numbers continue from the last round. Last delivered: v1_117 (Bills have no category field: the company type shows as a tag in the dropdown and the expense category is made from it; Dashboard balance subtracts loan money paid back; section titles restyled; logo source fixed). v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -151,10 +151,10 @@ Bills (v1_109, v1_110, v1_112)
 - Resume uses `skipMissed`. A bill with payments cannot be deleted. Currency locks once paid. Status (Upcoming, Due Today, Overdue, Partially Paid, Paid, Cancelled) is computed on the client from local today.
 - Each payment creates an Expense (`billId`, `billPaymentId`, unique partial index). Bill-linked expenses cannot be edited or deleted from `/expenses`. Payment failure rolls back.
 - Add and pay are not two chores: the add form has an "I already paid this bill" switch (records a full payment today from the chosen source, client makes create then payment), every unpaid row has a "Pay" button, and the detail view has "Add again" (copies the bill one period later). Note field is NOT in the form anymore (the field still exists on the model).
-- Add-bill form order: recently used companies (chips), Company, Amount + Currency, Category (optional, dropdown with "+ New category" -> `NewCategorySheet`), Due date (+ quick chips), Repeats (dropdown, shows the next 3 due dates), Payment source, paid switch, "More options" (Installation charges, Account / reference / bill number), "Entered in Vaultrix", Save bill, Save & add another.
+- Add-bill form order: recently used companies (chips), Company, Amount + Currency, (no category field since v1_117: the company's type tag, e.g. Electricity, decides the expense category, created by name on first use in `BillsPage.categoryForType`), Due date (+ quick chips), Repeats (dropdown, shows the next 3 due dates), Payment source, paid switch, "More options" (Installation charges, Account / reference / bill number), "Entered in Vaultrix", Save bill, Save & add another.
 - Money boxes use `components/MoneyInput.jsx` (text box, no up/down arrows, digits and one dot, 2 decimals). Never use `type="number"` for money.
 - Choices are remembered per company in localStorage (`utils/billPrefs.js`: last values, `recent` list of 8). "Save & add another" resets the form.
-- Bills page layout (v1_112): `BillsSummary` (one animated card: outstanding count-up, proportion bar, Overdue / Due today / Next 7 days / Paid this month), search + one small filter button (`BillFilter` sheet: status and category, badge shows active count, removable chips under the search), then sections from `groupBills` (Overdue, Due today, Next 7 days, Later, Paid, Cancelled) with `BillRow` rows (relative due text like "Overdue by 3d", Pay button). There is NO "next recurring bill" line anywhere (removed on request). Animations respect `useAppReducedMotion`.
+- Bills page layout (v1_112): `BillsSummary` (one animated card: outstanding count-up, proportion bar, Overdue / Due today / Next 7 days / Paid this month), search + one small filter button (`BillFilter` sheet: status and company type, badge shows active count, removable chips under the search), then sections from `groupBills` (Overdue, Due today, Next 7 days, Later, Paid, Cancelled) with `BillRow` rows (relative due text like "Overdue by 3d", Pay button). There is NO "next recurring bill" line anywhere (removed on request). Animations respect `useAppReducedMotion`.
 - Biller list is `utils/billers.js` (about 45 Pakistani companies: electricity, gas, water, internet, mobile, insurance, government). Logos: `BrandMark` tries `public/logos/index.json`, Google and DuckDuckGo favicons, the site's own icons, then a coloured monogram tile. I cannot download logos here; run `node scripts/fetch-logos.mjs` on his PC.
 - PDFs (bill, receipt, partial summary) use the dependency-free `pdfWriter.js`, always English and Latin letters only. Preview is an HTML replica. Share uses `navigator.share({files})` with WhatsApp, email and copy fallbacks.
 - Dashboard shows `BillsPanel` between the hero card and latest income (no next-recurring line).
@@ -171,12 +171,14 @@ When a new zip arrives, diff these against my last copy and re-apply my parts if
 - `frontend/src/services/api.js`, `apiError.js`, `adminService.js`, `AdminPage.jsx` - his security work; do not overwrite, merge by hand if I must touch them.
 - `frontend/src/App.jsx` - must import `BillsPage` and keep `<Route path="/bills" ...>` inside the `IncomeLayout` routes. Lost at v1_116: Bills then redirects away and "does not appear".
 - `frontend/src/i18n/locales/*.js` (all six) - must keep every `bills.*` key, `nav.bills`, `errors.bill*`, `errors.expenseBillLinked`, `expenses.chooseIcon/quickAdd/categoryName`.
-- `frontend/src/components/Combobox.jsx` - must keep the `footer` and `searchable` props and item `sub`.
+- `frontend/src/components/Combobox.jsx` - must keep the `footer` and `searchable` props and item `sub` and `tag`.
 - `backend/src/models/Expense.js` - must keep `billId`, `billPaymentId` and their two indexes. `backend/src/controllers/expenseController.js` - must keep `BILL_LINKED` guards and `billId` in the DTO.
 - `frontend/src/pages/ExpensesPage.jsx` - must keep the "Bill" pill and the row click to `/bills?bill=ID`.
 - `frontend/src/data/resources.js` - 'bills' must stay registered; `BillsPage` and `DashboardPage` read bills through `useResource`.
 FASTEST CHECK: `node docs/dev/check-bills-wiring.mjs` from the repo root. It lists exactly which piece is missing. Run it after every new zip and before every delivery.
 Quick check after unzipping: `grep -n bill backend/src/app.js`, run frontend tests (a lost translate.js mapping shows as failing `server-message-coverage` tests), then diff my known-changed files.
+
+Dashboard balance (v1_117): `net - spentBySelf`; money someone else paid only leaves the balance once repaid (`expenseMath.repaidAmount/sumRepaid`, from each expense's `loan.paid / loan.amount`). Loan saves already reload expenses.
 
 ## 9. Verifying UI in the sandbox
 
