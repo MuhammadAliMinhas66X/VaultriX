@@ -36,9 +36,11 @@ const initialsOf = (name) =>
 const sourcesFor = (brand, manifest) => {
   const list = [];
   if (manifest[brand.id]) list.push(`/logos/${manifest[brand.id]}`);
+  // nfrd=1 makes Google answer "not found" when it has no real icon, instead of
+  // sending its grey default tile (which looked like a logo and hid the fallback).
   brand.domains.forEach((domain) => {
-    list.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=256`);
-    list.push(`https://www.google.com/s2/favicons?domain=www.${domain}&sz=256`);
+    list.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=256&nfrd=1`);
+    list.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.${domain}&size=256&nfrd=1`);
   });
   brand.domains.forEach((domain) => {
     list.push(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
