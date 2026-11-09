@@ -3,14 +3,23 @@ import Expense from '../models/Expense.js';
 import Category from '../models/Category.js';
 import Loan from '../models/Loan.js';
 import { isCurrencyCode, cleanLabel } from '../utils/validators.js';
-import { isImageStorageReady } from '../config/cloudinary.js';
-import { destroyImage } from '../services/imageStorage.js';
+import {
+  paidMinorOf,
+  firstPaymentOf,
+  relationOf,
+  personOf,
+  directionOf,
+  sameName,
+  attachExpense,
+  checkDetach,
+  commitDetach,
+  summarizeLoans,
+} from '../utils/expenseLoanLink.js';
 import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
 const LINKED_EDIT = 'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.';
-const BILL_LINKED = 'This expense comes from a bill payment. Change it from Bills.';
 const LINKED_DELETE = 'This expense is linked to a loan that already has payments. Delete those payments first.';
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
@@ -26,8 +35,8 @@ const toExpenseDto = (expense) => ({
   payName: expense.payName || '',
   paidBy: expense.paidBy || 'self',
   payerName: expense.payerName || '',
+  givenTo: expense.givenTo || '',
   loanId: expense.loanId ? String(expense.loanId) : null,
-  billId: expense.billId ? String(expense.billId) : null,
   createdAt: expense.createdAt,
 });
 
@@ -56,19 +65,24 @@ const resolveCategory = async (orgId, raw) => {
 const parsePayer = (body, current) => {
   const paidBy = body.paidBy === undefined ? current.paidBy : body.paidBy;
   if (paidBy !== 'self' && paidBy !== 'other') return undefined;
-  if (paidBy === 'self') return { paidBy, payerName: '' };
-  const name = cleanLabel(body.payerName === undefined ? current.payerName : body.payerName);
-  if (!name) return undefined;
-  return { paidBy, payerName: name };
+
+  if (paidBy === 'other') {
+    if (typeof body.givenTo === 'string' && body.givenTo.trim()) return undefined;
+    const name = cleanLabel(body.payerName === undefined ? current.payerName : body.payerName);
+    if (!name) return undefined;
+    return { paidBy, payerName: name, givenTo: '' };
+  }
+
+  const rawGiven = body.givenTo === undefined ? current.givenTo : body.givenTo;
+  if (rawGiven === undefined || rawGiven === null || String(rawGiven).trim() === '') return { paidBy, payerName: '', givenTo: '' };
+  const given = cleanLabel(rawGiven);
+  if (!given) return undefined;
+  return { paidBy, payerName: '', givenTo: given };
 };
 
-const paidMinorOf = (loan) => (loan.payments || []).reduce((sum, item) => sum + item.amountMinor, 0);
-
-const toLoanMinor = (loan, expenseMinor) => expenseMinor * ((loan.scale || 100) / 100);
-
-const removeLoan = async (loan) => {
-  if (loan.receivedProof?.publicId && isImageStorageReady()) await destroyImage(loan.receivedProof.publicId);
-  await Loan.deleteOne({ _id: loan._id });
+const withLoans = async (orgId, expenses) => {
+  const summaries = await summarizeLoans(orgId, expenses.map((expense) => expense.loanId));
+  return expenses.map((expense) => ({ ...toExpenseDto(expense), loan: expense.loanId ? summaries.get(String(expense.loanId)) || null : null }));
 };
 
 export const listExpenses = async (req, res, next) => {
@@ -81,14 +95,13 @@ export const listExpenses = async (req, res, next) => {
       .limit(2000)
       .lean();
 
-    res.json({ success: true, expenses: expenses.map(toExpenseDto) });
+    res.json({ success: true, expenses: await withLoans(req.user.orgId, expenses) });
   } catch (error) {
     next(error);
   }
 };
 
 export const createExpense = async (req, res, next) => {
-  let createdLoan = null;
   try {
     const body = req.body || {};
 
@@ -106,44 +119,55 @@ export const createExpense = async (req, res, next) => {
     const note = optionalText(body.note, 200);
     if (note === undefined) return fail(res, 400, GENERIC_INVALID);
 
-    const payer = parsePayer(body, { paidBy: 'self', payerName: '' });
+    const payer = parsePayer(body, { paidBy: 'self', payerName: '', givenTo: '' });
     if (!payer) return fail(res, 400, GENERIC_INVALID);
 
     const where = payer.paidBy === 'self' ? parseWhere(body.payMethod, body.payName) : { method: '', name: '' };
     if (!where) return fail(res, 400, GENERIC_INVALID);
 
-    if (payer.paidBy === 'other') {
-      createdLoan = await Loan.create({
+    const relation = relationOf(payer);
+    let loan = null;
+    if (relation !== 'none') {
+      loan = await attachExpense({
         orgId: req.user.orgId,
-        createdBy: req.user.id,
-        direction: 'borrowed',
-        personName: payer.payerName,
+        userId: req.user.id,
+        direction: directionOf(relation),
+        person: personOf(payer),
         amountMinor,
         currency: body.currency,
-        sentAt: spentAt,
+        spentAt,
         note,
-        source: 'expense',
       });
     }
 
-    const expense = await Expense.create({
-      orgId: req.user.orgId,
-      createdBy: req.user.id,
-      amountMinor,
-      currency: body.currency,
-      categoryId: categoryId ?? null,
-      spentAt,
-      note,
-      payMethod: where.method,
-      payName: where.name,
-      paidBy: payer.paidBy,
-      payerName: payer.payerName,
-      loanId: createdLoan ? createdLoan._id : null,
-    });
+    let expense;
+    try {
+      expense = await Expense.create({
+        orgId: req.user.orgId,
+        createdBy: req.user.id,
+        amountMinor,
+        currency: body.currency,
+        categoryId: categoryId ?? null,
+        spentAt,
+        note,
+        payMethod: where.method,
+        payName: where.name,
+        paidBy: payer.paidBy,
+        payerName: payer.payerName,
+        givenTo: payer.givenTo,
+        loanId: loan ? loan._id : null,
+      });
+    } catch (error) {
+      if (loan) {
+        const check = await checkDetach(loan, { _id: null, amountMinor });
+        if (!check.error) await commitDetach(check).catch(() => null);
+      }
+      throw error;
+    }
 
-    res.status(201).json({ success: true, expense: toExpenseDto(expense.toObject()) });
+    const [dto] = await withLoans(req.user.orgId, [expense.toObject()]);
+    res.status(201).json({ success: true, expense: dto });
   } catch (error) {
-    if (createdLoan) await Loan.deleteOne({ _id: createdLoan._id }).catch(() => null);
     handleError(res, next, error);
   }
 };
@@ -152,7 +176,6 @@ export const updateExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!expense) return fail(res, 404, NOT_FOUND);
-    if (expense.billId) return fail(res, 400, BILL_LINKED);
 
     const body = req.body || {};
     const update = {};
@@ -186,7 +209,7 @@ export const updateExpense = async (req, res, next) => {
       update.note = note;
     }
 
-    const payer = parsePayer(body, { paidBy: expense.paidBy, payerName: expense.payerName });
+    const payer = parsePayer(body, { paidBy: expense.paidBy, payerName: expense.payerName, givenTo: expense.givenTo });
     if (!payer) return fail(res, 400, GENERIC_INVALID);
 
     if (payer.paidBy === 'self' && body.payMethod !== undefined) {
@@ -207,51 +230,73 @@ export const updateExpense = async (req, res, next) => {
       note: update.note ?? expense.note,
     };
 
-    let loan = expense.loanId ? await Loan.findOne({ _id: expense.loanId, orgId: req.user.orgId }) : null;
-    let loanId = loan ? loan._id : null;
+    const oldLoan = expense.loanId ? await Loan.findOne({ _id: expense.loanId, orgId: req.user.orgId }) : null;
+    const oldRelation = relationOf(expense);
+    const oldPerson = personOf(expense);
+    const newRelation = relationOf(payer);
+    const person = personOf(payer);
+    const direction = directionOf(newRelation);
+    let loanId = null;
 
-    if (payer.paidBy === 'self') {
-      if (loan) {
-        if (loan.payments.length > 0) return fail(res, 400, LINKED_EDIT);
-        await removeLoan(loan);
-      }
-      loanId = null;
-    } else if (loan) {
-      const paid = paidMinorOf(loan);
-      const nextMinor = toLoanMinor(loan, next_.amountMinor);
-      const firstPayment = loan.payments.reduce((min, item) => (!min || item.paidAt < min ? item.paidAt : min), null);
-      const sensitive =
-        nextMinor !== loan.amountMinor || next_.currency !== loan.currency || String(next_.spentAt) !== String(loan.sentAt);
-      if (loan.payments.length > 0 && sensitive) {
-        if (nextMinor < paid || next_.currency !== loan.currency || (firstPayment && next_.spentAt > firstPayment)) {
-          return fail(res, 400, LINKED_EDIT);
-        }
-      }
-      loan.personName = payer.payerName;
-      loan.amountMinor = nextMinor;
-      loan.currency = next_.currency;
-      loan.sentAt = next_.spentAt;
-      loan.note = next_.note;
-      await loan.save();
-    } else {
-      const created = await Loan.create({
+    const attach = (prefer) =>
+      attachExpense({
         orgId: req.user.orgId,
-        createdBy: req.user.id,
-        direction: 'borrowed',
-        personName: payer.payerName,
+        userId: req.user.id,
+        direction,
+        person,
         amountMinor: next_.amountMinor,
         currency: next_.currency,
-        sentAt: next_.spentAt,
+        spentAt: next_.spentAt,
         note: next_.note,
-        source: 'expense',
+        prefer,
       });
-      loanId = created._id;
+
+    if (newRelation === 'none') {
+      if (oldLoan) {
+        const check = await checkDetach(oldLoan, expense);
+        if (check.error) return fail(res, 400, LINKED_EDIT);
+        await commitDetach(check);
+      }
+    } else if (oldLoan) {
+      const same = oldLoan.direction === direction && oldLoan.currency === next_.currency && sameName(oldLoan.personName, person);
+      if (same) {
+        const paid = paidMinorOf(oldLoan);
+        const newTotal = oldLoan.amountMinor - expense.amountMinor + next_.amountMinor;
+        if (newTotal < Math.max(paid, 1)) return fail(res, 400, LINKED_EDIT);
+
+        let sentAt = oldLoan.sentAt;
+        let single = false;
+        if (oldLoan.source === 'expense') {
+          const others = await Expense.find({ orgId: req.user.orgId, loanId: oldLoan._id, _id: { $ne: expense._id } })
+            .select('spentAt')
+            .lean();
+          single = others.length === 0;
+          sentAt = [...others.map((item) => item.spentAt), next_.spentAt].reduce((min, date) => (date < min ? date : min));
+          const first = firstPaymentOf(oldLoan);
+          if (first && first < sentAt) return fail(res, 400, LINKED_EDIT);
+        }
+        oldLoan.amountMinor = newTotal;
+        oldLoan.sentAt = sentAt;
+        if (single) oldLoan.note = next_.note;
+        await oldLoan.save();
+        loanId = oldLoan._id;
+      } else {
+        const check = await checkDetach(oldLoan, expense);
+        if (check.error) return fail(res, 400, LINKED_EDIT);
+        const target = await attach(null);
+        await commitDetach(check);
+        loanId = target._id;
+      }
+    } else if (newRelation !== oldRelation || !sameName(person, oldPerson)) {
+      const target = await attach(null);
+      loanId = target._id;
     }
 
-    Object.assign(expense, update, { paidBy: payer.paidBy, payerName: payer.payerName, loanId });
+    Object.assign(expense, update, { paidBy: payer.paidBy, payerName: payer.payerName, givenTo: payer.givenTo, loanId });
     await expense.save();
 
-    res.json({ success: true, expense: toExpenseDto(expense.toObject()) });
+    const [dto] = await withLoans(req.user.orgId, [expense.toObject()]);
+    res.json({ success: true, expense: dto });
   } catch (error) {
     handleError(res, next, error);
   }
@@ -261,13 +306,13 @@ export const deleteExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!expense) return fail(res, 404, NOT_FOUND);
-    if (expense.billId) return fail(res, 400, BILL_LINKED);
 
     if (expense.loanId) {
       const loan = await Loan.findOne({ _id: expense.loanId, orgId: req.user.orgId });
       if (loan) {
-        if (loan.payments.length > 0) return fail(res, 400, LINKED_DELETE);
-        await removeLoan(loan);
+        const check = await checkDetach(loan, expense);
+        if (check.error) return fail(res, 400, LINKED_DELETE);
+        await commitDetach(check);
       }
     }
 
