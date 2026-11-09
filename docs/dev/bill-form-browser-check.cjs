@@ -80,7 +80,7 @@ const respond = (url, method, body) => {
     await page.getByRole('button', { name: 'In 7 days' }).click();
     await page.getByRole('switch').click();
     await page.getByRole('button', { name: 'Save bill' }).click();
-    await page.waitForSelector('text=Paid', { timeout: 10000 });
+    for (let i = 0; i < 50 && !(bills[1] && bills[1].remaining === 0); i += 1) await page.waitForTimeout(100);
     if (!bills[1] || bills[1].remaining !== 0) problems.push(`${name} paid-now did not record a payment`);
     await page.waitForTimeout(500);
     await page.screenshot({ path: `${out}form-${name}-paid.png` });

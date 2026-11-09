@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_115 (request storm fix, duplicate request layer, per-user rate limits, one currency list, refresh token replay detection). v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
+6. Version numbers continue from the last round. Last delivered: v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -169,6 +169,13 @@ When a new zip arrives, diff these against my last copy and re-apply my parts if
 - `backend/src/utils/organizations.js` - must delete `Bill` on org cleanup.
 - `backend/src/middleware/rateLimiters.js` - must export `financeLimiter` and `fxLimiter`.
 - `frontend/src/services/api.js`, `apiError.js`, `adminService.js`, `AdminPage.jsx` - his security work; do not overwrite, merge by hand if I must touch them.
+- `frontend/src/App.jsx` - must import `BillsPage` and keep `<Route path="/bills" ...>` inside the `IncomeLayout` routes. Lost at v1_116: Bills then redirects away and "does not appear".
+- `frontend/src/i18n/locales/*.js` (all six) - must keep every `bills.*` key, `nav.bills`, `errors.bill*`, `errors.expenseBillLinked`, `expenses.chooseIcon/quickAdd/categoryName`.
+- `frontend/src/components/Combobox.jsx` - must keep the `footer` and `searchable` props and item `sub`.
+- `backend/src/models/Expense.js` - must keep `billId`, `billPaymentId` and their two indexes. `backend/src/controllers/expenseController.js` - must keep `BILL_LINKED` guards and `billId` in the DTO.
+- `frontend/src/pages/ExpensesPage.jsx` - must keep the "Bill" pill and the row click to `/bills?bill=ID`.
+- `frontend/src/data/resources.js` - 'bills' must stay registered; `BillsPage` and `DashboardPage` read bills through `useResource`.
+FASTEST CHECK: `node docs/dev/check-bills-wiring.mjs` from the repo root. It lists exactly which piece is missing. Run it after every new zip and before every delivery.
 Quick check after unzipping: `grep -n bill backend/src/app.js`, run frontend tests (a lost translate.js mapping shows as failing `server-message-coverage` tests), then diff my known-changed files.
 
 ## 9. Verifying UI in the sandbox
