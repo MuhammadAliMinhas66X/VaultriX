@@ -29,7 +29,7 @@ function LoanCard({ loan, selected, converted, currency, onSelect }) {
           <span className="mt-0.5 block truncate text-sm text-muted">{t('loans.sentOn', { date: formatDate(new Date(loan.sentAt), dateOptions) })}</span>
         </span>
         <span className="shrink-0 text-end">
-          <span className="block text-base font-semibold tabular-nums text-ink">{formatMoney(shown, { decimals: 0, maxDecimals: 4, currency: loan.currency })}</span>
+          <span className="block text-base font-semibold tabular-nums text-ink">{formatMoney(shown, { decimals: 0, currency: loan.currency })}</span>
           <span className="block text-xs text-muted">
             {!state.done && converted !== null ? t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) }) : state.done ? t('loans.statTotal') : t('loans.chartLeft')}
           </span>
@@ -43,13 +43,16 @@ function LoanCard({ loan, selected, converted, currency, onSelect }) {
       )}
 
       <span className="flex flex-wrap items-center gap-2 text-xs">
+        {loan.fromExpense && (
+          <span className="rounded-full border border-ink px-2.5 py-1 font-medium text-ink">{loan.direction === 'lent' ? t('loans.viaExpenseGivenShort') : t('loans.viaExpenseBorrowedShort')}</span>
+        )}
         <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 font-medium ${statusClass(state)}`}>
           {state.done && <Check className="h-3 w-3" strokeWidth={2.5} />}
           {statusLabel(t, formatDate, loan, state)}
         </span>
         {partial && (
           <span className="rounded-full bg-surface px-2.5 py-1 font-medium tabular-nums text-muted">
-            {t('loans.paidOf', { paid: formatMoney(loan.paid, { decimals: 0, maxDecimals: 4, currency: loan.currency }), total: formatMoney(loan.amount, { decimals: 0, maxDecimals: 4, currency: loan.currency }) })}
+            {t('loans.paidOf', { paid: formatMoney(loan.paid, { decimals: 0, currency: loan.currency }), total: formatMoney(loan.amount, { decimals: 0, currency: loan.currency }) })}
           </span>
         )}
       </span>

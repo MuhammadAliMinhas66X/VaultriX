@@ -19,7 +19,7 @@ const sendImage = (url, file) => {
 export const listLoans = () => run(() => api.get('/loans'));
 export const createLoan = (payload) => run(() => api.post('/loans', payload));
 export const updateLoan = (id, payload) => run(() => api.patch(`/loans/${id}`, payload));
-export const deleteLoan = (id) => run(() => api.delete(`/loans/${id}`));
+export const deleteLoan = (id, { deleteExpenses = false } = {}) => run(() => api.delete(`/loans/${id}`, { params: deleteExpenses ? { deleteExpenses: 'true' } : {} }));
 
 export const addLoanPayment = (id, payload) => run(() => api.post(`/loans/${id}/payments`, payload));
 export const deleteLoanPayment = (id, paymentId) => run(() => api.delete(`/loans/${id}/payments/${paymentId}`));

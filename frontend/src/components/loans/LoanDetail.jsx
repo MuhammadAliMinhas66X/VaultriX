@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Copy, Pencil, Plus, Trash2 } from 'lucide-react';
@@ -44,12 +45,13 @@ function LoanDetail({
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [confirming, setConfirming] = useState(false);
+  const entries = loan.entries || [];
   const [paying, setPaying] = useState(false);
   const [confirmPaymentId, setConfirmPaymentId] = useState(null);
 
   const state = loanState(loan);
   const borrowed = loan.direction === 'borrowed';
-  const money = (value) => formatMoney(value, { decimals: 0, maxDecimals: 4, currency: loan.currency });
+  const money = (value) => formatMoney(value, { decimals: 0, currency: loan.currency });
   const day = (value) => formatDate(new Date(value), dateOptions);
 
   const copyNumber = async () => {
@@ -73,7 +75,7 @@ function LoanDetail({
           <h2 className="truncate text-lg font-semibold tracking-tight text-ink">{loan.personName}</h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-ink">{borrowed ? t('loans.directionBorrowed') : t('loans.directionLent')}</span>
-            {loan.fromExpense && <span className="rounded-full border border-ink px-2.5 py-1 text-xs font-medium text-ink">{t('loans.fromExpense')}</span>}
+            {loan.fromExpense && <span className="rounded-full border border-ink px-2.5 py-1 text-xs font-medium text-ink">{borrowed ? t('loans.viaExpenseBorrowed') : t('loans.viaExpenseGiven')}</span>}
             <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(state)}`}>
               {state.done && <Check className="h-3 w-3" strokeWidth={2.5} />}
               {statusLabel(t, formatDate, loan, state)}
@@ -81,9 +83,15 @@ function LoanDetail({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onEdit} title={t('loans.edit')} aria-label={t('loans.edit')} className={iconButton}>
-            <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
-          </button>
+          {loan.fromExpense ? (
+            <Link to="/expenses" title={t('loans.editInExpenses')} aria-label={t('loans.editInExpenses')} className={iconButton}>
+              <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </Link>
+          ) : (
+            <button type="button" onClick={onEdit} title={t('loans.edit')} aria-label={t('loans.edit')} className={iconButton}>
+              <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setConfirming(true)}
@@ -100,13 +108,20 @@ function LoanDetail({
         {confirming && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="flex flex-wrap items-center gap-3 border-y border-red-100 bg-red-50 px-5 py-3">
-              <span className="me-auto text-sm font-medium text-red-700">{t('loans.deleteAsk')}</span>
+              <span className="w-full text-sm font-medium text-red-700 sm:w-auto sm:me-auto">
+                {entries.length > 0 ? t('loans.deleteAskLinked', { count: entries.length }) : t('loans.deleteAsk')}
+              </span>
               <button type="button" onClick={() => setConfirming(false)} className="rounded-lg border border-red-200 bg-white px-3.5 py-2 text-sm font-medium text-ink transition hover:bg-surface">
                 {t('common.cancel')}
               </button>
-              <button type="button" onClick={onDelete} className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-red-700">
-                <Trash2 className="h-4 w-4" /> {t('loans.delete')}
+              <button type="button" onClick={() => onDelete(false)} className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-red-700">
+                <Trash2 className="h-4 w-4" /> {entries.length > 0 ? t('loans.deleteKeepExpenses') : t('loans.delete')}
               </button>
+              {entries.length > 0 && (
+                <button type="button" onClick={() => onDelete(true)} className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">
+                  <Trash2 className="h-4 w-4" /> {t('loans.deleteWithExpenses')}
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -120,6 +135,26 @@ function LoanDetail({
           <p className="mt-3 text-xs tabular-nums text-muted">{t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) })}</p>
         )}
       </div>
+
+      {entries.length > 0 && (
+        <section className="mx-5 mt-5 rounded-xl border border-border">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <h3 className="text-sm font-semibold text-ink">{t('loans.entriesTitle')}</h3>
+            <Link to="/expenses" className="text-xs font-semibold text-ink underline underline-offset-4">{t('loans.viewExpenses')}</Link>
+          </div>
+          <ul>
+            {entries.map((entry) => (
+              <li key={entry.expenseId} className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-ink">{entry.note || t(borrowed ? 'loans.entryBorrowed' : 'loans.entryGiven')}</span>
+                  <span className="block text-xs text-muted">{day(entry.spentAt)}</span>
+                </span>
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">{money(entry.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="flex flex-col gap-7 p-5">
         <section className="flex flex-col gap-4">
@@ -200,7 +235,8 @@ function LoanDetail({
         <dl className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-3">
           <Detail label={borrowed ? t('loans.sentDateBorrowed') : t('loans.sentDateLent')}>{day(loan.sentAt)}</Detail>
           <Detail label={t('loans.enteredLabel')}>{day(loan.createdAt)}</Detail>
-          <Detail label={t('loans.dueLabel')}>{loan.dueAt ? day(loan.dueAt) : '-'}</Detail>
+          {!loan.fromExpense && <Detail label={t('loans.dueLabel')}>{loan.dueAt ? day(loan.dueAt) : '-'}</Detail>}
+          {!loan.fromExpense && (
           <Detail label={borrowed ? t('loans.receivedBorrowedLabel') : t('loans.receivedLentLabel')} wide>
             {loan.receivedMethod ? (
               <span className="flex items-center gap-2">
@@ -211,9 +247,12 @@ function LoanDetail({
               '-'
             )}
           </Detail>
+          )}
           {loan.note && <Detail label={borrowed ? t('loans.noteLabelBorrowed') : t('loans.noteLabelLent')} wide>{loan.note}</Detail>}
         </dl>
 
+        {!loan.fromExpense && (
+          <>
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold text-ink">{borrowed ? t('loans.payoutBorrowed') : t('loans.payoutLent')}</h3>
           {loan.payoutMethod ? (
@@ -245,6 +284,8 @@ function LoanDetail({
           <h3 className="text-sm font-semibold text-ink">{borrowed ? t('loans.photoReceivedBorrowed') : t('loans.photoReceivedLent')}</h3>
           <ProofSlot proof={loan.receivedProof} uploading={uploadingKey === 'received'} onUpload={onUploadReceived} onRemove={onRemoveReceived} />
         </section>
+          </>
+        )}
       </div>
     </div>
   );
