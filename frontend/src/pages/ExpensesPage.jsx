@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CornerDownRight, Plus, Receipt, Search, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
@@ -63,6 +63,7 @@ function ExpensesPage() {
   const [previous, setPrevious] = useState([]);
   const [categories, setCategories] = useState([]);
   const [people, setPeople] = useState([]);
+  const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -398,7 +399,7 @@ function ExpensesPage() {
                             <li key={expense.id} className="border-b border-border last:border-b-0">
                               <button
                                 type="button"
-                                onClick={() => setPanel({ mode: 'edit', expense })}
+                                onClick={() => (expense.billId ? navigate(`/bills?bill=${expense.billId}`) : setPanel({ mode: 'edit', expense }))}
                                 className="flex w-full items-center gap-3 px-4 py-3.5 text-start outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60 sm:px-5"
                               >
                                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink">
@@ -407,6 +408,7 @@ function ExpensesPage() {
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
+                                    {expense.billId && <span className="shrink-0 rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('bills.fromBill')}</span>}
                                     {expense.paidBy === 'other' && (
                                       <span className="max-w-[55%] shrink-0 truncate rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('expenses.paidByName', { name: expense.payerName })}</span>
                                     )}
