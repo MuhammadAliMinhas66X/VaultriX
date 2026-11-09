@@ -15,7 +15,7 @@ import { amountForTotal, isDeducted } from '../utils/salaryCuts.js';
 import { byReceivedDesc, summarize, toBase } from '../utils/incomeMath.js';
 import { dateOptions, todayInput } from '../utils/dates.js';
 import { summarizeBills } from '../utils/billMath.js';
-import { monthKey, sumExpenses } from '../utils/expenseMath.js';
+import { monthKey, sumExpenses, sumRepaid } from '../utils/expenseMath.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
 import { useResource } from '../data/useResource.js';
 
@@ -43,7 +43,9 @@ function DashboardPage() {
     () => (monthExpenses && rates ? sumExpenses(monthExpenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total : 0),
     [monthExpenses, rates, currency]
   );
-  const spentBySelf = Math.max(0, spent - spentByOthers);
+  const repaid = useMemo(() => (monthExpenses && rates ? sumRepaid(monthExpenses, rates, currency) : 0), [monthExpenses, rates, currency]);
+  // Money paid by others only leaves my balance once I pay it back.
+  const spentBySelf = Math.max(0, spent - spentByOthers) + Math.min(repaid, spentByOthers);
   const latest = useMemo(() => byReceivedDesc(streams.filter((item) => item.expectedAmount !== null)).slice(0, LATEST_LIMIT), [streams]);
 
   const rateLines = useMemo(() => {
@@ -104,7 +106,12 @@ function DashboardPage() {
           {spent > 0 ? '- ' : ''}
           {formatMoney(spent, { decimals: 2, currency })}
         </span>
-        {spentByOthers > 0 && <span className="mt-0.5 block text-xs text-muted">{t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) })}</span>}
+        {spentByOthers > 0 && (
+          <span className="mt-0.5 block text-xs text-muted">
+            {t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) })}
+            {repaid > 0 ? ` · ${t('dashboard.repaidNote', { amount: formatMoney(repaid, { decimals: 2, currency }) })}` : ''}
+          </span>
+        )}
       </span>
     </div>
   );
@@ -119,7 +126,7 @@ function DashboardPage() {
   const tabletRows = [
     { key: 'gross', label: t('dashboard.beforeDeductions'), value: ready ? formatMoney(summary.gross, { decimals: 2, currency }) : '-' },
     { key: 'cuts', label: t('dashboard.deductions'), value: ready ? `${hasCuts ? '- ' : ''}${formatMoney(hasCuts ? summary.cuts : 0, { decimals: 2, currency })}` : '-', bar: ready && hasCuts },
-    { key: 'spent', label: t('dashboard.spentMonth'), value: ready ? `${spent > 0 ? '- ' : ''}${formatMoney(spent, { decimals: 2, currency })}` : '-', sub: ready && spentByOthers > 0 ? t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) }) : '' },
+    { key: 'spent', label: t('dashboard.spentMonth'), value: ready ? `${spent > 0 ? '- ' : ''}${formatMoney(spent, { decimals: 2, currency })}` : '-', sub: ready && spentByOthers > 0 ? `${t('expenses.paidByOthers', { amount: formatMoney(spentByOthers, { decimals: 2, currency }) })}${repaid > 0 ? ` · ${t('dashboard.repaidNote', { amount: formatMoney(repaid, { decimals: 2, currency }) })}` : ''}` : '' },
   ];
 
   const heroCard = (
@@ -165,8 +172,11 @@ function DashboardPage() {
   const latestCard = (
     <div className="rounded-2xl border border-border bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('dashboard.latest')}</p>
-        <Link to="/income" className="flex items-center gap-1.5 text-sm font-medium text-ink transition hover:opacity-70">
+        <h2 className="flex items-center gap-3 text-base font-bold tracking-tight text-ink">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ink to-[#3a3a42] text-white shadow-sm"><Banknote className="h-[18px] w-[18px]" strokeWidth={2} /></span>
+          {t('dashboard.latest')}
+        </h2>
+        <Link to="/income" className="flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink transition hover:bg-border/60">
           {t('dashboard.viewAll')} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

@@ -54,8 +54,11 @@ function BillsPanel({ bills, summary, currency, today }) {
   return (
     <section className="rounded-2xl border border-border bg-white" aria-label={t('bills.dashTitle')}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">{t('bills.dashTitle')}</p>
-        <Link to="/bills" className="flex items-center gap-1.5 text-sm font-medium text-ink transition hover:opacity-70">
+        <h2 className="flex items-center gap-3 text-base font-bold tracking-tight text-ink">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ink to-[#3a3a42] text-white shadow-sm"><Receipt className="h-[18px] w-[18px]" strokeWidth={2} /></span>
+          {t('bills.dashTitle')}
+        </h2>
+        <Link to="/bills" className="flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink transition hover:bg-border/60">
           {t('bills.dashViewAll')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
         </Link>
       </div>
