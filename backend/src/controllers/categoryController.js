@@ -1,6 +1,7 @@
 import Category, { CATEGORY_TYPE_VALUES } from '../models/Category.js';
 import { cleanLabel, isHexColor } from '../utils/validators.js';
 import { isCategoryIcon } from '../utils/categoryIcons.js';
+import Expense from '../models/Expense.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
@@ -127,7 +128,8 @@ export const deleteCategory = async (req, res, next) => {
   try {
     const result = await Category.deleteOne({ _id: req.params.id, orgId: req.user.orgId });
     if (result.deletedCount === 0) return fail(res, 404, NOT_FOUND);
-    res.json({ success: true });
+    const moved = await Expense.updateMany({ orgId: req.user.orgId, categoryId: req.params.id }, { $set: { categoryId: null } });
+    res.json({ success: true, moved: moved.modifiedCount });
   } catch (error) {
     if (error?.name === 'CastError') return fail(res, 404, NOT_FOUND);
     next(error);
