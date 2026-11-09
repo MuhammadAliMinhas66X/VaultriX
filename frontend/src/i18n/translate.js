@@ -38,11 +38,6 @@ const SERVER_MESSAGE_KEYS = {
   'This account was created with Google. Use the Google sign-in button instead.': 'errors.googleUseButton',
   'You do not have access to this.': 'errors.noAccess',
   'Your current password is not right.': 'errors.currentPasswordWrong',
-  'This bill already has payments, so its currency cannot be changed.': 'errors.billCurrencyLocked',
-  'The total cannot be lower than what is already paid.': 'errors.billTotalLow',
-  'This bill is cancelled, so it cannot take payments.': 'errors.billCancelled',
-  'This bill has payments. Delete the payments first, or cancel the bill instead.': 'errors.billDeletePaid',
-  'This expense comes from a bill payment. Change it from Bills.': 'errors.expenseBillLinked',
   'Your name cannot be empty.': 'errors.nameEmpty',
   'Your session has expired. Please sign in again.': 'errors.sessionExpired',
   'Something went wrong on our end. Please try again in a moment.': 'errors.somethingWrong',
@@ -100,6 +95,7 @@ const SERVER_MESSAGE_KEYS = {
   'That is more than what is left to pay.': 'errors.loanOverpay',
   'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.': 'errors.expenseLinkedEdit',
   'This expense is linked to a loan that already has payments. Delete those payments first.': 'errors.expenseLinkedDelete',
+  'This loan comes from an expense. Change it from the expense instead.': 'errors.loanFromExpense',
   'Photo upload is not available right now.': 'errors.uploadUnavailable',
   'Could not upload that photo. Please try again.': 'errors.uploadFailed',
   '2-step verification is already off.': 'errors.mfaAlreadyOff',
@@ -114,13 +110,6 @@ export const translateError = (language, error) => {
   const known = serverMessageKey(error);
   if (known) return translate(language, known);
   if (error?.isNetwork) return translate(language, 'errors.network');
-  if (error?.status === 429) {
-    const seconds = Number(error.retryAfter) || 0;
-    if (seconds > 0) {
-      const time = seconds < 90 ? `${seconds}s` : `${Math.ceil(seconds / 60)} min`;
-      return translate(language, 'errors.tooManyRequestsWait', { time });
-    }
-    return translate(language, 'errors.tooManyRequests');
-  }
+  if (error?.status === 429) return translate(language, 'errors.tooManyRequests');
   return translate(language, error?.fallbackKey || 'errors.somethingWrong');
 };
