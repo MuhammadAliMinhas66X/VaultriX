@@ -20,11 +20,12 @@ import { useLocalizedOptions } from '../i18n/useLocalizedOptions.js';
 import { notify } from '../i18n/notifications.js';
 import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
-import { listBills, createBill, updateBill, deleteBill, addBillPayment, deleteBillPayment, setBillCancelled, changeBillRecurring } from '../services/billService.js';
+import { createBill, updateBill, deleteBill, addBillPayment, deleteBillPayment, setBillCancelled, changeBillRecurring } from '../services/billService.js';
 import { VIEWS, countByView, groupBills, matchesView, sortBills, summarizeBills } from '../utils/billMath.js';
 import { addPeriods } from '../utils/billDates.js';
 import { todayInput } from '../utils/dates.js';
 import { readLastPrefs, rememberBill } from '../utils/billPrefs.js';
+import { useResource } from '../data/useResource.js';
 
 const VIEW_KEY = {
   all: 'bills.viewAll',
@@ -53,6 +54,8 @@ const SECTION_KEY = {
   cancelled: 'bills.secCancelled',
 };
 
+const NO_BILLS = [];
+
 function BillsPage() {
   const { currency } = useAuth();
   const reduced = useAppReducedMotion();
@@ -66,8 +69,6 @@ function BillsPage() {
   const navigate = useNavigate();
 
   const today = todayInput();
-  const [bills, setBills] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [view, setView] = useState('all');
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -78,22 +79,15 @@ function BillsPage() {
   const [addRound, setAddRound] = useState(0);
   const linkHandled = useRef(false);
 
-  const load = useCallback(async () => {
-    try {
-      const data = await listBills(todayInput());
-      setBills(data.bills);
-      return data.bills;
-    } catch (error) {
-      notify.error(tServer(error));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [tServer]);
+  const { data: billsData, loading, reload, update: updateBillsData } = useResource('bills', { today }, { onError: (error) => notify.error(tServer(error)) });
+  const bills = billsData ? billsData.bills : NO_BILLS;
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const load = useCallback(async () => {
+    const data = await reload();
+    return data ? data.bills : null;
+  }, [reload]);
+
+  const setBills = useCallback((updater) => updateBillsData((prev) => ({ ...(prev || {}), bills: updater(prev ? prev.bills : NO_BILLS) })), [updateBillsData]);
 
   useEffect(() => {
     if (loading || linkHandled.current) return;

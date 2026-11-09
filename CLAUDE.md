@@ -86,6 +86,7 @@ Frontend habits
 - Dates are `YYYY-MM-DD` keys in UTC (`utils/dates.js`, `utils/expenseMath.js shiftDay`). "Today" comes from the local date (`todayInput()`), never `new Date().toISOString()`.
 - Money inputs: `MoneyInput` (no spinner arrows).
 - Never fetch from an effect whose dependencies change every render. `t` and `tServer` from `useTranslation` are stable (memoized on language); any new hook or context value used in a dependency list must be too. An unstable dependency caused the Bills request storm (v1_115).
+- Fetched data lives in ONE place: `frontend/src/data/`. `useResource(name, params)` gives `{ data, loading, refreshing, error, reload, update }`. Resources (bills, expenses, categories, rates) are declared in `data/resources.js`, and the same file holds the rules saying which saves reload which data (a save to `/bills` reloads bills and expenses by itself). Pages must not fetch these in their own effects. To add data to the store: register it there, add a rule, use `useResource`. Not yet on the store: income streams, loans (hands-off), accounts, `/auth/me`.
 - GET requests go through `services/requestCache.js` (same request at the same time is sent once, answers are reused for 8 seconds, any save clears it, admin/auth/security are never cached). Do not add your own caching on top.
 - Dropdowns: use `Combobox` (portal, searchable, grouped, supports `footer`, `searchable={false}`, item `sub`). Do not hand-roll new select popups.
 - Toasts: single animation only (Framer). Do not add a CSS fade on top of it (that caused the blink).

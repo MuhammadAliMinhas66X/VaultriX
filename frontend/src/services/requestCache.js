@@ -5,6 +5,18 @@ const NEVER_CACHE = ['/admin', '/auth', '/security'];
 
 const cache = new Map();
 const inflight = new Map();
+const mutationListeners = new Set();
+const clearListeners = new Set();
+
+export const onMutation = (listener) => {
+  mutationListeners.add(listener);
+  return () => mutationListeners.delete(listener);
+};
+
+export const onCacheCleared = (listener) => {
+  clearListeners.add(listener);
+  return () => clearListeners.delete(listener);
+};
 
 const authOf = (config) => {
   const headers = config.headers;
@@ -22,6 +34,7 @@ const copyFor = (response, config) => ({
 
 export const clearRequestCache = () => {
   cache.clear();
+  clearListeners.forEach((listener) => listener());
 };
 
 export const installRequestCache = (instance) => {
@@ -33,6 +46,7 @@ export const installRequestCache = (instance) => {
     if (method !== 'get') {
       const response = await base(config);
       cache.clear();
+      mutationListeners.forEach((listener) => listener(String(config.url || '')));
       return response;
     }
 

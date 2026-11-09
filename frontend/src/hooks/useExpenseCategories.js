@@ -1,19 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
-import { listExpenseCategories, createExpenseCategory, updateExpenseCategory, deleteExpenseCategory } from '../services/expenseService.js';
+import { createExpenseCategory, updateExpenseCategory, deleteExpenseCategory } from '../services/expenseService.js';
+import { useResource } from '../data/useResource.js';
 
 const byName = (a, b) => a.name.localeCompare(b.name);
+const NO_CATEGORIES = [];
 
 export default function useExpenseCategories() {
   const { t, tServer } = useTranslation();
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    listExpenseCategories()
-      .then(setCategories)
-      .catch((error) => notify.error(tServer(error)));
-  }, []);
+  const { data, update } = useResource('categories', null, { onError: (error) => notify.error(tServer(error)) });
+  const categories = data ?? NO_CATEGORIES;
+  const setCategories = useCallback((fn) => update((prev) => fn(prev ?? NO_CATEGORIES)), [update]);
 
   const failed = useCallback((error) => notify.error(tServer(error), { title: t('expenses.categoryFailedTitle') }), [t, tServer]);
 

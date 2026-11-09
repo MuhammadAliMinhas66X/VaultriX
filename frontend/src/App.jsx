@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
@@ -11,19 +12,27 @@ import { IncomeLayout } from './context/IncomeContext.jsx';
 import IncomePage from './pages/IncomePage.jsx';
 import LoansPage from './pages/LoansPage.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
-import BillsPage from './pages/BillsPage.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
 import ToastViewport from './components/ToastViewport.jsx';
 import OfflineBanner from './components/OfflineBanner.jsx';
 
+const PortfolioPage = lazy(() => import('./portfolio/PortfolioPage.jsx'));
+
 function App() {
   return (
     <>
       <OfflineBanner />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={<div className="min-h-screen bg-white" />}>
+              <PortfolioPage />
+            </Suspense>
+          }
+        />
 
         <Route element={<PublicOnlyRoute />}>
           <Route path="/login" element={<LoginPage />} />
@@ -40,7 +49,6 @@ function App() {
               <Route path="/income" element={<IncomePage />} />
               <Route path="/loans" element={<LoansPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/bills" element={<BillsPage />} />
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
 

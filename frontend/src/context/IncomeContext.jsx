@@ -4,9 +4,7 @@ import { useAuth } from './AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { notify } from '../i18n/notifications.js';
 import { listIncomeStreams } from '../services/incomeStreamService.js';
-import { getExchangeRates } from '../services/fxService.js';
-
-const REFRESH_MS = 30 * 1000;
+import { useResource } from '../data/useResource.js';
 
 const IncomeContext = createContext(null);
 
@@ -16,11 +14,6 @@ export function IncomeProvider({ children }) {
 
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [rates, setRates] = useState(null);
-  const [ratesLoading, setRatesLoading] = useState(true);
-  const [ratesLive, setRatesLive] = useState(false);
-  const [ratesStale, setRatesStale] = useState(false);
-  const [ratesUpdatedAt, setRatesUpdatedAt] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -46,52 +39,13 @@ export function IncomeProvider({ children }) {
     [streams, currency]
   );
 
-  const applyRates = useCallback((data) => {
-    setRates(data.rates);
-    setRatesStale(Boolean(data.stale));
-    setRatesLive(Array.isArray(data.live) && data.live.length > 0);
-    setRatesUpdatedAt(data.liveAt || data.updatedAt || data.fetchedAt || null);
-  }, []);
-
-  useEffect(() => {
-    if (!currency) {
-      setRatesLoading(false);
-      return undefined;
-    }
-    let cancelled = false;
-    const symbols = neededSymbols ? neededSymbols.split(',') : [];
-
-    setRatesLoading(true);
-    getExchangeRates(currency, symbols)
-      .then((data) => {
-        if (!cancelled) applyRates(data);
-      })
-      .catch(() => {
-        if (!cancelled) setRates(null);
-      })
-      .finally(() => {
-        if (!cancelled) setRatesLoading(false);
-      });
-
-    const refresh = () => {
-      if (document.visibilityState === 'hidden') return;
-      getExchangeRates(currency, symbols)
-        .then((data) => {
-          if (!cancelled) applyRates(data);
-        })
-        .catch(() => {});
-    };
-    const timer = window.setInterval(refresh, REFRESH_MS);
-    document.addEventListener('visibilitychange', refresh);
-    window.addEventListener('online', refresh);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', refresh);
-      window.removeEventListener('online', refresh);
-    };
-  }, [currency, neededSymbols, applyRates]);
+  const ratesResource = useResource('rates', currency ? { base: currency, symbols: neededSymbols } : null, { enabled: Boolean(currency) });
+  const ratesData = ratesResource.data;
+  const rates = ratesData ? ratesData.rates : null;
+  const ratesLoading = ratesResource.loading;
+  const ratesLive = Boolean(ratesData && Array.isArray(ratesData.live) && ratesData.live.length > 0);
+  const ratesStale = Boolean(ratesData && ratesData.stale);
+  const ratesUpdatedAt = ratesData ? ratesData.liveAt || ratesData.updatedAt || ratesData.fetchedAt || null : null;
 
   const value = useMemo(
     () => ({ streams, setStreams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt }),

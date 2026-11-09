@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Banknote, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -14,13 +14,13 @@ import { useFormat } from '../i18n/useFormat.js';
 import { amountForTotal, isDeducted } from '../utils/salaryCuts.js';
 import { byReceivedDesc, summarize, toBase } from '../utils/incomeMath.js';
 import { dateOptions, todayInput } from '../utils/dates.js';
-import { listExpenses } from '../services/expenseService.js';
-import { listBills } from '../services/billService.js';
 import { summarizeBills } from '../utils/billMath.js';
 import { monthKey, sumExpenses } from '../utils/expenseMath.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
+import { useResource } from '../data/useResource.js';
 
 const LATEST_LIMIT = 8;
+const NO_ITEMS = [];
 
 function DashboardPage() {
   const { currency, user } = useAuth();
@@ -30,28 +30,10 @@ function DashboardPage() {
   const { items, activeId } = useAppNav();
 
   const summary = useMemo(() => (rates ? summarize(streams, rates) : null), [streams, rates]);
-  const [monthExpenses, setMonthExpenses] = useState(null);
-  const [bills, setBills] = useState(null);
-
-  useEffect(() => {
-    let alive = true;
-    listExpenses(monthKey(new Date()))
-      .then((data) => alive && setMonthExpenses(data.expenses))
-      .catch(() => alive && setMonthExpenses([]));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-    listBills(todayInput())
-      .then((data) => alive && setBills(data.bills))
-      .catch(() => alive && setBills([]));
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const monthResource = useResource('expenses', { month: monthKey(new Date()) });
+  const billsResource = useResource('bills', { today: todayInput() });
+  const monthExpenses = monthResource.data ? monthResource.data.expenses : monthResource.error ? NO_ITEMS : null;
+  const bills = billsResource.data ? billsResource.data.bills : billsResource.error ? NO_ITEMS : null;
 
   const billsToday = todayInput();
   const billSummary = useMemo(() => (bills && rates ? summarizeBills(bills, rates, currency, billsToday) : null), [bills, rates, currency, billsToday]);

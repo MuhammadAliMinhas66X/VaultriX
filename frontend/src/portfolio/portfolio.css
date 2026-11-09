@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@400;500;600&display=swap');
+
+.pf {
+  --pf-ink: #111114;
+  --pf-line: #e5e5e7;
+  --pf-muted: #6b6b70;
+  --pf-surface: #f7f7f8;
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  color: var(--pf-ink);
+  background: #fff;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pf h1,
+.pf h2,
+.pf h3 {
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.pf-mono {
+  font-family: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+.pf-wordmark {
+  font-family: 'Anton', 'Inter', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pf-weight {
+  font-variation-settings: 'wght' 520;
+  transition: font-variation-settings 0.5s cubic-bezier(0.22, 1, 0.36, 1), letter-spacing 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pf-weight:hover {
+  font-variation-settings: 'wght' 860;
+  letter-spacing: -0.045em;
+}
+
+.pf-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--pf-ink);
+  background: linear-gradient(var(--pf-ink), var(--pf-ink)) no-repeat 0 0 / 0% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: background-size 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.5s;
+}
+
+.pf-outline.is-on {
+  background-size: 100% 100%;
+}
+
+.pf-outline-light {
+  -webkit-text-stroke-color: #fff;
+  background-image: linear-gradient(#fff, #fff);
+}
+
+.pf-gridlines {
+  background-image: linear-gradient(to right, var(--pf-line) 1px, transparent 1px);
+  background-size: 25% 100%;
+  background-position: -1px 0;
+}
+
+.pf-gridlines-dark {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+
+.pf-fade-y {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+
+@keyframes pf-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.pf-marquee {
+  animation: pf-marquee 46s linear infinite;
+}
+
+.pf-marquee-slow {
+  animation-duration: 70s;
+}
+
+.pf-marquee-rev {
+  animation-direction: reverse;
+}
+
+.pf-marquee-wrap:hover .pf-marquee {
+  animation-play-state: paused;
+}
+
+@keyframes pf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pf-spin {
+  animation: pf-spin 26s linear infinite;
+}
+
+@keyframes pf-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.pf-dash {
+  animation: pf-dash 1.6s linear infinite;
+}
+
+@keyframes pf-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.pf-blink {
+  animation: pf-blink 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-marquee,
+  .pf-spin,
+  .pf-dash,
+  .pf-blink {
+    animation: none;
+  }
+}
+
+html[data-reduce-motion='true'] .pf-marquee,
+html[data-reduce-motion='true'] .pf-spin,
+html[data-reduce-motion='true'] .pf-dash,
+html[data-reduce-motion='true'] .pf-blink {
+  animation: none;
+}
