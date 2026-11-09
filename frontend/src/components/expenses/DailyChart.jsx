@@ -114,11 +114,11 @@ function DailyChart({ days, todayDay, perDay, month, money, dayLabel, summary })
   );
 
   return (
-    <div className="select-none">
-      <div className="mb-3 flex items-end justify-between gap-3">
+    <div className="select-none" style={{ contain: 'layout' }}>
+      <div className="mb-3 flex h-[3.5rem] items-start justify-between gap-3">
         <div className="min-w-0" aria-live="polite">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">{readoutLabel}</p>
-          <p className={`mt-1 truncate tabular-nums ${activeDay ? 'text-lg font-bold text-white' : 'text-sm text-white/45'}`}>{readoutValue}</p>
+          <p className="h-4 truncate text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-white/50">{readoutLabel}</p>
+          <p className={`mt-1 h-7 truncate text-lg leading-7 tabular-nums ${activeDay ? 'font-bold text-white' : 'font-medium text-white/45'}`}>{readoutValue}</p>
         </div>
         <div role="tablist" className="flex shrink-0 gap-0.5 rounded-full bg-white/10 p-1">
           {tab('daily', t('expenses.chartDaily'))}
@@ -126,8 +126,8 @@ function DailyChart({ days, todayDay, perDay, month, money, dayLabel, summary })
         </div>
       </div>
 
-      <div ref={wrapRef} tabIndex={0} onKeyDown={onKeyDown} role="img" aria-label={summary} className="relative rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-        <svg key={`${month}-${mode}`} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="block max-w-full overflow-visible text-white">
+      <div ref={wrapRef} tabIndex={0} onKeyDown={onKeyDown} role="img" aria-label={summary} className="relative w-full rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/40" style={{ height }}>
+        <svg key={`${month}-${mode}`} width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="absolute inset-0 block overflow-visible text-white">
           <defs>
             <linearGradient id={`bar-${uid}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#fff" stopOpacity="0.95" />

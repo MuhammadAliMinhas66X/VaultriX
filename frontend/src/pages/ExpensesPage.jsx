@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Receipt, Search, X } from 'lucide-react';
+import { CornerDownRight, Plus, Receipt, Search, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
@@ -55,7 +55,6 @@ function ExpensesPage() {
   const { currencies } = useLocalizedOptions();
   const { rates } = useIncome();
   const { items, activeId } = useAppNav();
-  const navigate = useNavigate();
 
   const todayKey = todayLocal();
   const nowMonth = todayKey.slice(0, 7);
@@ -64,6 +63,7 @@ function ExpensesPage() {
   const [previous, setPrevious] = useState([]);
   const [categories, setCategories] = useState([]);
   const [people, setPeople] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [range, setRange] = useState('all');
@@ -101,7 +101,10 @@ function ExpensesPage() {
 
   const loadPeople = useCallback(() => {
     listLoans()
-      .then((data) => setPeople([...new Set(data.loans.filter((loan) => loan.direction === 'borrowed').map((loan) => loan.personName))].sort((a, b) => a.localeCompare(b))))
+      .then((data) => {
+        setLoans(data.loans);
+        setPeople([...new Set(data.loans.map((loan) => loan.personName))].sort((a, b) => a.localeCompare(b)));
+      })
       .catch(() => null);
   }, []);
 
@@ -115,18 +118,21 @@ function ExpensesPage() {
   const names = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
   const byId = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   const nameOf = (id) => (id && names.get(id)) || t('expenses.uncategorized');
+  const spending = useMemo(() => expenses.filter((expense) => !expense.givenTo), [expenses]);
+  const previousSpending = useMemo(() => previous.filter((expense) => !expense.givenTo), [previous]);
+  const lentTotal = useMemo(() => sumExpenses(expenses.filter((expense) => expense.givenTo), rates, currency).total, [expenses, rates, currency]);
   const rows = useMemo(
     () =>
-      breakdown(expenses, rates, currency).map((row) => {
+      breakdown(spending, rates, currency).map((row) => {
         const category = row.key === 'none' ? null : byId.get(row.key) || null;
         return { ...row, id: row.key === 'none' ? '' : row.key, category, name: category ? category.name : t('expenses.uncategorized') };
       }),
-    [expenses, rates, currency, byId]
+    [spending, rates, currency, byId]
   );
 
-  const others = useMemo(() => sumExpenses(expenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total, [expenses, rates, currency]);
+  const others = useMemo(() => sumExpenses(spending.filter((expense) => expense.paidBy === 'other'), rates, currency).total, [spending, rates, currency]);
 
-  const stats = useMemo(() => analyze(expenses, previous, month, todayKey, rates, currency), [expenses, previous, month, todayKey, rates, currency]);
+  const stats = useMemo(() => analyze(spending, previousSpending, month, todayKey, rates, currency), [spending, previousSpending, month, todayKey, rates, currency]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -172,8 +178,9 @@ function ExpensesPage() {
         payCustom: customFor(expense.payMethod, expense.payName),
         date: dayKey(expense.spentAt),
         note: expense.note || '',
-        payer: expense.paidBy === 'other' ? (people.includes(expense.payerName) ? `person:${expense.payerName}` : 'new') : 'self',
-        payerName: expense.paidBy === 'other' && !people.includes(expense.payerName) ? expense.payerName : '',
+        kind: expense.givenTo ? 'given' : expense.paidBy === 'other' ? 'borrowed' : 'spent',
+        payer: expense.givenTo || expense.paidBy === 'other' ? (people.includes(expense.givenTo || expense.payerName) ? `person:${expense.givenTo || expense.payerName}` : 'new') : 'self',
+        payerName: (expense.givenTo || expense.paidBy === 'other') && !people.includes(expense.givenTo || expense.payerName) ? expense.givenTo || expense.payerName : '',
       };
     }
     const last = readRemembered();
@@ -186,6 +193,7 @@ function ExpensesPage() {
       payCustom: last.payCustom || '',
       date: todayKey,
       note: '',
+      kind: 'spent',
       payer: 'self',
       payerName: '',
     };
@@ -260,9 +268,13 @@ function ExpensesPage() {
 
   const removeCategory = async (category) => {
     try {
-      await deleteExpenseCategory(category.id);
+      const result = await deleteExpenseCategory(category.id);
       setCategories((prev) => prev.filter((item) => item.id !== category.id));
+      const clear = (list) => list.map((item) => (item.categoryId === category.id ? { ...item, categoryId: null } : item));
+      setExpenses(clear);
+      setPrevious(clear);
       if (categoryFilter === category.id) setCategoryFilter('');
+      notify.success(result && result.moved > 0 ? t('expenses.categoryRemovedMoved', { count: result.moved }) : t('expenses.categoryRemoved'), { title: t('expenses.categoryRemovedTitle') });
     } catch (error) {
       notify.error(tServer(error), { title: t('expenses.categoryFailedTitle') });
     }
@@ -302,7 +314,8 @@ function ExpensesPage() {
               perDay={stats.perDay}
               change={change}
               biggest={stats.biggest}
-              count={expenses.length}
+              count={spending.length}
+              lent={lentTotal}
               busy={refreshing}
               canNext={month < nowMonth}
               onPrev={() => setMonth(shiftMonth(month, -1))}
@@ -385,8 +398,8 @@ function ExpensesPage() {
                             <li key={expense.id} className="border-b border-border last:border-b-0">
                               <button
                                 type="button"
-                                onClick={() => (expense.billId ? navigate(`/bills?bill=${expense.billId}`) : setPanel({ mode: 'edit', expense }))}
-                                className="flex w-full items-center gap-3 px-5 py-3.5 text-start outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60"
+                                onClick={() => setPanel({ mode: 'edit', expense })}
+                                className="flex w-full items-center gap-3 px-4 py-3.5 text-start outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60 sm:px-5"
                               >
                                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-ink">
                                   <CategoryIcon category={byId.get(expense.categoryId)} name={nameOf(expense.categoryId)} />
@@ -394,9 +407,11 @@ function ExpensesPage() {
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
-                                    {expense.billId && <span className="shrink-0 rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('bills.fromBill')}</span>}
                                     {expense.paidBy === 'other' && (
                                       <span className="max-w-[55%] shrink-0 truncate rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('expenses.paidByName', { name: expense.payerName })}</span>
+                                    )}
+                                    {expense.givenTo && (
+                                      <span className="max-w-[55%] shrink-0 truncate rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-white">{t('expenses.givenToName', { name: expense.givenTo })}</span>
                                     )}
                                     <span className="min-w-0 truncate text-sm text-muted">
                                       {[expense.note, expense.paidBy === 'other' ? '' : expense.payMethod === 'cash' ? t('loans.cash') : expense.payName].filter(Boolean).join(' · ') || (expense.paidBy === 'other' ? '' : '-')}
@@ -407,6 +422,34 @@ function ExpensesPage() {
                                   {formatMoney(expense.amount, { decimals: 2, currency: expense.currency })}
                                 </span>
                               </button>
+                              {(expense.loan || expense.givenTo || expense.paidBy === 'other') && (
+                                <div className="px-4 pb-3.5 sm:px-5">
+                                  {expense.loan ? (
+                                    <Link
+                                      to={`/loans?loan=${expense.loan.id}`}
+                                      className="ms-[3.25rem] flex items-center gap-2 rounded-xl bg-surface px-3 py-2 text-xs outline-none transition hover:bg-black/[0.06] focus-visible:ring-2 focus-visible:ring-accent/40"
+                                    >
+                                      <CornerDownRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+                                      <span className="min-w-0 flex-1 truncate font-semibold text-ink">
+                                        {t('expenses.subLoan', { name: expense.loan.personName })}
+                                        {expense.loan.entries > 1 ? ` · ${t('expenses.subEntries', { count: expense.loan.entries })}` : ''}
+                                      </span>
+                                      <span className={`shrink-0 rounded-full px-2 py-0.5 font-semibold tabular-nums ${expense.loan.done ? 'bg-ink text-white' : 'bg-white text-ink ring-1 ring-border'}`}>
+                                        {expense.loan.done
+                                          ? t('expenses.statusPaid')
+                                          : expense.loan.paid > 0
+                                            ? t('expenses.statusPartly', { paid: formatMoney(expense.loan.paid, { decimals: 0, currency: expense.loan.currency }), total: formatMoney(expense.loan.amount, { decimals: 0, currency: expense.loan.currency }) })
+                                            : t('expenses.statusOpen', { left: formatMoney(expense.loan.remaining, { decimals: 0, currency: expense.loan.currency }) })}
+                                      </span>
+                                    </Link>
+                                  ) : (
+                                    <p className="ms-[3.25rem] flex items-center gap-2 px-1 text-xs text-muted">
+                                      <CornerDownRight className="h-3.5 w-3.5 shrink-0" />
+                                      {t('expenses.subRemoved')}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -445,6 +488,7 @@ function ExpensesPage() {
             mode={panel.mode}
             initial={formFor(panel.mode === 'edit' ? panel.expense : null)}
             people={people}
+            loans={loans}
             enteredAt={panel.mode === 'edit' ? panel.expense.createdAt : undefined}
             loanId={panel.mode === 'edit' ? panel.expense.loanId : null}
             categories={categories}

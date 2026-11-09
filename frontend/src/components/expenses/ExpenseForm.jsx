@@ -14,7 +14,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { initialsFromName } from '../../utils/avatar.js';
 import { dateOptions } from '../../utils/dates.js';
 
-function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onUpdateCategory, onRemoveCategory, onCancel, busy }) {
+function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onUpdateCategory, onRemoveCategory, onCancel, busy }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [form, setForm] = useState(initial);
@@ -23,14 +23,12 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
 
   const payerItems = useMemo(
     () => [
-      { value: 'self', label: t('expenses.paidBySelf'), group: t('expenses.paidByGroupYou') },
       ...people.map((name) => ({
         value: `person:${name}`,
         label: name,
-        group: t('expenses.paidByGroupPeople'),
         icon: <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-[10px] font-semibold text-ink">{initialsFromName(name) || '?'}</span>,
       })),
-      { value: 'new', label: t('expenses.paidByNew'), group: t('expenses.paidByGroupPeople') },
+      { value: 'new', label: t('expenses.paidByNew') },
     ],
     [people, t]
   );
@@ -40,8 +38,25 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
     setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
   };
 
-  const other = form.payer !== 'self';
+  const kind = form.kind;
+  const other = kind !== 'spent';
   const shownName = form.payer.startsWith('person:') ? form.payer.slice(7) : form.payerName.trim();
+  const direction = kind === 'given' ? 'lent' : 'borrowed';
+  const existing = other && shownName
+    ? loans.find(
+        (loan) =>
+          loan.direction === direction &&
+          loan.currency === form.currency &&
+          loan.personName.trim().toLowerCase() === shownName.toLowerCase() &&
+          loan.remaining > 0 &&
+          loan.id !== loanId
+      )
+    : null;
+
+  const setKind = (next) => {
+    setForm((prev) => ({ ...prev, kind: next, payer: next === 'spent' ? 'self' : prev.payer === 'self' ? 'new' : prev.payer }));
+    setErrors((prev) => ({ ...prev, payerName: '' }));
+  };
 
   const submit = (event) => {
     event.preventDefault();
@@ -49,16 +64,17 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
     if (!form.amount || !(Number(form.amount) > 0)) found.amount = t('loans.errAmount');
     if (!form.currency) found.currency = t('income.errCurrency');
     if (!form.date || form.date > todayLocal()) found.date = t('loans.errSent');
-    const other = form.payer !== 'self';
-    const payerName = form.payer.startsWith('person:') ? form.payer.slice(7) : form.payerName.trim();
-    if (other && !payerName) found.payerName = t('loans.errName');
-    if (!other && isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
+    const person = form.payer.startsWith('person:') ? form.payer.slice(7) : form.payerName.trim();
+    if (other && !person) found.payerName = t('loans.errName');
+    const needsWhere = kind !== 'borrowed';
+    if (needsWhere && isOtherKey(form.payKey) && !form.payCustom.trim()) found.payCustom = t('loans.errOther');
     setErrors(found);
     if (Object.keys(found).length) return;
-    const where = other ? { method: '', name: '' } : splitKey(form.payKey, form.payCustom);
+    const where = needsWhere ? splitKey(form.payKey, form.payCustom) : { method: '', name: '' };
     onSubmit({
-      paidBy: other ? 'other' : 'self',
-      payerName: other ? payerName : '',
+      paidBy: kind === 'borrowed' ? 'other' : 'self',
+      payerName: kind === 'borrowed' ? person : '',
+      givenTo: kind === 'given' ? person : '',
       amount: Number(form.amount),
       currency: form.currency,
       categoryId: form.categoryId || null,
@@ -108,25 +124,52 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
       />
 
       <div className="flex flex-col gap-3">
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-sm font-medium text-ink">{t('expenses.paidByLabel')}</span>
-          <Combobox items={payerItems} ariaLabel={t('expenses.paidByLabel')} placeholder={t('expenses.paidBySelf')} searchPlaceholder={t('common.search')} value={form.payer} onChange={set('payer')} />
+        <div role="radiogroup" aria-label={t('expenses.kindLabel')} className="grid grid-cols-3 gap-1 rounded-2xl bg-surface p-1">
+          {[
+            ['spent', t('expenses.kindSpent')],
+            ['borrowed', t('expenses.kindBorrowed')],
+            ['given', t('expenses.kindGiven')],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={kind === id}
+              onClick={() => setKind(id)}
+              className={`min-h-[3rem] rounded-xl px-2 py-2 text-center text-[13px] font-semibold leading-tight outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${kind === id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        {form.payer === 'new' && (
-          <FormField label={t('loans.nameLabel')} value={form.payerName} maxLength={60} onChange={(event) => set('payerName')(event.target.value)} placeholder={t('loans.namePlaceholder')} error={errors.payerName} />
+
+        {other && (
+          <div className="flex flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-ink">{kind === 'given' ? t('expenses.givenToLabel') : t('expenses.paidByLabel')}</span>
+              <Combobox items={payerItems} ariaLabel={t('expenses.personLabel')} placeholder={t('expenses.personChoose')} searchPlaceholder={t('common.search')} value={form.payer === 'self' ? '' : form.payer} onChange={set('payer')} />
+            </div>
+            {form.payer === 'new' && (
+              <FormField label={t('loans.nameLabel')} value={form.payerName} maxLength={60} onChange={(event) => set('payerName')(event.target.value)} placeholder={t('loans.namePlaceholder')} error={errors.payerName} />
+            )}
+            <FieldError>{form.payer !== 'new' ? errors.payerName : ''}</FieldError>
+          </div>
         )}
-        <FieldError>{form.payer !== 'new' ? errors.payerName : ''}</FieldError>
       </div>
 
-      <AnimatePresence initial={false} mode="wait">
-        {other ? (
+      <AnimatePresence initial={false}>
+        {other && (
           <motion.div key="preview" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
             <div className="flex items-start gap-3.5 rounded-2xl bg-ink p-4 text-white">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">{initialsFromName(shownName) || '?'}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">{t('expenses.loanPreviewTitle')}</p>
                 <p className="mt-1.5 text-sm font-medium leading-relaxed">
-                  {t('expenses.loanPreviewBody', { name: shownName || '...', amount: formatMoney(Number(form.amount) || 0, { decimals: 2, currency: form.currency }) })}
+                  {existing
+                    ? t(kind === 'given' ? 'expenses.previewAddGiven' : 'expenses.previewAddBorrowed', { name: shownName, amount: formatMoney(Number(form.amount) || 0, { decimals: 2, currency: form.currency }), left: formatMoney(existing.remaining, { decimals: 2, currency: existing.currency }) })
+                    : mode === 'edit' && loanId
+                      ? t('expenses.previewLinked', { name: shownName })
+                      : t(kind === 'given' ? 'expenses.previewNewGiven' : 'expenses.loanPreviewBody', { name: shownName || '...', amount: formatMoney(Number(form.amount) || 0, { decimals: 2, currency: form.currency }) })}
                 </p>
                 {mode === 'edit' && loanId && (
                   <Link to={`/loans?loan=${loanId}`} className="mt-2.5 inline-block text-xs font-semibold text-white underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-white/60">
@@ -136,11 +179,15 @@ function ExpenseForm({ initial, people, enteredAt, loanId, categories, currencie
               </div>
             </div>
           </motion.div>
-        ) : (
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence initial={false}>
+        {kind !== 'borrowed' && (
           <motion.div key="from" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
             <WherePicker
               optional
-              label={<span className="text-sm font-medium text-ink">{t('expenses.paidFrom')}</span>}
+              label={<span className="text-sm font-medium text-ink">{kind === 'given' ? t('expenses.paidFromGiven') : t('expenses.paidFrom')}</span>}
               value={form.payKey}
               custom={form.payCustom}
               onChange={set('payKey')}

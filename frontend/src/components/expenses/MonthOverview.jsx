@@ -4,7 +4,7 @@ import DailyChart from './DailyChart.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 
-function MonthOverview({ month, label, total, others = 0, days, todayDay, currency, perDay, change, biggest, count, onPrev, onNext, canNext, busy }) {
+function MonthOverview({ month, label, total, others = 0, days, todayDay, currency, perDay, change, biggest, count, lent = 0, onPrev, onNext, canNext, busy }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const money = (value) => formatMoney(value, { decimals: 0, currency });
@@ -57,6 +57,7 @@ function MonthOverview({ month, label, total, others = 0, days, todayDay, curren
         <p className="mt-2 break-words text-[2.25rem] font-bold leading-none tracking-tight tabular-nums sm:text-[2.75rem]">
           <AnimatedAmount value={total} format={(value) => formatMoney(value, { decimals: 2, currency })} />
         </p>
+        {lent > 0 && <p className="mt-2 text-xs tabular-nums text-white/55">{t('expenses.givenNote', { amount: formatMoney(lent, { decimals: 2, currency }) })}</p>}
         {others > 0 && <p className="mt-2.5 text-xs tabular-nums text-white/55">{t('expenses.paidByOthers', { amount: formatMoney(others, { decimals: 2, currency }) })}</p>}
       </div>
 
