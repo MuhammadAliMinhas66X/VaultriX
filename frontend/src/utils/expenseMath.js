@@ -34,6 +34,22 @@ export const sumExpenses = (expenses, rates, baseCurrency) => {
   return { total, excluded };
 };
 
+// Money I already paid back for things someone else paid first. The expense
+// carries its loan summary; a loan can cover several expenses, so each one gets
+// the same share of what has been repaid.
+export const repaidAmount = (expense) => {
+  const loan = expense.loan;
+  if (expense.paidBy !== 'other' || !loan || loan.direction !== 'borrowed' || !(loan.amount > 0)) return 0;
+  return expense.amount * Math.min(1, Math.max(0, loan.paid / loan.amount));
+};
+
+export const sumRepaid = (expenses, rates, baseCurrency) =>
+  sumExpenses(
+    expenses.map((expense) => ({ ...expense, amount: repaidAmount(expense) })).filter((expense) => expense.amount > 0),
+    rates,
+    baseCurrency
+  ).total;
+
 export const analyze = (expenses, previous, month, todayKey, rates, baseCurrency) => {
   const size = daysInMonth(month);
   const days = Array.from({ length: size }, (_, index) => ({ day: index + 1, amount: 0 }));
