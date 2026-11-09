@@ -19,6 +19,7 @@ import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '.
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
+const BILL_LINKED = 'This expense comes from a bill payment. Change it from Bills.';
 const LINKED_EDIT = 'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.';
 const LINKED_DELETE = 'This expense is linked to a loan that already has payments. Delete those payments first.';
 
@@ -36,6 +37,7 @@ const toExpenseDto = (expense) => ({
   paidBy: expense.paidBy || 'self',
   payerName: expense.payerName || '',
   givenTo: expense.givenTo || '',
+  billId: expense.billId ? String(expense.billId) : null,
   loanId: expense.loanId ? String(expense.loanId) : null,
   createdAt: expense.createdAt,
 });
@@ -176,6 +178,7 @@ export const updateExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!expense) return fail(res, 404, NOT_FOUND);
+    if (expense.billId) return fail(res, 400, BILL_LINKED);
 
     const body = req.body || {};
     const update = {};
@@ -306,6 +309,7 @@ export const deleteExpense = async (req, res, next) => {
   try {
     const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
     if (!expense) return fail(res, 404, NOT_FOUND);
+    if (expense.billId) return fail(res, 400, BILL_LINKED);
 
     if (expense.loanId) {
       const loan = await Loan.findOne({ _id: expense.loanId, orgId: req.user.orgId });
