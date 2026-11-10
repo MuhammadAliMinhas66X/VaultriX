@@ -14,6 +14,7 @@ import LoansPage from './pages/LoansPage.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
 import BillsPage from './pages/BillsPage.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
+import MainShell from './components/layout/MainShell.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
 import ToastViewport from './components/ToastViewport.jsx';
@@ -46,11 +47,13 @@ function App() {
 
           <Route element={<RequireOnboarding />}>
             <Route element={<IncomeLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/income" element={<IncomePage />} />
-              <Route path="/loans" element={<LoansPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/bills" element={<BillsPage />} />
+              <Route element={<MainShell />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/income" element={<IncomePage />} />
+                <Route path="/loans" element={<LoansPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/bills" element={<BillsPage />} />
+              </Route>
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
 

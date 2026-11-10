@@ -1,0 +1,20 @@
+import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import { AppFrame } from './AppShell.jsx';
+import useAppNav from './useAppNav.jsx';
+import { ShellSlotContext } from './shellSlot.js';
+
+// One shell for every main page, so moving between them only swaps the page.
+function MainShell() {
+  const { items, activeId } = useAppNav();
+  const [meta, setMeta] = useState({ title: undefined, showLogo: true, pageTitle: '', hideSettingsLink: false });
+  return (
+    <AppFrame {...meta} items={items} activeId={activeId}>
+      <ShellSlotContext.Provider value={setMeta}>
+        <Outlet />
+      </ShellSlotContext.Provider>
+    </AppFrame>
+  );
+}
+
+export default MainShell;

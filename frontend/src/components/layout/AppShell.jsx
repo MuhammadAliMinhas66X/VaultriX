@@ -1,3 +1,4 @@
+import { useContext, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Sidebar, { useSidebarCollapsed } from './Sidebar.jsx';
@@ -7,8 +8,9 @@ import SecureGuard from '../security/SecureGuard.jsx';
 import SecureBadge from '../security/SecureBadge.jsx';
 import Logo from '../Logo.jsx';
 import { readDirection } from '../../utils/direction.js';
+import { ShellSlotContext } from './shellSlot.js';
 
-function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerItems = [], hideSettingsLink = false, children }) {
+export function AppFrame({ title, showLogo = false, pageTitle, items, activeId, footerItems = [], hideSettingsLink = false, children }) {
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
   const back = footerItems.find((item) => item.to);
   const bodyProps = { title, showLogo, items, activeId, footerItems };
@@ -48,6 +50,22 @@ function AppShell({ title, showLogo = false, pageTitle, items, activeId, footerI
       <BottomNav items={items} activeId={activeId} label={title || pageTitle} />
     </div>
   );
+}
+
+// Pages still write <AppShell ...>. Inside MainShell (one shell for Dashboard,
+// Income, Expenses, Bills, Loans) that only hands the page title to the shell
+// that is already on screen, so the sidebar is not rebuilt on every click.
+function AppShell(props) {
+  const setMeta = useContext(ShellSlotContext);
+  if (setMeta) return <ShellSlot setMeta={setMeta} {...props} />;
+  return <AppFrame {...props} />;
+}
+
+function ShellSlot({ setMeta, title, showLogo = false, pageTitle, hideSettingsLink = false, children }) {
+  useLayoutEffect(() => {
+    setMeta((prev) => (prev.title === title && prev.showLogo === showLogo && prev.pageTitle === pageTitle && prev.hideSettingsLink === hideSettingsLink ? prev : { title, showLogo, pageTitle, hideSettingsLink }));
+  }, [setMeta, title, showLogo, pageTitle, hideSettingsLink]);
+  return children;
 }
 
 export default AppShell;
