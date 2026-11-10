@@ -60,6 +60,7 @@ function ExpensesPage() {
   const nowMonth = todayKey.slice(0, 7);
   const [month, setMonth] = useState(nowMonth);
   const [expenses, setExpenses] = useState([]);
+  const [capped, setCapped] = useState(false);
   const [previous, setPrevious] = useState([]);
   const [categories, setCategories] = useState([]);
   const [people, setPeople] = useState([]);
@@ -83,6 +84,7 @@ function ExpensesPage() {
         const [current, before] = await Promise.all([listExpenses(target), listExpenses(shiftMonth(target, -1))]);
         if (id !== requestId.current) return;
         setExpenses(current.expenses);
+        setCapped(Boolean(current.capped));
         setPrevious(before.expenses);
       } catch (error) {
         if (id === requestId.current) notify.error(tServer(error));
@@ -299,6 +301,7 @@ function ExpensesPage() {
             </button>
           )}
         </div>
+        {capped && <p className="mb-4 rounded-xl bg-surface px-4 py-3 text-sm text-muted">{t('errors.listCapped', { count: 2000 })}</p>}
 
         {loading ? (
           <ExpensesSkeleton />

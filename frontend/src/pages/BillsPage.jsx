@@ -82,6 +82,7 @@ function BillsPage() {
 
   const { data: billsData, loading, reload, update: updateBillsData } = useResource('bills', { today }, { onError: (error) => notify.error(tServer(error)) });
   const bills = billsData ? billsData.bills : NO_BILLS;
+  const capped = Boolean(billsData && billsData.capped);
 
   const load = useCallback(async () => {
     const data = await reload();
@@ -266,6 +267,7 @@ function BillsPage() {
             </button>
           )}
         </div>
+        {capped && <p className="mb-4 rounded-xl bg-surface px-4 py-3 text-sm text-muted">{t('errors.listCapped', { count: 2000 })}</p>}
 
         {loading ? (
           <div className="flex flex-col gap-4" aria-busy="true">

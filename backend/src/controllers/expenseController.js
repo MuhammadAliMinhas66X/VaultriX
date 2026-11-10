@@ -97,7 +97,7 @@ export const listExpenses = async (req, res, next) => {
       .limit(2000)
       .lean();
 
-    res.json({ success: true, expenses: await withLoans(req.user.orgId, expenses) });
+    res.json({ success: true, expenses: await withLoans(req.user.orgId, expenses), capped: expenses.length >= 2000 });
   } catch (error) {
     next(error);
   }
