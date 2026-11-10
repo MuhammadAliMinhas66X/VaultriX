@@ -18,7 +18,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
 - No AI slop UI. He wants clean, modern, restrained, "settled" layouts. Black and white with muted greys, no gradients for decoration, no emoji icons, no filler text, no cluttered rows. Look at screenshots of my own work before delivering.
 - Simple for the user, fast for repeat entry: remember choices, sensible defaults, one tap where possible.
 - Exact numbers matter to him. Rates must equal the live source with no rounding drift. Show real precision where asked (deduction share shows 2 decimals).
-- Hands off Loans unless he says otherwise. He is working on loans in another agent. Do not edit `loanController`, `Loan.js`, `components/loans/*` (except importing existing shared pieces like `WherePicker`, `loanOptions.js`, which must keep working), `LoansPage.jsx`.
+- Hands off Loans unless he says otherwise (exception: he asked directly for the payments graph in v1_118/v1_119, so `PaymentsChart.jsx` and new `PaymentBar.jsx` are mine; tell the other agent). He is working on loans in another agent. Do not edit `loanController`, `Loan.js`, `components/loans/*` (except importing existing shared pieces like `WherePicker`, `loanOptions.js`, which must keep working), `LoansPage.jsx`.
 - Do not change the stack. Do not add packages unless needed, and say so loudly in the merge script header.
 
 ## 3. Delivery workflow (every round)
@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_118 (loan payment chart: new `PaymentBar` shows every payment as a slice of the loan; the time chart only shows when payments span different days; he asked for this explicitly, so loans files were touched: `PaymentsChart.jsx`, new `PaymentBar.jsx`). v1_117 (Bills have no category field: the company type shows as a tag in the dropdown and the expense category is made from it; Dashboard balance subtracts loan money paid back; section titles restyled; logo source fixed). v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
+6. Version numbers continue from the last round. Last delivered: v1_119 (loan payments graph redone as a ring plus running-balance bars, `PaymentBar.jsx`; v1_118 was the first, rejected, bar version). v1_117 (Bills have no category field: the company type shows as a tag in the dropdown and the expense category is made from it; Dashboard balance subtracts loan money paid back; section titles restyled; logo source fixed). v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -204,6 +204,17 @@ Dashboard balance (v1_117): `net - spentBySelf`; money someone else paid only le
 - Split payments paid with money borrowed from someone, tracked in Loans: NOT started, because loans belong to the other agent. Bill payments already support several steps from different sources. Revisit only when he says loans are ready.
 - Not verified yet (needs his machine): bills saving to real MongoDB (new indexes are created on first backend start, restart after merging), the integration `ownership` test with the new bills case, real Yahoo feed, real biller logos, native-speaker review of hi/ur/ar.
 - Known limits: PDFs are English only; Yahoo is unofficial and may break.
+
+Round log v1_116 to v1_119 (what was asked, what was done, so it is not redone)
+- v1_116 Bills "not appearing": the other agent's zip had overwritten `App.jsx` (no `/bills` route), the six locale files (no `bills.*` text), `translate.js`, `Combobox.jsx` footer, `Expense.js` bill fields, `expenseController.js` bill guard, `ExpensesPage.jsx` Bill pill. All re-applied. `docs/dev/check-bills-wiring.mjs` now detects this; run it after every zip.
+- v1_117 asks and results:
+  - Bills: NO category field (form, filter, detail). Each company shows its type tag next to its name in the dropdown (`Combobox` item `tag`, `GROUP_KEY` and `groupOfBill` in `utils/billers.js`). Expense category is created/found by type name in `BillsPage.categoryForType`. Filter and detail use the company type (`bills.typeLabel`, `bills.allTypes`).
+  - Dashboard balance: money someone else paid leaves the balance only when repaid (`expenseMath.repaidAmount/sumRepaid`, uses each expense's `loan.paid/loan.amount`). Spent this month still shows the full amount. Note `dashboard.repaidNote`. Only the current month's expenses are loaded, so repayments of older months are not counted (same limit the balance already had).
+  - Dashboard section titles ("Bills", "Latest income") are bold with a dark icon tile and a pill "View all". Keep titles visible, not tiny grey caps.
+  - Logos: Google `s2/favicons` returns a grey default tile that passes as a logo. `BrandMark` now uses `t1.gstatic.com/faviconV2 ... nfrd=1` (404 when no icon) so the coloured initials tile shows. Real logos still need `node scripts/fetch-logos.mjs` on his PC. The faviconV2 address was never tested from the sandbox.
+- v1_118/v1_119 Loan payments graph: the old step chart used time on the x axis, so same-day payments became one vertical line. `PaymentBar.jsx` now shows a ring split by payment, Paid/Left/Total, and running-balance bars (what was left after each payment). `StepChart` shows only when payments fall on more than one distinct day. Browser check: `docs/dev/loan-chart-browser-check.cjs`.
+- He rejects UI that looks plain or unclear: show a screenshot-level check on phone (390 px) and desktop before sending; numbers must never wrap mid-number (use `whitespace-nowrap`).
+- Still owed: Google Sheets vs Twelve Data "how to" answer (verify free limits by search first).
 
 ## 12. Quick checklist before sending a round
 
