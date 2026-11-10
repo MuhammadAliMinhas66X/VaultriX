@@ -20,8 +20,11 @@ const FAR_DAYS = 3660;
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
 
+const CONFLICT = 'This bill was just changed somewhere else. Reload and try again.';
+
 const handleError = (res, next, error) => {
-  if (error?.name === 'CastError' || error?.name === 'VersionError') return fail(res, 404, NOT_FOUND);
+  if (error?.name === 'VersionError') return fail(res, 409, CONFLICT);
+  if (error?.name === 'CastError') return fail(res, 404, NOT_FOUND);
   return next(error);
 };
 
@@ -176,7 +179,7 @@ export const listBills = async (req, res, next) => {
     const today = readToday(req.query.today);
     await generateDueBills(req.user.orgId, today);
     const bills = await Bill.find({ orgId: req.user.orgId }).sort({ dueAt: 1, createdAt: 1 }).limit(LIST_LIMIT).lean();
-    res.json({ success: true, bills: bills.map(toBillDto) });
+    res.json({ success: true, bills: bills.map(toBillDto), capped: bills.length >= LIST_LIMIT });
   } catch (error) {
     next(error);
   }

@@ -99,6 +99,7 @@ const SERVER_MESSAGE_KEYS = {
   'This bill already has payments, so its currency cannot be changed.': 'errors.billCurrencyLocked',
   'The total cannot be lower than what is already paid.': 'errors.billTotalLow',
   'This bill is cancelled, so it cannot take payments.': 'errors.billCancelled',
+  'This bill was just changed somewhere else. Reload and try again.': 'errors.billConflict',
   'This bill has payments. Delete the payments first, or cancel the bill instead.': 'errors.billDeletePaid',
   'This expense comes from a bill payment. Change it from Bills.': 'errors.expenseBillLinked',
   'Photo upload is not available right now.': 'errors.uploadUnavailable',

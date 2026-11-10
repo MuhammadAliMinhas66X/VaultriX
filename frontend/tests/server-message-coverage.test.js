@@ -19,6 +19,7 @@ const KNOWN_BACKEND_MESSAGES = [
   'This bill already has payments, so its currency cannot be changed.',
   'The total cannot be lower than what is already paid.',
   'This bill is cancelled, so it cannot take payments.',
+  'This bill was just changed somewhere else. Reload and try again.',
   'This bill has payments. Delete the payments first, or cancel the bill instead.',
   'This expense comes from a bill payment. Change it from Bills.',
   '2-step verification is already off.',
