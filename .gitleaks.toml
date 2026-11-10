@@ -1,0 +1,11 @@
+# Uses all the default gitleaks rules, and ignores one harmless pattern:
+# names of browser storage keys such as const KEY = 'vaultrix.billPrefs.v1'.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Browser storage key names are not secrets"
+regexTarget = "line"
+regexes = [
+  '''(?i)(?:STORAGE_KEY|REMEMBER_KEY|FS_KEY|KEY)\s*=\s*['"]vaultrix\.[\w.]+['"]''',
+]

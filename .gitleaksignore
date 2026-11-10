@@ -1,0 +1,3 @@
+# False positive: the name of a browser storage key ('vaultrix.billPrefs.v1'), not a secret.
+# It sits in git history (commit 0e09bec), so changing the file cannot clear it; this line does.
+0e09becf9a032ce068a7dfb479e018b0489c456c:frontend/src/utils/billPrefs.js:generic-api-key:3

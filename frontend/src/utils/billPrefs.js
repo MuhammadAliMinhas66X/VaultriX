@@ -1,11 +1,11 @@
 // Remembers what you chose last time so entering many bills is quick.
 // Everything is optional and lives only in this browser.
-const KEY = 'vaultrix.billPrefs.v1';
+const STORAGE_KEY = 'vaultrix.billPrefs.v1';
 const MAX_BILLERS = 80;
 
 const read = () => {
   try {
-    const data = JSON.parse(window.localStorage.getItem(KEY));
+    const data = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
     return data && typeof data === 'object' ? data : {};
   } catch (error) {
     return {};
@@ -14,7 +14,7 @@ const read = () => {
 
 const write = (data) => {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(data));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
     return;
   }
