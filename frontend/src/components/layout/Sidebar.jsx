@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, ChevronsLeft, Loader2 } from 'lucide-react';
 import Logo from '../Logo.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
@@ -49,19 +49,15 @@ function Tooltip({ rect, children }) {
   );
 }
 
-const ROW = 'nav-hover relative flex w-full items-center overflow-hidden rounded-lg outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70';
+const ROW = 'nav-hover group/row relative flex w-full items-center overflow-hidden rounded-lg outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-wait disabled:opacity-70';
 const ICON = 'h-5 w-5';
 
-// Active marker shared by every row (items, group headers, children): a soft
-// background plus a thin bar on the start edge. Both glide between rows.
+// Active marker: top-level rows get a solid ink pill (same black as the primary
+// buttons and the balance card); child rows get a soft tint. It glides between rows.
 function ActiveMark({ uid, instant, danger = false, compact = false }) {
   const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 42 };
-  return (
-    <>
-      <motion.span layoutId={`${uid}-bg`} transition={spring} className={`absolute inset-0 rounded-lg ${danger ? 'bg-red-50' : 'bg-black/[0.06]'}`} />
-      {!danger && <motion.span layoutId={`${uid}-bar`} transition={spring} className={`absolute start-0 w-[3px] rounded-full bg-ink ${compact ? 'inset-y-2' : 'inset-y-2.5'}`} />}
-    </>
-  );
+  const color = danger ? 'bg-red-50' : compact ? 'bg-black/[0.06]' : 'bg-ink shadow-[0_6px_14px_-6px_rgba(17,17,20,0.55)]';
+  return <motion.span layoutId={`${uid}-${compact ? 'soft' : 'bg'}`} transition={spring} className={`absolute inset-0 rounded-lg ${color}`} />;
 }
 
 function Label({ collapsed, instant, children }) {
@@ -81,8 +77,10 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compa
     : item.back
       ? 'group text-ink hover:bg-black/[0.05] active:bg-black/[0.08]'
       : active
-        ? 'font-semibold text-ink'
-        : 'text-ink/65 hover:bg-black/[0.04] hover:text-ink';
+        ? compact
+          ? 'font-semibold text-ink'
+          : 'font-semibold text-white'
+        : 'text-ink/65 hover:bg-black/[0.05] hover:text-ink';
   const nudge = item.back && !instant ? 'transition-transform duration-200 ease-out group-hover:-translate-x-1 group-focus-visible:-translate-x-1 group-active:-translate-x-1.5 rtl:group-hover:translate-x-1 rtl:group-focus-visible:translate-x-1 rtl:group-active:translate-x-1.5 motion-reduce:transform-none' : '';
   const size = compact ? 'h-9 gap-3 px-3 text-[13px] font-medium' : 'h-10 gap-3 px-[14px] text-sm font-medium';
   const className = `${ROW} ${size} ${tone}`;
@@ -94,7 +92,7 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate, compa
     <>
       {active && <ActiveMark uid={activeId} instant={instant} danger={item.danger} compact={compact} />}
       {(item.loading || Icon) && (
-        <span className={`relative z-10 flex ${ICON} shrink-0 items-center justify-center ${nudge}`}>
+        <span className={`relative z-10 flex ${ICON} shrink-0 items-center justify-center ${nudge} ${item.back || instant ? '' : 'transition-transform duration-200 group-hover/row:scale-110'}`}>
           {item.loading ? <Loader2 className={`${ICON} animate-spin`} /> : <Icon className={`${ICON} ${item.back ? 'rtl:rotate-180' : ''}`} strokeWidth={item.back ? 2 : 1.75} />}
         </span>
       )}
@@ -161,7 +159,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
 
   const spring = instant ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 36 };
   const expanded = open && !collapsed && hasItems;
-  const tone = headerActive ? 'font-semibold text-ink' : group.activeChild ? 'text-ink' : 'text-ink/65 hover:bg-black/[0.04] hover:text-ink';
+  const tone = headerActive ? 'font-semibold text-white' : group.activeChild ? 'font-medium text-ink' : 'text-ink/65 hover:bg-black/[0.05] hover:text-ink';
 
   return (
     <div className="flex flex-col">
@@ -183,7 +181,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           }}
           className="relative z-10 flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg ps-[14px] pe-1 outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
-          <span className={`flex ${ICON} shrink-0 items-center justify-center`}>
+          <span className={`flex ${ICON} shrink-0 items-center justify-center ${instant ? '' : 'transition-transform duration-200 group-hover/row:scale-110'}`}>
             <Icon className={ICON} strokeWidth={1.75} />
           </span>
           <Label collapsed={collapsed} instant={instant}>{group.label}</Label>
@@ -259,21 +257,31 @@ export function SidebarBody({ title, showLogo, items, activeId, footerItems, col
             type="button"
             onClick={onToggle}
             aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
-            className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted outline-none transition hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 lg:flex"
+            title={collapsed ? t('nav.expand') : t('nav.collapse')}
+            className="group/toggle hidden h-9 w-9 items-center justify-center rounded-lg text-muted outline-none transition hover:bg-black/[0.05] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40 lg:flex"
           >
-            {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" strokeWidth={1.75} /> : <PanelLeftClose className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+            <motion.span animate={{ rotate: collapsed ? 180 : 0 }} transition={instant ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 30 }} className="flex transition-transform duration-200 group-hover/toggle:-translate-x-0.5 rtl:group-hover/toggle:translate-x-0.5">
+              <ChevronsLeft className="h-[18px] w-[18px]" strokeWidth={1.9} />
+            </motion.span>
           </button>
         )}
       </div>
 
       <nav aria-label={title || 'Main'} className={`flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden py-3 px-3`}>
-        {items.map((item) =>
-          item.type === 'group' ? (
-            <Group key={item.id} group={item} activeId={activeId} collapsed={collapsed} uid={uid} instant={instant} onNavigate={onNavigate} onExpandSidebar={onToggle} />
-          ) : (
-            <NavItem key={item.id} item={item} active={item.id === activeId} collapsed={collapsed} activeId={uid} instant={instant} onNavigate={onNavigate} />
-          )
-        )}
+        {items.map((item, index) => (
+          <motion.div
+            key={item.id}
+            initial={instant ? false : { opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34, delay: instant ? 0 : Math.min(index, 8) * 0.045 }}
+          >
+            {item.type === 'group' ? (
+              <Group group={item} activeId={activeId} collapsed={collapsed} uid={uid} instant={instant} onNavigate={onNavigate} onExpandSidebar={onToggle} />
+            ) : (
+              <NavItem item={item} active={item.id === activeId} collapsed={collapsed} activeId={uid} instant={instant} onNavigate={onNavigate} />
+            )}
+          </motion.div>
+        ))}
       </nav>
 
       {footerItems.length > 0 && (
@@ -295,7 +303,7 @@ function Sidebar({ collapsed, onToggle, ...rest }) {
       initial={false}
       animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
       transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 38 }}
-      className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-white lg:flex"
+      className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-gradient-to-b from-white to-[#f9f9fa] lg:flex"
     >
       <div dir={readDirection()} className="flex min-h-0 flex-1 flex-col">
         <SidebarBody {...rest} collapsed={collapsed} onToggle={onToggle} instant={Boolean(reduced)} />
