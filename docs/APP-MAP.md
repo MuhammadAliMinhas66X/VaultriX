@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (246 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (247 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -278,11 +278,11 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 71 files
+- `frontend/src/i18n/useTranslation.js` is imported by 72 files
 - `frontend/src/i18n/useFormat.js` is imported by 26 files
 - `frontend/src/context/AuthContext.jsx` is imported by 26 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 22 files
-- `frontend/src/i18n/notifications.js` is imported by 19 files
+- `frontend/src/i18n/notifications.js` is imported by 20 files
 - `frontend/src/utils/dates.js` is imported by 19 files
 - `frontend/src/components/FormField.jsx` is imported by 13 files
 - `frontend/src/components/ErrorSlot.jsx` is imported by 13 files
@@ -468,6 +468,7 @@ flowchart LR
 - `frontend/src/components/Combobox.jsx`  (used by 9)
 - `frontend/src/components/Drawer.jsx`  (used by 4)
 - `frontend/src/components/EmailField.jsx`  (used by 3)
+- `frontend/src/components/ErrorBoundary.jsx`  (used by 2)
 - `frontend/src/components/ErrorSlot.jsx`  (used by 13)
 - `frontend/src/components/FieldError.jsx`  (used by 9)
 - `frontend/src/components/FormField.jsx`  (used by 13)
@@ -519,12 +520,12 @@ flowchart LR
 - `frontend/src/i18n/locales/fr.js`  (used by 1)
 - `frontend/src/i18n/locales/hi.js`  (used by 1)
 - `frontend/src/i18n/locales/ur.js`  (used by 1)
-- `frontend/src/i18n/notifications.js`  (used by 19)
+- `frontend/src/i18n/notifications.js`  (used by 20)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
 - `frontend/src/i18n/useFormat.js`  (used by 26)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 7)
-- `frontend/src/i18n/useTranslation.js`  (used by 71)
+- `frontend/src/i18n/useTranslation.js`  (used by 72)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
