@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
+import { ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import Logo from '../Logo.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
@@ -115,30 +115,16 @@ function NavItem({ item, active, collapsed, activeId, instant, onNavigate }) {
   );
 }
 
-const GROUP_KEY = 'vaultrix.sidebar.group';
-
 function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandSidebar }) {
-  const { t } = useTranslation();
   const Icon = group.icon;
   const ref = useRef(null);
   const navigate = useNavigate();
   const [tipRect, setTipRect] = useState(null);
-  const [open, setOpen] = useState(() => {
-    try {
-      return window.localStorage.getItem(`${GROUP_KEY}.${group.id}`) === 'open';
-    } catch (error) {
-      return false;
-    }
-  });
-
-  const setAndSave = (next) => {
-    setOpen(next);
-    try {
-      window.localStorage.setItem(`${GROUP_KEY}.${group.id}`, next ? 'open' : 'closed');
-    } catch (error) {
-      return;
-    }
-  };
+  // Closed on every load. It opens when the person opens it, or when they land
+  // on one of the streams inside it.
+  const [open, setOpen] = useState(() => Boolean(group.activeChild && activeId.startsWith('stream:')));
+  const setAndSave = setOpen;
+  const hasItems = group.items.length > 0;
 
   const headerTone = group.activeChild ? 'text-ink' : 'text-muted hover:text-ink';
   const headerActive = group.activeChild && !activeId.startsWith('stream:');
@@ -187,7 +173,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
         <Link
           to={group.to}
           onClick={() => {
-            setAndSave(true);
+            if (hasItems) setOpen(group.activeChild ? !open : true);
             onNavigate?.();
           }}
           aria-current={headerActive ? 'page' : undefined}
@@ -198,6 +184,7 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
           </span>
           <span className="min-w-0 flex-1 truncate text-start">{group.label}</span>
         </Link>
+        {hasItems && (
         <button
           type="button"
           onClick={() => setAndSave(!open)}
@@ -209,10 +196,11 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
             <ChevronDown className="h-4 w-4" />
           </motion.span>
         </button>
+        )}
       </div>
 
       <AnimatePresence initial={false}>
-        {expanded && (
+        {expanded && hasItems && (
           <motion.div
             key="children"
             initial={{ height: 0, opacity: 0 }}
@@ -231,16 +219,6 @@ function Group({ group, activeId, collapsed, uid, instant, onNavigate, onExpandS
                 className="absolute inset-y-0 start-0 w-px rounded-full bg-border"
               />
               <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto overflow-x-hidden pe-0.5">
-                {group.items.length === 0 && (
-                  <Link
-                    to={group.to}
-                    onClick={onNavigate}
-                    className="flex h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-muted outline-none transition-colors hover:bg-black/[0.04] hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    <Plus className="h-4 w-4" strokeWidth={1.75} />
-                    {t('income.add')}
-                  </Link>
-                )}
                 {group.items.map((item, index) => {
                   const itemActive = item.id === activeId;
                   return (
