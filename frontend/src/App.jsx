@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
@@ -23,9 +24,11 @@ import OfflineBanner from './components/OfflineBanner.jsx';
 const PortfolioPage = lazy(() => import('./portfolio/PortfolioPage.jsx'));
 
 function App() {
+  const location = useLocation();
   return (
     <>
       <OfflineBanner />
+      <ErrorBoundary resetKey={location.pathname}>
       <Routes>
         <Route
           path="/"
@@ -65,6 +68,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </ErrorBoundary>
       <ToastViewport />
     </>
   );
