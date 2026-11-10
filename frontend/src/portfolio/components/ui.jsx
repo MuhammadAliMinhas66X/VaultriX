@@ -180,16 +180,31 @@ export function PhoneFrame({ src, alt, className = '', priority = false }) {
   );
 }
 
-export function WindowFrame({ src, alt, className = '', priority = false }) {
+export function AndroidFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`overflow-hidden rounded-2xl border border-ink/90 bg-white shadow-[0_40px_80px_-34px_rgba(17,17,20,0.5)] ${className}`}>
-      <div className="flex items-center gap-1.5 border-b border-border bg-surface px-4 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-ink/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-ink/40" />
-        <span className="h-2.5 w-2.5 rounded-full bg-ink/20" />
-        <span className="pf-mono ms-3 rounded-md bg-white px-3 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted">Vaultrix</span>
+    <div className={`relative rounded-[1.7rem] bg-[#1b1b1f] p-[5px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-black/30 ${className}`}>
+      <span aria-hidden="true" className="absolute -right-[3px] top-24 h-10 w-[3px] rounded-r bg-[#1b1b1f]" />
+      <span aria-hidden="true" className="absolute -right-[3px] top-40 h-6 w-[3px] rounded-r bg-[#1b1b1f]" />
+      <div className="relative overflow-hidden rounded-[1.3rem] bg-white">
+        <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+        <span aria-hidden="true" className="absolute left-1/2 top-2 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-[#1b1b1f] ring-2 ring-black/20" />
       </div>
-      <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+    </div>
+  );
+}
+
+export function LaptopFrame({ src, alt, className = '', priority = false }) {
+  return (
+    <div className={className}>
+      <div className="relative rounded-t-[1rem] bg-ink p-[8px] pb-[8px] shadow-[0_40px_80px_-34px_rgba(17,17,20,0.5)]">
+        <div className="relative overflow-hidden rounded-[0.55rem] bg-white">
+          <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+        </div>
+        <span aria-hidden="true" className="absolute left-1/2 top-[2.5px] h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-white/40" />
+      </div>
+      <div className="relative left-1/2 h-[11px] w-[114%] -translate-x-1/2 rounded-b-[0.9rem] bg-gradient-to-b from-[#dcdce0] to-[#a8a8b0] shadow-[0_18px_30px_-16px_rgba(17,17,20,0.5)]">
+        <span aria-hidden="true" className="absolute left-1/2 top-0 h-[4px] w-20 -translate-x-1/2 rounded-b-md bg-[#8c8c94]" />
+      </div>
     </div>
   );
 }

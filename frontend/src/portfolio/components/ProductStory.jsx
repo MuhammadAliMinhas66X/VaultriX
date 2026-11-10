@@ -4,36 +4,37 @@ import { Check } from 'lucide-react';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { features } from '../content.js';
 import { screens } from '../screens.js';
-import { PhoneFrame, Reveal, SectionTag, SplitText, TabletFrame, Tilt, WindowFrame } from './ui.jsx';
+import { AndroidFrame, LaptopFrame, PhoneFrame, Reveal, SectionTag, SplitText, TabletFrame, Tilt } from './ui.jsx';
 
 function Visual({ id }) {
+  const fit = { maxWidth: 'min(100%, 94vh)' };
   if (id === 'dashboard') {
     return (
-      <div className="relative mx-auto w-full max-w-[720px]">
-        <TabletFrame src={screens.dashboardTablet} alt="Dashboard with the balance card on a tablet" className="w-[88%]" />
-        <PhoneFrame src={screens.dashboardPhone} alt="Dashboard with the balance card on a phone" className="absolute -bottom-6 right-0 w-[27%]" />
+      <div className="relative mx-auto w-full" style={fit}>
+        <TabletFrame src={screens.dashboardTablet} alt="Dashboard with the balance card on a tablet" className="w-[86%]" />
+        <PhoneFrame src={screens.dashboardPhone} alt="Dashboard with the balance card on an iPhone" className="absolute -bottom-4 right-0 w-[26%]" />
       </div>
     );
   }
   if (id === 'income') {
     return (
-      <div className="mx-auto w-full max-w-[720px]">
-        <WindowFrame src={screens.incomeDesktop} alt="Income streams with tax and deductions" />
+      <div className="relative mx-auto w-full px-[3%]" style={fit}>
+        <LaptopFrame src={screens.incomeDesktop} alt="Income streams with tax and deductions on a laptop" />
       </div>
     );
   }
   if (id === 'expenses') {
     return (
-      <div className="relative mx-auto w-full max-w-[720px]">
-        <WindowFrame src={screens.expensesDesktop} alt="Daily expenses chart and categories" className="w-[88%]" />
-        <PhoneFrame src={screens.expensesPhone} alt="Daily expenses on a phone" className="absolute -bottom-6 right-0 w-[27%]" />
+      <div className="relative mx-auto w-full" style={fit}>
+        <LaptopFrame src={screens.expensesDesktop} alt="Daily expenses chart and categories on a laptop" className="w-[90%]" />
+        <AndroidFrame src={screens.expensesPhone} alt="Daily expenses on an Android phone" className="absolute -bottom-4 right-0 w-[25%]" />
       </div>
     );
   }
   return (
-    <div className="relative mx-auto w-full max-w-[720px]">
-      <WindowFrame src={screens.loansDesktop} alt="Loans with the repayment graph" className="w-[88%]" />
-      <PhoneFrame src={screens.loansPhone} alt="Loans on a phone" className="absolute -bottom-6 right-0 w-[27%]" />
+    <div className="relative mx-auto w-full" style={fit}>
+      <LaptopFrame src={screens.loansDesktop} alt="Loans with the repayment graph on a laptop" className="w-[90%]" />
+      <PhoneFrame src={screens.loansPhone} alt="Loans on an iPhone" className="absolute -bottom-4 right-0 w-[25%]" />
     </div>
   );
 }
@@ -79,7 +80,7 @@ function StickyStory() {
 
   return (
     <div ref={ref} className="relative hidden lg:block" style={{ height: `${features.length * 90}vh` }}>
-      <div className="sticky top-0 flex h-screen items-center">
+      <div className="sticky top-0 flex h-[100svh] items-center pb-6 pt-16">
         <div className="mx-auto grid w-full max-w-[1400px] grid-cols-12 items-center gap-12 px-8">
           <div className="col-span-5">
             <ol className="relative border-l border-border pl-8">
@@ -95,7 +96,7 @@ function StickyStory() {
                   <li key={feature.id} className="py-3">
                     <button type="button" onClick={() => jump(index)} aria-current={on} className="group block w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-ink">
                       <span className="pf-mono text-[11px] tracking-[0.2em] text-muted">{feature.index}</span>
-                      <span className={`mt-1 block text-[clamp(2rem,3.4vw,3.2rem)] font-semibold leading-none tracking-tight transition-colors duration-500 ${on ? 'text-ink' : 'text-ink/25 group-hover:text-ink/50'}`}>
+                      <span className={`mt-1 block text-[clamp(1.6rem,min(3.2vw,4.6vh),3rem)] font-semibold leading-none tracking-tight transition-colors duration-500 ${on ? 'text-ink' : 'text-ink/25 group-hover:text-ink/50'}`}>
                         {feature.name}
                       </span>
                     </button>
@@ -108,7 +109,7 @@ function StickyStory() {
                           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                           className="overflow-hidden"
                         >
-                          <h3 className="mt-5 max-w-md text-2xl font-semibold leading-tight tracking-tight">{feature.title}</h3>
+                          <h3 className="mt-4 max-w-md text-[clamp(1.2rem,2.6vh,1.6rem)] font-semibold leading-tight tracking-tight">{feature.title}</h3>
                           <p className="mt-3 max-w-md text-[15px] leading-relaxed text-ink/65">{feature.body}</p>
                           <Points points={feature.points} />
                         </motion.div>
@@ -143,9 +144,9 @@ function StickyStory() {
 
 function StackedStory() {
   return (
-    <div className="mx-auto max-w-[1400px] space-y-20 px-5 pb-20 sm:px-8 lg:hidden">
+    <div className="mx-auto max-w-[1400px] px-5 pb-10 sm:px-8 lg:hidden">
       {features.map((feature) => (
-        <article key={feature.id} className="border-t border-border pt-8">
+        <article key={feature.id} className="flex min-h-[86svh] flex-col justify-center border-t border-border py-10">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
               <p className="pf-mono text-[11px] tracking-[0.2em] text-muted">{feature.index}</p>
@@ -175,10 +176,10 @@ function StackedStory() {
 
 function ProductStory() {
   return (
-    <section id="product" className="relative scroll-mt-20 border-b border-border">
-      <div className="mx-auto max-w-[1400px] px-5 pb-12 pt-20 sm:px-8 sm:pt-28 lg:pb-16">
+    <section id="product" className="pf-snap-target relative scroll-mt-20 border-b border-border">
+      <div className="mx-auto max-w-[1400px] px-5 pb-10 pt-20 sm:px-8 sm:pt-24 lg:pb-8">
         <SectionTag index="01" label="The product" />
-        <h2 className="mt-6 max-w-4xl text-[clamp(2.6rem,7vw,6rem)] font-semibold">
+        <h2 className="mt-5 max-w-4xl text-[clamp(2.4rem,5.6vw,5rem)] font-semibold">
           <SplitText text="Four screens. One picture of your money." />
         </h2>
         <Reveal delay={0.15} className="mt-6 max-w-xl text-lg leading-relaxed text-ink/65">

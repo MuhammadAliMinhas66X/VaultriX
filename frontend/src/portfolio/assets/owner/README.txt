@@ -1,3 +1,3 @@
-Put your photo in this folder (jpg, jpeg, png, webp or avif).
-The founder section picks up the first image automatically. No code change needed.
-Best results: a portrait with space around the head, at least 1200 pixels tall.
+The founder photo lives here. To change it, replace muhammad-ali-minhas.webp
+(or add another jpg, jpeg, png, webp or avif; the first file by name is used).
+For a new ASCII version, replace ascii.js in the folder above.

@@ -148,3 +148,27 @@ html[data-reduce-motion='true'] .pf-dash,
 html[data-reduce-motion='true'] .pf-blink {
   animation: none;
 }
+
+html.pf-snap {
+  scroll-snap-type: y proximity;
+}
+
+.pf-snap-target {
+  scroll-snap-align: start;
+}
+
+html:not([data-reduce-motion='true']) .pf-focus-body {
+  transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.7s ease;
+}
+
+html:not([data-reduce-motion='true']) .pf main > section[data-pf-focus='off'] > .pf-focus-body {
+  opacity: 0.32;
+  transform: scale(0.985);
+  filter: blur(1.2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.pf-snap {
+    scroll-snap-type: none;
+  }
+}

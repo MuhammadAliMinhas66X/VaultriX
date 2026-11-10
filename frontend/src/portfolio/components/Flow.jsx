@@ -29,25 +29,25 @@ function Connector() {
 
 function Flow() {
   return (
-    <section id="flow" className="relative scroll-mt-20 border-b border-border bg-surface">
-      <div className="mx-auto grid max-w-[1400px] gap-14 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-12 lg:gap-12">
+    <section id="flow" className="pf-snap-target relative flex min-h-[100svh] items-center border-b border-border bg-surface">
+      <div className="pf-focus-body mx-auto grid w-full max-w-[1400px] gap-8 px-5 pb-10 pt-24 sm:px-8 lg:grid-cols-12 lg:gap-12 lg:pb-6 lg:pt-20">
         <div className="lg:col-span-7">
           <SectionTag index="02" label="How it connects" />
-          <h2 className="mt-6 text-[clamp(2.6rem,6.4vw,5.4rem)] font-semibold">
+          <h2 className="mt-4 text-[clamp(2.1rem,min(4vw,6.4vh),3.9rem)] font-semibold">
             <SplitText text="When someone else pays, Vaultrix remembers." />
           </h2>
-          <Reveal delay={0.1} className="mt-6 max-w-xl text-lg leading-relaxed text-ink/65">
+          <Reveal delay={0.1} className="mt-4 max-w-xl text-base leading-relaxed text-ink/65 sm:text-lg">
             A friend covers your flight. You record the expense once. The loan is written for you, so nothing is forgotten and nothing is entered twice.
           </Reveal>
 
-          <Reveal delay={0.1} className="mt-12 grid items-center gap-2 md:grid-cols-[1fr_auto_1fr]">
+          <Reveal delay={0.1} className="mt-6 grid items-center gap-2 md:grid-cols-[1fr_auto_1fr]">
             <div className="rounded-2xl border border-border bg-white p-5 shadow-[0_24px_50px_-30px_rgba(17,17,20,0.35)]">
               <p className="pf-mono text-[10px] uppercase tracking-[0.18em] text-muted">Expense</p>
               <p className="mt-3 text-lg font-semibold">Travel</p>
               <p className="text-sm text-muted">Flight ticket</p>
-              <div className="mt-4 flex items-end justify-between gap-3">
-                <span className="rounded-full border border-ink px-2.5 py-0.5 text-[11px] font-semibold">Paid by Hamza Tariq</span>
-                <span className="text-lg font-bold tabular-nums">Rs 18,000.00</span>
+              <div className="mt-4 flex flex-wrap items-end justify-between gap-x-3 gap-y-2">
+                <span className="whitespace-nowrap rounded-full border border-ink px-2.5 py-0.5 text-[11px] font-semibold">Paid by Hamza Tariq</span>
+                <span className="whitespace-nowrap text-lg font-bold tabular-nums">Rs 18,000.00</span>
               </div>
             </div>
 
@@ -67,19 +67,19 @@ function Flow() {
             </div>
           </Reveal>
 
-          <ol className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
+          <ol className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
             {steps.map((step, index) => (
-              <li key={step.title} className="bg-white p-5">
+              <li key={step.title} className="bg-white p-4">
                 <span className="pf-mono text-[11px] tracking-[0.2em] text-muted">0{index + 1}</span>
-                <p className="mt-3 text-lg font-semibold leading-tight tracking-tight">{step.title}</p>
-                <p className="mt-2 text-sm leading-relaxed text-ink/65">{step.body}</p>
+                <p className="mt-2 text-base font-semibold leading-tight tracking-tight">{step.title}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink/65">{step.body}</p>
               </li>
             ))}
           </ol>
         </div>
 
         <Reveal y={60} className="flex justify-center lg:col-span-5">
-          <Tilt max={6} className="w-[min(78vw,340px)]">
+          <Tilt max={6} className="w-[min(70vw,300px)] lg:w-[min(300px,31vh)]">
             <PhoneFrame src={screens.paidByPhone} alt="Adding an expense paid by someone else, with the Loans preview card" />
           </Tilt>
         </Reveal>

@@ -19,6 +19,7 @@ export const nav = [
   { id: 'flow', label: 'How it connects' },
   { id: 'privacy', label: 'Privacy' },
   { id: 'security', label: 'Security' },
+  { id: 'details', label: 'Details' },
   { id: 'founder', label: 'Founder' },
 ];
 
