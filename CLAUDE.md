@@ -31,7 +31,7 @@ Keep it current: when something here becomes false, fix the line in the same rou
    - `commit-v1_NNN.ps1` - `Save-Commit` per logical group (conventional messages: `feat(api): ...`, `feat(ui): ...`, `fix(ui): ...`, `feat(i18n): ...`), does NOT push without asking, refuses if files are already staged.
 4. Templates: copy the last delivered pair and change names and groups. Repo path candidates in the scripts: `C:\Users\DELL\Downloads\vaultrix-main-github-origined-folder\vaultrix` then a `vaultrix` folder next to the script. Windows windows stay open with "Press Enter to close".
 5. Commit scripts add NO AI attribution lines (he asked for plain messages).
-6. Version numbers continue from the last round. Last delivered: v1_123 (sidebar: solid ink active pill, chevrons collapse icon that turns, row entrance and hover motion). v1_122 (sidebar restyled like the MongoDB Atlas side nav: one row style for every item, `Sidebar.jsx`). v1_121 (menu flicker fix: one persistent shell, `components/layout/MainShell.jsx` + `shellSlot.js`; pages keep writing `<AppShell>` but inside MainShell it only passes the page title; check `docs/dev/shell-persist-browser-check.cjs`). v1_120 (sidebar Income Stream: plain link when there are no streams, closed dropdown when there are, opens on click; `Sidebar.jsx` `Group`, check `docs/dev/sidebar-browser-check.cjs`). v1_119 (loan payments graph redone as a ring plus running-balance bars, `PaymentBar.jsx`; v1_118 was the first, rejected, bar version). v1_117 (Bills have no category field: the company type shows as a tag in the dropdown and the expense category is made from it; Dashboard balance subtracts loan money paid back; section titles restyled; logo source fixed). v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
+6. Version numbers continue from the last round. Last delivered: v1_124 (CLAUDE.md only: audit and BUILD FIRST list). v1_123 (sidebar: solid ink active pill, chevrons collapse icon that turns, row entrance and hover motion). v1_122 (sidebar restyled like the MongoDB Atlas side nav: one row style for every item, `Sidebar.jsx`). v1_121 (menu flicker fix: one persistent shell, `components/layout/MainShell.jsx` + `shellSlot.js`; pages keep writing `<AppShell>` but inside MainShell it only passes the page title; check `docs/dev/shell-persist-browser-check.cjs`). v1_120 (sidebar Income Stream: plain link when there are no streams, closed dropdown when there are, opens on click; `Sidebar.jsx` `Group`, check `docs/dev/sidebar-browser-check.cjs`). v1_119 (loan payments graph redone as a ring plus running-balance bars, `PaymentBar.jsx`; v1_118 was the first, rejected, bar version). v1_117 (Bills have no category field: the company type shows as a tag in the dropdown and the expense category is made from it; Dashboard balance subtracts loan money paid back; section titles restyled; logo source fixed). v1_116 (Bills was missing again: the `/bills` route, bills text and wiring were overwritten by the other agent's zip; restored). v1_115 was the request storm fix, per-user rate limits, one currency list, refresh token replay detection. v1_112 was the bills redesign, v1_111 the CLAUDE.md and bills-fix round.
 7. Final message: one or two sentences, what is in it, the one next step, and honest "not verified". Do not paste links for Artifacts; do not re-send unchanged files.
 
 ## 4. Stack and commands
@@ -199,6 +199,7 @@ Dashboard balance (v1_117): `net - spentBySelf`; money someone else paid only le
 
 ## 11. Open items and backlog
 
+- BUILD FIRST list is in section 11A and beats everything below.
 - Pending, waiting for his go-ahead: mobile-only premium Dashboard card (rolling digits, tap-to-cycle net / before deductions / deductions, sheen), plus a browser-engine check of loan charts and a review of the hi/ur/ar loan text.
 - Pending, his choice: Google Sheets CSV or Twelve Data as the rates source.
 - Split payments paid with money borrowed from someone, tracked in Loans: NOT started, because loans belong to the other agent. Bill payments already support several steps from different sources. Revisit only when he says loans are ready.
@@ -219,6 +220,29 @@ Round log v1_116 to v1_119 (what was asked, what was done, so it is not redone)
 - v1_123 sidebar colour and motion: active top-level row is a solid ink pill with white text (same black as primary buttons and the balance card), child rows use a soft tint; the sidebar has a faint white-to-#f9f9fa gradient. The collapse button is a double chevron that rotates 180 degrees (the old panel icon was judged irrelevant). Rows slide in with a small stagger on first load, icons scale slightly on hover. Phone bottom bar untouched.
 - He rejects UI that looks plain or unclear: show a screenshot-level check on phone (390 px) and desktop before sending; numbers must never wrap mid-number (use `whitespace-nowrap`).
 - Still owed: Google Sheets vs Twelve Data "how to" answer (verify free limits by search first).
+
+Audit of v1_123 codebase (Tue 2026-11-10, for brainstorming with him; not yet built, pick with him)
+- Money logic: `Total balance = sum of each stream's one expectedAmount - THIS month's self-paid expenses`. Income has no receipt history (one record per stream), so a second month's salary never adds, earlier months' spending is never subtracted, yearly/once/monthly amounts are all summed alike. Rates are today's for old data. Needs a real model: income receipts (date, amount) and a balance or per-month "left this month" view.
+- Expenses over money are allowed by design (he confirmed); add a soft warning only.
+- Backend accepts future expense dates (only the form blocks them via `max`). Bill and loan payments are read-then-save without a guard: two quick taps or two tabs can overpay or double-create an expense (needs an atomic update or an idempotency key). Bill payment creates the Expense then pushes the payment with no transaction (rollback is best effort).
+- Missing: React error boundary (a render error white-screens the app); data export (CSV/PDF) and import for users (admin CSV only); due-date reminders (no email, push or in-app alert for bills or loans); recurring expenses; expense search beyond notes and filters by category or payer; receipts on expenses; budgets and goals; reports; member invites (roles owner/admin/member/viewer exist but no way to add a second person); account balances (Account API exists, no page); income stream archive is in the API but not in the UI.
+- Limits: expenses list caps at 2000 per month, bills at `LIST_LIMIT`, silently. Bill generation runs on GET /bills (a GET with side effects).
+- Tests: integration tests only cover auth, sessions, devices, ownership; nothing for expense, bill, loan, income CRUD, payments or generation.
+
+## 11A. BUILD FIRST (his decision on 2026-11-10: these come before any new feature or polish)
+
+Work in this order. Each item: build it, test it, deliver, then tick it here. Do not start a new feature while an earlier item is open, unless he says so.
+1. Income receipts and a real balance. Add a per-receipt record (stream, date, amount, currency, optional note) so each salary or payment is its own entry. Replace "sum of each stream's one amount minus this month's expenses" with a clear model: a running balance (all received income minus all self-paid expenses, with repaid loan money) and a "left this month" view with month switching. Keep rates honest: say which rate was used for old amounts. Dashboard, Income page and the stream detail must all read the same numbers. Add a soft warning when expenses are more than the money (expenses over money stay allowed).
+2. Safe payments. Bill and loan payments must not double or overpay on two quick taps or two tabs (atomic update or an idempotency key from the client). Reject future expense and payment dates on the SERVER too. Make a bill payment and its expense succeed or fail together (transaction where available, a clean cleanup otherwise).
+3. React error boundary around the app and around each page, with a friendly "Something went wrong, reload" card and the page title still visible, plus a way to report it.
+4. Tell the user when a list is capped (expenses 2000 per month, bills `LIST_LIMIT`), or add paging.
+5. Integration tests for expense, bill (create, pay, overpay, generate), loan payment and income CRUD, including ownership, plus a test for the double-tap case (his PC runs them).
+6. Reminders: in-app alert and optional email for bills and loans due soon or overdue.
+7. Export (CSV and PDF) of income, expenses, bills and loans, and CSV import for expenses.
+8. Income stream archive and unarchive in the UI (API already has `isArchived`).
+9. Invite a second person to the organisation (roles owner, admin, member, viewer already exist) so "shared" is real.
+10. After the above: recurring expenses, receipt photos on expenses, expense filters (category, payer, text), reports, budgets and goals, an Accounts page.
+
 
 ## 12. Quick checklist before sending a round
 
