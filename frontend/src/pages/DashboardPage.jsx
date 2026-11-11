@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Banknote, Plus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Banknote, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
@@ -11,11 +11,12 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
-import { amountForTotal, isDeducted } from '../utils/salaryCuts.js';
-import { byReceivedDesc, summarize, toBase } from '../utils/incomeMath.js';
+import { toBase } from '../utils/incomeMath.js';
+import { receiptAmounts } from '../utils/balanceMath.js';
+import { useBalance } from '../hooks/useBalance.js';
 import { dateOptions, todayInput } from '../utils/dates.js';
 import { summarizeBills } from '../utils/billMath.js';
-import { monthKey, sumExpenses, sumRepaid } from '../utils/expenseMath.js';
+import { monthKey } from '../utils/expenseMath.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
 import { useResource } from '../data/useResource.js';
 
@@ -29,24 +30,22 @@ function DashboardPage() {
   const { streams, loading, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt } = useIncome();
   const { items, activeId } = useAppNav();
 
-  const summary = useMemo(() => (rates ? summarize(streams, rates) : null), [streams, rates]);
-  const monthResource = useResource('expenses', { month: monthKey(new Date()) });
+  const balance = useBalance(monthKey(new Date()));
   const billsResource = useResource('bills', { today: todayInput() });
-  const monthExpenses = monthResource.data ? monthResource.data.expenses : monthResource.error ? NO_ITEMS : null;
   const bills = billsResource.data ? billsResource.data.bills : billsResource.error ? NO_ITEMS : null;
 
   const billsToday = todayInput();
   const billSummary = useMemo(() => (bills && rates ? summarizeBills(bills, rates, currency, billsToday) : null), [bills, rates, currency, billsToday]);
 
-  const spent = useMemo(() => (monthExpenses && rates ? sumExpenses(monthExpenses, rates, currency).total : 0), [monthExpenses, rates, currency]);
-  const spentByOthers = useMemo(
-    () => (monthExpenses && rates ? sumExpenses(monthExpenses.filter((expense) => expense.paidBy === 'other'), rates, currency).total : 0),
-    [monthExpenses, rates, currency]
-  );
-  const repaid = useMemo(() => (monthExpenses && rates ? sumRepaid(monthExpenses, rates, currency) : 0), [monthExpenses, rates, currency]);
-  // Money paid by others only leaves my balance once I pay it back.
-  const spentBySelf = Math.max(0, spent - spentByOthers) + Math.min(repaid, spentByOthers);
-  const latest = useMemo(() => byReceivedDesc(streams.filter((item) => item.expectedAmount !== null)).slice(0, LATEST_LIMIT), [streams]);
+  // Every number here comes from useBalance, the same source as the Income page.
+  const data = balance.data;
+  const summary = data ? { gross: data.income.gross, net: data.income.net, cuts: data.income.cuts, excluded: data.excluded } : null;
+  const spent = data ? data.month.spentAll : 0;
+  const spentByOthers = data ? data.month.other : 0;
+  const repaid = data ? data.month.repaid : 0;
+  const left = data ? data.month.left : 0;
+  const streamsById = useMemo(() => new Map(streams.map((stream) => [stream.id, stream])), [streams]);
+  const latest = useMemo(() => balance.receipts.slice(0, LATEST_LIMIT), [balance.receipts]);
 
   const rateLines = useMemo(() => {
     if (!rates) return [];
@@ -56,7 +55,7 @@ function DashboardPage() {
       .map((code) => (rates[code] >= 1 ? { code, from: currency, to: code, value: rates[code] } : { code, from: code, to: currency, value: 1 / rates[code] }));
   }, [streams, rates, currency]);
 
-  const hasIncome = streams.some((item) => item.expectedAmount !== null);
+  const hasIncome = balance.receipts.length > 0 || Boolean(balance.opening && balance.opening.amount > 0) || streams.some((item) => item.expectedAmount !== null);
 
   const ready = Boolean(summary) && !ratesLoading && !loading;
   const cutsBlock = ready && summary.cuts > 0.005 && (
@@ -115,10 +114,24 @@ function DashboardPage() {
       </span>
     </div>
   );
-  const phoneExtras = [cutsBlock, spentBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
-  const tabletNotes = [rateBlock, staleBlock, excludedBlock].filter(Boolean);
+  const leftBlock = ready && (
+    <div key="left" className="mt-4 border-t border-border pt-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-muted">{t('balance.leftThisMonth')}</span>
+        <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-ink">{formatMoney(left, { decimals: 2, currency })}</span>
+      </div>
+      {(data.overspentMonth || data.belowZero) && (
+        <p className="mt-2 flex items-start gap-2 text-xs text-ink">
+          <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+          {data.belowZero ? t('balance.overspentTotal') : t('balance.overspentMonth', { amount: formatMoney(Math.abs(left), { decimals: 2, currency }) })}
+        </p>
+      )}
+    </div>
+  );
+  const phoneExtras = [cutsBlock, spentBlock, leftBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
+  const tabletNotes = [leftBlock, rateBlock, staleBlock, excludedBlock].filter(Boolean);
 
-  const waiting = ratesLoading || loading;
+  const waiting = ratesLoading || loading || balance.status === 'wait';
   const cardStatus = waiting ? 'wait' : !summary ? 'error' : 'ready';
   const hasCuts = ready && summary.cuts > 0.005;
 
@@ -135,7 +148,7 @@ function DashboardPage() {
         <div className="md:grid md:grid-cols-[1.4fr_1fr] md:gap-4 lg:grid-cols-[1.7fr_1fr] lg:gap-5">
           <BalanceCard
             status={cardStatus}
-            amount={summary ? summary.net - spentBySelf : 0}
+            amount={data ? data.running : 0}
             currency={currency}
             holder={user?.name}
             message={waiting ? t('income.ratesLoading') : t('errors.ratesUnavailable')}
@@ -181,22 +194,24 @@ function DashboardPage() {
         </Link>
       </div>
       <ul>
-        {latest.map((stream) => {
-          const deducted = isDeducted(stream);
-          const shown = amountForTotal(stream);
-          const converted = stream.currency === currency ? null : toBase(shown, stream.currency, rates);
+        {latest.map((receipt) => {
+          const stream = streamsById.get(receipt.streamId);
+          const amounts = receiptAmounts(receipt, stream);
+          const deducted = Math.abs(amounts.gross - amounts.net) > 0.005;
+          const shown = amounts.net;
+          const converted = receipt.currency === currency ? null : toBase(shown, receipt.currency, rates);
           return (
-            <li key={stream.id} className="border-b border-border last:border-b-0">
-              <Link to={`/income#stream-${stream.id}`} className="flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-surface/60">
-                <BrandMark method={stream.destinationMethod} name={stream.destinationName} />
+            <li key={receipt.id} className="border-b border-border last:border-b-0">
+              <Link to={`/income#stream-${receipt.streamId}`} className="flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-surface/60">
+                <BrandMark method={stream?.destinationMethod} name={stream?.destinationName} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-ink">{stream.name}</span>
+                  <span className="block truncate text-sm font-semibold text-ink">{stream ? stream.name : ''}</span>
                   <span className="mt-0.5 block truncate text-xs text-muted">
-                    {formatDate(new Date(stream.receivedAt || stream.createdAt), dateOptions)} · {t(typeLabelKey(stream.incomeType))}
+                    {formatDate(new Date(receipt.receivedAt), dateOptions)}{stream ? ` · ${t(typeLabelKey(stream.incomeType))}` : ''}
                   </span>
                 </span>
                 <span className="shrink-0 text-end">
-                  <span className="block text-sm font-semibold tabular-nums text-ink">{formatMoney(shown, { decimals: 0, currency: stream.currency })}</span>
+                  <span className="block text-sm font-semibold tabular-nums text-ink">{formatMoney(shown, { decimals: 0, currency: receipt.currency })}</span>
                   <span className="block text-xs tabular-nums text-muted">
                     {deducted ? t('income.afterDeductions') : converted !== null ? t('income.approx', { amount: formatMoney(converted, { decimals: 0, currency }) }) : ''}
                   </span>

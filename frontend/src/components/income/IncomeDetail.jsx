@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Pencil, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import SalaryCutsPanel from './SalaryCutsPanel.jsx';
+import ReceiptsPanel from './ReceiptsPanel.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 import { amountForTotal, isDeducted, supportsCuts } from '../../utils/salaryCuts.js';
@@ -63,7 +64,10 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
         {confirming && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="flex flex-wrap items-center gap-3 border-y border-red-100 bg-red-50 px-5 py-3">
-              <span className="me-auto text-sm font-medium text-red-700">{t('income.deleteAsk')}</span>
+              <span className="me-auto text-sm font-medium text-red-700">
+                {t('income.deleteAsk')}
+                <span className="mt-0.5 block text-xs font-normal text-red-700/80">{t('income.deleteReceiptsNote')}</span>
+              </span>
               <button type="button" onClick={() => setConfirming(false)} className="rounded-lg border border-red-200 bg-white px-3.5 py-2 text-sm font-medium text-ink transition hover:bg-surface">
                 {t('common.cancel')}
               </button>
@@ -95,6 +99,8 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
           <Detail label={t('income.receivedLabel')}>{formatDate(new Date(stream.receivedAt || stream.createdAt), dateOptions)}</Detail>
           {stream.typeDetail && <Detail label={t(`income.detail${kind}Label`)}>{stream.typeDetail}</Detail>}
         </dl>
+
+        <ReceiptsPanel stream={stream} />
 
         {cutsEligible && <SalaryCutsPanel stream={stream} onChange={onCutsChange} status={cutsStatus} />}
       </div>

@@ -8,6 +8,10 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import IncomeForm, { emptyForm, formFromStream } from '../components/income/IncomeForm.jsx';
 import IncomeCard from '../components/income/IncomeCard.jsx';
 import IncomeDetail from '../components/income/IncomeDetail.jsx';
+import BalanceOverview from '../components/income/BalanceOverview.jsx';
+import OpeningBalanceSheet from '../components/income/OpeningBalanceSheet.jsx';
+import { useBalance } from '../hooks/useBalance.js';
+import { monthKey, shiftMonth } from '../utils/expenseMath.js';
 import Drawer from '../components/Drawer.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -42,6 +46,10 @@ function IncomePage() {
   const [busy, setBusy] = useState(false);
   const [cutsStatus, setCutsStatus] = useState({});
   const [flashId, setFlashId] = useState(null);
+  const currentMonth = monthKey(new Date());
+  const [month, setMonth] = useState(currentMonth);
+  const [openingOpen, setOpeningOpen] = useState(false);
+  const balance = useBalance(month);
 
   const saveTimers = useRef({});
   const streamsRef = useRef(streams);
@@ -228,6 +236,18 @@ function IncomePage() {
           )}
         </div>
 
+        {!loading && (
+          <div className="mb-6">
+            <BalanceOverview
+              balance={balance}
+              month={month}
+              canGoNext={month < currentMonth}
+              onMonthChange={(delta) => setMonth((prev) => (delta > 0 && prev >= currentMonth ? prev : shiftMonth(prev, delta)))}
+              onEditOpening={() => setOpeningOpen(true)}
+            />
+          </div>
+        )}
+
         {loading ? (
           <IncomeSkeleton />
         ) : streams.length === 0 && !adding ? (
@@ -284,6 +304,9 @@ function IncomePage() {
           </motion.button>
         )}
       </AnimatePresence>
+      <Drawer open={openingOpen} onClose={() => setOpeningOpen(false)} title={t('balance.openingTitle')} label={t('balance.openingTitle')}>
+        <OpeningBalanceSheet opening={balance.opening} currency={currency} currencies={currencies} onDone={() => setOpeningOpen(false)} />
+      </Drawer>
       <Drawer
         open={!wide && !loading && Boolean(sidePanel)}
         onClose={() => {
