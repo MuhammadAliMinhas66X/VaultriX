@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (247 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (250 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -280,19 +280,19 @@ flowchart LR
 
 - `frontend/src/i18n/useTranslation.js` is imported by 72 files
 - `frontend/src/i18n/useFormat.js` is imported by 26 files
-- `frontend/src/context/AuthContext.jsx` is imported by 26 files
+- `frontend/src/context/AuthContext.jsx` is imported by 25 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 22 files
 - `frontend/src/i18n/notifications.js` is imported by 20 files
 - `frontend/src/utils/dates.js` is imported by 19 files
 - `frontend/src/components/FormField.jsx` is imported by 13 files
 - `frontend/src/components/ErrorSlot.jsx` is imported by 13 files
+- `frontend/src/components/BrandMark.jsx` is imported by 12 files
 - `frontend/src/components/Button.jsx` is imported by 12 files
 - `backend/src/middleware/rateLimiters.js` is imported by 12 files
 - `backend/src/utils/validators.js` is imported by 12 files
-- `frontend/src/components/BrandMark.jsx` is imported by 11 files
 - `frontend/src/services/api.js` is imported by 11 files
+- `frontend/src/portfolio/components/ui.jsx` is imported by 11 files
 - `backend/src/middleware/auth.js` is imported by 11 files
-- `frontend/src/portfolio/components/ui.jsx` is imported by 10 files
 
 ## 9. File index by feature (one line each)
 
@@ -328,7 +328,7 @@ flowchart LR
 - `frontend/src/components/OtpInput.jsx`  (used by 4)
 - `frontend/src/components/PasswordStrength.jsx`  (used by 2)
 - `frontend/src/components/admin/AdminPasswordPrompt.jsx`  (used by 1)
-- `frontend/src/context/AuthContext.jsx`  (used by 26)
+- `frontend/src/context/AuthContext.jsx`  (used by 25)
 - `frontend/src/pages/ForgotPasswordPage.jsx`  (used by 1)
 - `frontend/src/pages/LoginPage.jsx`  (used by 1)
 - `frontend/src/pages/SignupPage.jsx`  (used by 1)
@@ -462,7 +462,7 @@ flowchart LR
 - `frontend/src/App.jsx`  (used by 1)
 - `frontend/src/components/AlertBanner.jsx`  (used by 1)
 - `frontend/src/components/AnimatedAmount.jsx`  (used by 2)
-- `frontend/src/components/BrandMark.jsx`  (used by 11)
+- `frontend/src/components/BrandMark.jsx`  (used by 12)
 - `frontend/src/components/Button.jsx`  (used by 12)
 - `frontend/src/components/Captcha.jsx`  (used by 3)
 - `frontend/src/components/Combobox.jsx`  (used by 9)
@@ -514,12 +514,12 @@ flowchart LR
 - `frontend/src/hooks/useEmailCheck.js`  (used by 1)
 - `frontend/src/hooks/useMotionPreference.js`  (used by 22)
 - `frontend/src/i18n/languageStorage.js` - Only the *signed-out* language (login / signup screens) lives in localStorage.  (used by 1)
-- `frontend/src/i18n/locales/ar.js`  (used by 1)
-- `frontend/src/i18n/locales/en.js`  (used by 1)
-- `frontend/src/i18n/locales/es.js`  (used by 1)
-- `frontend/src/i18n/locales/fr.js`  (used by 1)
-- `frontend/src/i18n/locales/hi.js`  (used by 1)
-- `frontend/src/i18n/locales/ur.js`  (used by 1)
+- `frontend/src/i18n/locales/ar.js`  (used by 2)
+- `frontend/src/i18n/locales/en.js`  (used by 2)
+- `frontend/src/i18n/locales/es.js`  (used by 2)
+- `frontend/src/i18n/locales/fr.js`  (used by 2)
+- `frontend/src/i18n/locales/hi.js`  (used by 2)
+- `frontend/src/i18n/locales/ur.js`  (used by 2)
 - `frontend/src/i18n/notifications.js`  (used by 20)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
@@ -529,18 +529,21 @@ flowchart LR
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
+- `frontend/src/portfolio/PrivacyPolicyPage.jsx`  (used by 1)
+- `frontend/src/portfolio/ascii.js`  (used by 1)
+- `frontend/src/portfolio/components/Bento.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Buttons.jsx`  (used by 3)
-- `frontend/src/portfolio/components/Cta.jsx`  (used by 1)
-- `frontend/src/portfolio/components/Details.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Flow.jsx`  (used by 1)
-- `frontend/src/portfolio/components/Footer.jsx`  (used by 1)
+- `frontend/src/portfolio/components/Footer.jsx`  (used by 2)
 - `frontend/src/portfolio/components/Founder.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Hero.jsx`  (used by 1)
-- `frontend/src/portfolio/components/Nav.jsx`  (used by 3)
+- `frontend/src/portfolio/components/Logos.jsx`  (used by 2)
+- `frontend/src/portfolio/components/Nav.jsx`  (used by 4)
 - `frontend/src/portfolio/components/ProductStory.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Trust.jsx`  (used by 1)
-- `frontend/src/portfolio/components/ui.jsx`  (used by 10)
-- `frontend/src/portfolio/content.js`  (used by 9)
+- `frontend/src/portfolio/components/ui.jsx`  (used by 11)
+- `frontend/src/portfolio/content.js`  (used by 8)
+- `frontend/src/portfolio/policy.js`  (used by 1)
 - `frontend/src/portfolio/screens.js`  (used by 4)
 - `frontend/src/services/api.js` - Backs up the server's own httpOnly device cookie for the per-device  (used by 11)
 - `frontend/src/services/apiError.js`  (used by 9)
