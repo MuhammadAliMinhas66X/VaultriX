@@ -7,6 +7,8 @@ const read = (path) => (existsSync(path) ? readFileSync(path, 'utf8') : '');
 const checks = [
   ['backend/src/app.js', "app.use('/api/bills'", 'the /api/bills route is not mounted'],
   ['backend/src/app.js', "import billRoutes", 'billRoutes is not imported'],
+  ['backend/src/app.js', "app.use('/api/receipts'", 'the /api/receipts route is not mounted'],
+  ['backend/src/utils/organizations.js', 'IncomeReceipt.deleteMany', 'deleting an account does not delete its income receipts'],
   ['backend/src/utils/organizations.js', 'Bill.deleteMany', 'deleting an account does not delete its bills'],
   ['backend/src/models/Expense.js', 'billPaymentId', 'Expense has no billId / billPaymentId'],
   ['backend/src/controllers/expenseController.js', 'BILL_LINKED', 'bill-linked expenses can be edited or deleted from Expenses'],
