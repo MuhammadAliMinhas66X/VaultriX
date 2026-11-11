@@ -11,19 +11,22 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { IncomeLayout } from './context/IncomeContext.jsx';
 import IncomePage from './pages/IncomePage.jsx';
 import LoansPage from './pages/LoansPage.jsx';
+import BillsPage from './pages/BillsPage.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import RequireOnboarding from './components/RequireOnboarding.jsx';
 import RequireAdmin from './components/RequireAdmin.jsx';
 import ToastViewport from './components/ToastViewport.jsx';
 import OfflineBanner from './components/OfflineBanner.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
+import MainShell from './components/layout/MainShell.jsx';
 
 const PortfolioPage = lazy(() => import('./portfolio/PortfolioPage.jsx'));
 const PrivacyPolicyPage = lazy(() => import('./portfolio/PrivacyPolicyPage.jsx'));
 
 function App() {
   return (
-    <>
+    <ErrorBoundary>
       <OfflineBanner />
       <Routes>
         <Route
@@ -54,10 +57,13 @@ function App() {
 
           <Route element={<RequireOnboarding />}>
             <Route element={<IncomeLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/income" element={<IncomePage />} />
-              <Route path="/loans" element={<LoansPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
+              <Route element={<MainShell />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/income" element={<IncomePage />} />
+                <Route path="/loans" element={<LoansPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/bills" element={<BillsPage />} />
+              </Route>
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
 
@@ -70,7 +76,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       <ToastViewport />
-    </>
+    </ErrorBoundary>
   );
 }
 
