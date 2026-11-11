@@ -16,6 +16,7 @@ import {
   summarizeLoans,
 } from '../utils/expenseLoanLink.js';
 import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
+import { repaidMinorOf, buildTotals } from '../utils/balanceTotals.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
@@ -98,6 +99,58 @@ export const listExpenses = async (req, res, next) => {
       .lean();
 
     res.json({ success: true, expenses: await withLoans(req.user.orgId, expenses), capped: expenses.length >= 2000 });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Money spent per month and currency, for the running balance. Rows carry what I
+// paid myself, what others paid first, and how much of that I have paid back.
+// `since` (YYYY-MM-DD) is the opening-balance date; omit it to count everything.
+export const expenseTotals = async (req, res, next) => {
+  try {
+    const orgId = new mongoose.Types.ObjectId(String(req.user.orgId));
+    const match = { orgId };
+    if (req.query.since !== undefined && req.query.since !== '') {
+      const since = parseDay(String(req.query.since), { maxFutureDays: 3650 });
+      if (!since) return fail(res, 400, GENERIC_INVALID);
+      match.spentAt = { $gte: since };
+    }
+
+    const groups = await Expense.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: {
+            month: { $dateToString: { format: '%Y-%m', date: '$spentAt' } },
+            currency: '$currency',
+            paidBy: { $cond: [{ $eq: ['$paidBy', 'other'] }, 'other', 'self'] },
+          },
+          minor: { $sum: '$amountMinor' },
+        },
+      },
+    ]);
+
+    const borrowed = await Expense.find({ ...match, paidBy: 'other', loanId: { $ne: null } })
+      .select('amountMinor currency spentAt paidBy loanId')
+      .lean();
+    const summaries = await summarizeLoans(req.user.orgId, borrowed.map((expense) => expense.loanId));
+    const repaid = new Map();
+    borrowed.forEach((expense) => {
+      const minor = repaidMinorOf(expense, summaries.get(String(expense.loanId)));
+      if (minor <= 0) return;
+      const key = `${new Date(expense.spentAt).toISOString().slice(0, 7)}|${expense.currency}`;
+      repaid.set(key, (repaid.get(key) || 0) + minor);
+    });
+
+    const totals = buildTotals(groups, repaid).map((row) => ({
+      month: row.month,
+      currency: row.currency,
+      self: toMajor(row.selfMinor),
+      other: toMajor(row.otherMinor),
+      repaid: toMajor(row.repaidMinor),
+    }));
+    res.json({ success: true, totals });
   } catch (error) {
     next(error);
   }

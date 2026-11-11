@@ -20,6 +20,7 @@ import fxRoutes from './routes/fxRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import billRoutes from './routes/billRoutes.js';
+import receiptRoutes from './routes/receiptRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -106,6 +107,7 @@ app.use('/api/fx', fxRoutes);
 app.use('/api/loans', loanRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/bills', billRoutes);
+app.use('/api/receipts', receiptRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

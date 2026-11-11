@@ -9,6 +9,8 @@ import Account from '../../src/models/Account.js';
 import Expense from '../../src/models/Expense.js';
 import IncomeStream from '../../src/models/IncomeStream.js';
 import Bill from '../../src/models/Bill.js';
+import IncomeReceipt from '../../src/models/IncomeReceipt.js';
+import Organization from '../../src/models/Organization.js';
 
 const { default: app } = await import('../../src/app.js');
 
@@ -72,6 +74,17 @@ const cases = [
     exists: async (id) => Boolean(await IncomeStream.exists({ _id: id })),
     changed: async (id) => (await IncomeStream.findById(id)).name !== 'Original',
   },
+  {
+    name: 'income receipts',
+    path: '/api/receipts',
+    patch: { note: 'Hacked' },
+    make: async (owner) => {
+      const stream = await IncomeStream.create({ orgId: owner.user.orgId, createdBy: owner.user._id, name: 'Salary', currency: 'PKR' });
+      return IncomeReceipt.create({ orgId: owner.user.orgId, streamId: stream._id, createdBy: owner.user._id, receivedAt: new Date(), amountMinor: 100000, currency: 'PKR', note: 'Original' });
+    },
+    exists: async (id) => Boolean(await IncomeReceipt.exists({ _id: id })),
+    changed: async (id) => (await IncomeReceipt.findById(id)).note !== 'Original',
+  },
 ];
 
 describe.each(cases)('another account cannot touch $name', ({ path, patch, make, changed, exists }) => {
@@ -112,5 +125,32 @@ describe('loan payments', () => {
     const res = await request(app).post(`/api/loans/${loan._id}/payments`).set('Authorization', attacker.authorization).send({ amount: 1, paidAt: new Date().toISOString() });
     expect(res.status).not.toBe(200);
     expect((await Loan.findById(loan._id)).payments).toHaveLength(0);
+  });
+});
+
+describe('income receipts and opening balance', () => {
+  it('another account cannot add a receipt to someone else\'s stream', async () => {
+    const { owner, attacker } = await setup();
+    const stream = await IncomeStream.create({ orgId: owner.user.orgId, createdBy: owner.user._id, name: 'Salary', currency: 'PKR' });
+    const res = await request(app).post('/api/receipts').set('Authorization', attacker.authorization).send({ streamId: String(stream._id), amount: 100, receivedAt: new Date().toISOString().slice(0, 10) });
+    expect(res.status).toBe(404);
+    expect(await IncomeReceipt.countDocuments({ streamId: stream._id })).toBe(0);
+  });
+
+  it('opening balance only changes the caller\'s own account', async () => {
+    const { owner, attacker } = await setup();
+    const res = await request(app).put('/api/receipts/opening').set('Authorization', attacker.authorization).send({ amount: 5000, currency: 'PKR', asOf: new Date().toISOString().slice(0, 10) });
+    expect(res.status).toBe(200);
+    expect((await Organization.findById(owner.user.orgId)).openingBalanceMinor || 0).toBe(0);
+    expect((await Organization.findById(attacker.user.orgId)).openingBalanceMinor).toBe(500000);
+  });
+
+  it('deleting a stream deletes its receipts', async () => {
+    const { owner } = await setup();
+    const stream = await IncomeStream.create({ orgId: owner.user.orgId, createdBy: owner.user._id, name: 'Salary', currency: 'PKR' });
+    await IncomeReceipt.create({ orgId: owner.user.orgId, streamId: stream._id, receivedAt: new Date(), amountMinor: 100000, currency: 'PKR' });
+    const res = await request(app).delete(`/api/income-streams/${stream._id}`).set('Authorization', owner.authorization);
+    expect(res.status).toBe(200);
+    expect(await IncomeReceipt.countDocuments({ streamId: stream._id })).toBe(0);
   });
 });

@@ -1,3 +1,4 @@
+import IncomeReceipt from '../models/IncomeReceipt.js';
 import IncomeStream, {
   INCOME_TYPE_VALUES,
   FREQUENCY_VALUES,
@@ -159,6 +160,21 @@ export const createIncomeStream = async (req, res, next) => {
       createdBy: req.user.id,
     });
 
+    // A stream saved with an amount means money that already came in: record it
+    // as the first receipt so the balance counts it (same as before receipts).
+    if (expectedAmountMinor && expectedAmountMinor > 0 && req.body?.recordReceipt !== false) {
+      await IncomeReceipt.create({
+        orgId: req.user.orgId,
+        streamId: stream._id,
+        receivedAt: resolvedReceivedAt,
+        amountMinor: expectedAmountMinor,
+        currency,
+        note: '',
+        source: 'stream',
+        createdBy: req.user.id,
+      });
+    }
+
     res.status(201).json({ success: true, incomeStream: toIncomeStreamDto(stream.toObject()) });
   } catch (error) {
     next(error);
@@ -270,14 +286,14 @@ export const updateIncomeStream = async (req, res, next) => {
 };
 
 // --- Delete -------------------------------------------------------------
-// Permanent, same reasoning as Account.deleteAccount - nothing references
-// an income stream yet, so there's no history to lose. Revisit once
-// Transactions can point at one.
+// Permanent. Its receipts are deleted with it (the Income screen warns first).
 
 export const deleteIncomeStream = async (req, res, next) => {
   try {
     const result = await IncomeStream.deleteOne({ _id: req.params.id, orgId: req.user.orgId });
     if (result.deletedCount === 0) return fail(res, 404, NOT_FOUND);
+    // The money received from this stream goes with it.
+    await IncomeReceipt.deleteMany({ orgId: req.user.orgId, streamId: req.params.id });
     res.json({ success: true });
   } catch (error) {
     if (error?.name === 'CastError') return fail(res, 404, NOT_FOUND);
