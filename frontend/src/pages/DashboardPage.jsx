@@ -6,8 +6,6 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import BalanceCard from '../components/dashboard/BalanceCard.jsx';
 import BillsPanel from '../components/dashboard/BillsPanel.jsx';
-import RemindersPanel from '../components/dashboard/RemindersPanel.jsx';
-import { buildReminders } from '../utils/reminders.js';
 import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -34,12 +32,9 @@ function DashboardPage() {
 
   const balance = useBalance(monthKey(new Date()));
   const billsResource = useResource('bills', { today: todayInput() });
-  const loansResource = useResource('loans');
-  const loans = loansResource.data ? loansResource.data.loans : NO_ITEMS;
   const bills = billsResource.data ? billsResource.data.bills : billsResource.error ? NO_ITEMS : null;
 
   const billsToday = todayInput();
-  const reminders = useMemo(() => buildReminders(bills || NO_ITEMS, loans, billsToday), [bills, loans, billsToday]);
   const billSummary = useMemo(() => (bills && rates ? summarizeBills(bills, rates, currency, billsToday) : null), [bills, rates, currency, billsToday]);
 
   // Every number here comes from useBalance, the same source as the Income page.
@@ -249,7 +244,6 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
-            <RemindersPanel items={reminders} ready={Boolean(bills)} />
             {bills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
             {latestCard}
           </div>
