@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
-import { Scramble } from './ui.jsx';
 
 export function JoinButton({ to, label, variant = 'dark', size = 'md', className = '' }) {
   const dark = variant === 'dark';
@@ -16,9 +15,7 @@ export function JoinButton({ to, label, variant = 'dark', size = 'md', className
         aria-hidden="true"
         className={`absolute inset-0 origin-bottom scale-y-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-y-100 ${dark ? 'bg-[#2c2c33]' : 'bg-[#e9e9ec]'}`}
       />
-      <span className="relative z-10">
-        <Scramble text={label} />
-      </span>
+      <span className="relative z-10">{label}</span>
       <span className="relative z-10 flex h-6 w-6 items-center justify-center overflow-hidden">
         <ArrowUpRight className="absolute h-[18px] w-[18px] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-7 group-hover:translate-x-7" />
         <ArrowUpRight className="absolute h-[18px] w-[18px] -translate-x-7 translate-y-7 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0 group-hover:translate-y-0" />

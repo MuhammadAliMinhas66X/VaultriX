@@ -1,40 +1,28 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { features } from '../content.js';
 import { screens } from '../screens.js';
-import { AndroidFrame, LaptopFrame, PhoneFrame, Reveal, SectionTag, SplitText, TabletFrame, Tilt } from './ui.jsx';
+import { AndroidFrame, Divider, LaptopFrame, MonitorFrame, Reveal, SectionTag, SplitText, TabletFrame, Tilt } from './ui.jsx';
+
+// One device per feature, shown alone and centered so it can be read.
+const stages = {
+  dashboard: { device: 'Tablet', width: 'min(100%, 80vh)' },
+  income: { device: 'Laptop', width: 'min(100%, 108vh)' },
+  expenses: { device: 'Phone', width: 'min(62%, 36vh)' },
+  loans: { device: 'Monitor', width: 'min(100%, 86vh)' },
+};
 
 function Visual({ id }) {
-  const fit = { maxWidth: 'min(100%, 94vh)' };
-  if (id === 'dashboard') {
-    return (
-      <div className="relative mx-auto w-full" style={fit}>
-        <TabletFrame src={screens.dashboardTablet} alt="Dashboard with the balance card on a tablet" className="w-[86%]" />
-        <PhoneFrame src={screens.dashboardPhone} alt="Dashboard with the balance card on an iPhone" className="absolute -bottom-4 right-0 w-[26%]" />
-      </div>
-    );
-  }
-  if (id === 'income') {
-    return (
-      <div className="relative mx-auto w-full px-[3%]" style={fit}>
-        <LaptopFrame src={screens.incomeDesktop} alt="Income streams with tax and deductions on a laptop" />
-      </div>
-    );
-  }
-  if (id === 'expenses') {
-    return (
-      <div className="relative mx-auto w-full" style={fit}>
-        <LaptopFrame src={screens.expensesDesktop} alt="Daily expenses chart and categories on a laptop" className="w-[90%]" />
-        <AndroidFrame src={screens.expensesPhone} alt="Daily expenses on an Android phone" className="absolute -bottom-4 right-0 w-[25%]" />
-      </div>
-    );
-  }
+  let device = null;
+  if (id === 'dashboard') device = <TabletFrame src={screens.dashboardTablet} alt="Dashboard with the balance card on a tablet" />;
+  else if (id === 'income') device = <LaptopFrame src={screens.incomeDesktop} alt="Income streams with tax and deductions on a laptop" />;
+  else if (id === 'expenses') device = <AndroidFrame src={screens.expensesPhone} alt="Daily expenses on an Android phone" />;
+  else device = <MonitorFrame src={screens.loansDesktop} alt="Loans with the repayment graph on a monitor" />;
   return (
-    <div className="relative mx-auto w-full" style={fit}>
-      <LaptopFrame src={screens.loansDesktop} alt="Loans with the repayment graph on a laptop" className="w-[90%]" />
-      <PhoneFrame src={screens.loansPhone} alt="Loans on an iPhone" className="absolute -bottom-4 right-0 w-[25%]" />
+    <div className="mx-auto" style={{ width: stages[id].width }}>
+      {device}
     </div>
   );
 }
@@ -64,23 +52,56 @@ function StickyStory() {
   const ref = useRef(null);
   const reduced = useAppReducedMotion();
   const [active, setActive] = useState(0);
+  const activeRef = useRef(0);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] });
 
   useMotionValueEvent(scrollYProgress, 'change', (value) => {
     setActive(Math.min(features.length - 1, Math.max(0, Math.floor(value * features.length * 0.999))));
   });
 
-  const jump = (index) => {
-    const el = ref.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    const span = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + (span * (index + 0.5)) / features.length, behavior: reduced ? 'auto' : 'smooth' });
-  };
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
+
+  const jump = useCallback(
+    (index) => {
+      const el = ref.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const span = el.offsetHeight - window.innerHeight;
+      window.scrollTo({ top: top + (span * (index + 0.5)) / features.length, behavior: reduced ? 'auto' : 'smooth' });
+    },
+    [reduced]
+  );
+
+  // Down and up arrows (and page keys) step through the four screens while the
+  // story is pinned. At the first and last screen the page scrolls on as usual.
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const down = event.key === 'ArrowDown' || event.key === 'PageDown';
+      const up = event.key === 'ArrowUp' || event.key === 'PageUp';
+      if (!down && !up) return;
+      const el = ref.current;
+      if (!el) return;
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const rect = el.getBoundingClientRect();
+      if (!(rect.top <= 2 && rect.bottom >= window.innerHeight - 2)) return;
+      const next = activeRef.current + (down ? 1 : -1);
+      if (next < 0 || next > features.length - 1) return;
+      event.preventDefault();
+      jump(next);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [jump]);
+
+  const stage = stages[features[active].id];
 
   return (
-    <div ref={ref} className="relative hidden lg:block" style={{ height: `${features.length * 90}vh` }}>
-      <div className="sticky top-0 flex h-[100svh] items-center pb-6 pt-16">
+    <div ref={ref} className="relative hidden lg:block" style={{ height: `${features.length * 100}vh` }}>
+      <div className="sticky top-0 flex h-[100svh] items-center pb-6 pt-20">
         <div className="mx-auto grid w-full max-w-[1400px] grid-cols-12 items-center gap-12 px-8">
           <div className="col-span-5">
             <ol className="relative border-l border-border pl-8">
@@ -119,20 +140,29 @@ function StickyStory() {
                 );
               })}
             </ol>
+            <p className="pf-mono mt-6 flex items-center gap-2 pl-8 text-[10px] uppercase tracking-[0.18em] text-muted">
+              <ChevronDown className="h-3.5 w-3.5" />
+              Scroll or press the down key
+            </p>
           </div>
 
-          <div className="col-span-7">
+          <div className="relative col-span-7 flex h-[78svh] items-center justify-center">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[2.5rem] bg-[radial-gradient(60%_58%_at_50%_50%,#efeff2_0%,rgba(239,239,242,0)_100%)]" />
             <AnimatePresence mode="wait">
               <motion.div
                 key={features[active].id}
-                initial={reduced ? false : { opacity: 0, y: 50, scale: 0.95, filter: 'blur(12px)' }}
+                initial={reduced ? false : { opacity: 0, y: 46, scale: 0.94, filter: 'blur(10px)' }}
                 animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                exit={reduced ? { opacity: 0 } : { opacity: 0, y: -40, scale: 0.97, filter: 'blur(8px)' }}
+                exit={reduced ? { opacity: 0 } : { opacity: 0, y: -34, scale: 0.97, filter: 'blur(8px)' }}
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                className="flex w-full flex-col items-center"
               >
-                <Tilt max={4}>
+                <Tilt max={3} className="w-full">
                   <Visual id={features[active].id} />
                 </Tilt>
+                <p className="pf-mono mt-7 text-[10px] uppercase tracking-[0.2em] text-muted">
+                  {features[active].index} / {stage.device}
+                </p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -176,7 +206,7 @@ function StackedStory() {
 
 function ProductStory() {
   return (
-    <section id="product" className="pf-snap-target relative scroll-mt-20 border-b border-border">
+    <section id="product" className="pf-snap-target relative scroll-mt-20">
       <div className="mx-auto max-w-[1400px] px-5 pb-10 pt-20 sm:px-8 sm:pt-24 lg:pb-8">
         <SectionTag index="01" label="The product" />
         <h2 className="mt-5 max-w-4xl text-[clamp(2.4rem,5.6vw,5rem)] font-semibold">
@@ -188,6 +218,7 @@ function ProductStory() {
       </div>
       <StickyStory />
       <StackedStory />
+      <Divider index="02" label="How it connects" />
     </section>
   );
 }

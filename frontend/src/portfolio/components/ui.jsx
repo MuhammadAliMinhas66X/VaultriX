@@ -46,44 +46,6 @@ export function Reveal({ children, className = '', delay = 0, y = 28, as = 'div'
   );
 }
 
-const GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&*+';
-
-export function Scramble({ text, className = '' }) {
-  const reduced = useAppReducedMotion();
-  const [shown, setShown] = useState(text);
-  const timer = useRef(null);
-
-  useEffect(() => () => clearInterval(timer.current), []);
-
-  const run = () => {
-    if (reduced) return;
-    clearInterval(timer.current);
-    let frame = 0;
-    timer.current = setInterval(() => {
-      frame += 1;
-      setShown(
-        text
-          .split('')
-          .map((char, index) => (char === ' ' || index < frame / 2 ? char : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]))
-          .join('')
-      );
-      if (frame / 2 >= text.length) {
-        clearInterval(timer.current);
-        setShown(text);
-      }
-    }, 28);
-  };
-
-  return (
-    <span className={`relative inline-block ${className}`} onMouseEnter={run} onFocus={run}>
-      <span className="invisible">{text}</span>
-      <span aria-hidden="true" className="absolute inset-0 whitespace-nowrap">
-        {shown}
-      </span>
-    </span>
-  );
-}
-
 export function CountUp({ to, className = '', duration = 1.6 }) {
   const ref = useRef(null);
   const reduced = useAppReducedMotion();
@@ -182,12 +144,12 @@ export function PhoneFrame({ src, alt, className = '', priority = false }) {
 
 export function AndroidFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`relative rounded-[1.7rem] bg-[#1b1b1f] p-[5px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-black/30 ${className}`}>
-      <span aria-hidden="true" className="absolute -right-[3px] top-24 h-10 w-[3px] rounded-r bg-[#1b1b1f]" />
-      <span aria-hidden="true" className="absolute -right-[3px] top-40 h-6 w-[3px] rounded-r bg-[#1b1b1f]" />
-      <div className="relative overflow-hidden rounded-[1.3rem] bg-white">
+    <div className={`relative rounded-[1.1rem] bg-[#202024] p-[4px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-white/10 ${className}`}>
+      <span aria-hidden="true" className="absolute -right-[2.5px] top-[20%] h-12 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
+      <span aria-hidden="true" className="absolute -right-[2.5px] top-[31%] h-7 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
+      <div className="relative overflow-hidden rounded-[0.8rem] bg-white">
         <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
-        <span aria-hidden="true" className="absolute left-1/2 top-2 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-[#1b1b1f] ring-2 ring-black/20" />
+        <span aria-hidden="true" className="absolute left-1/2 top-[7px] h-[9px] w-[9px] -translate-x-1/2 rounded-full bg-[#0c0c0f] ring-[1.5px] ring-black/30" />
       </div>
     </div>
   );
@@ -211,9 +173,65 @@ export function LaptopFrame({ src, alt, className = '', priority = false }) {
 
 export function TabletFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`rounded-[1.8rem] bg-ink p-2.5 shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ${className}`}>
-      <div className="overflow-hidden rounded-[1.25rem] bg-white">
+    <div className={`relative rounded-[1.45rem] bg-[#1c1c20] p-[11px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-white/10 ${className}`}>
+      <span aria-hidden="true" className="absolute -top-[2.5px] right-[16%] h-[2.5px] w-10 rounded-t-sm bg-[#2c2c32]" />
+      <span aria-hidden="true" className="absolute -right-[2.5px] top-[12%] h-8 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
+      <span aria-hidden="true" className="absolute -right-[2.5px] top-[20%] h-8 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
+      <div className="relative overflow-hidden rounded-[0.75rem] bg-white">
         <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+      </div>
+      <span aria-hidden="true" className="absolute left-1/2 top-[3.5px] h-[5px] w-[5px] -translate-x-1/2 rounded-full bg-[#0b0b0d] ring-1 ring-white/10" />
+    </div>
+  );
+}
+
+export function MonitorFrame({ src, alt, className = '', priority = false }) {
+  return (
+    <div className={className}>
+      <div className="relative rounded-[0.7rem] bg-[#1c1c20] p-[7px] shadow-[0_40px_80px_-34px_rgba(17,17,20,0.5)] ring-1 ring-white/10">
+        <div className="relative overflow-hidden rounded-[0.35rem] bg-white">
+          <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+        </div>
+        <span aria-hidden="true" className="absolute bottom-[2px] left-1/2 h-[2px] w-1.5 -translate-x-1/2 rounded-full bg-white/30" />
+      </div>
+      <div className="mx-auto h-[clamp(14px,3.2vw,38px)] w-[15%] bg-gradient-to-b from-[#8f8f97] to-[#d9d9de]" />
+      <div className="mx-auto h-[7px] w-[32%] rounded-t-[3px] rounded-b-[8px] bg-gradient-to-b from-[#e4e4e8] to-[#a9a9b1] shadow-[0_14px_24px_-12px_rgba(17,17,20,0.5)]" />
+    </div>
+  );
+}
+
+export function useTicker(count, ms, enabled = true) {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const timer = setInterval(() => setIndex((value) => (value + 1) % count), ms);
+    return () => clearInterval(timer);
+  }, [count, ms, enabled]);
+  return index;
+}
+
+// A section divider: a ruler of fine ticks that draws itself out from a label.
+export function Divider({ index, label, dark = false }) {
+  const ref = useRef(null);
+  const reduced = useAppReducedMotion();
+  const seen = useInView(ref, { once: true, margin: '0px 0px -12% 0px' });
+  const show = seen || reduced;
+  const grow = (origin) => ({
+    initial: reduced ? false : { scaleX: 0 },
+    animate: { scaleX: show ? 1 : 0 },
+    transition: { duration: 1.1, ease },
+    style: { transformOrigin: origin },
+  });
+  return (
+    <div ref={ref} role="separator" aria-label={label} className={dark ? 'text-white' : 'text-ink'}>
+      <div className="mx-auto flex max-w-[1400px] items-center gap-5 px-5 py-8 sm:px-8 sm:py-10">
+        <motion.span aria-hidden="true" {...grow('right')} className="pf-ruler pf-ruler-left h-[9px] flex-1" />
+        <span className={`pf-mono inline-flex shrink-0 items-center gap-2.5 rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.2em] ${dark ? 'border-white/20 text-white/70' : 'border-ink/15 bg-white text-ink/70'}`}>
+          <span className={dark ? 'text-white' : 'text-ink'}>{index}</span>
+          <span aria-hidden="true" className={`h-1 w-1 rounded-full ${dark ? 'bg-white/60' : 'bg-ink'}`} />
+          {label}
+        </span>
+        <motion.span aria-hidden="true" {...grow('left')} className="pf-ruler pf-ruler-right h-[9px] flex-1" />
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ function PrivacyPolicyPage() {
     <div className="pf min-h-screen">
       <Nav home={false} />
       <main>
-        <header className="pf-gridlines relative border-b border-border pb-14 pt-32 sm:pt-40">
+        <header className="relative border-b border-border pb-14 pt-32 sm:pt-40">
           <div className="mx-auto max-w-[1400px] px-5 sm:px-8">
             <p className="pf-mono text-[11px] uppercase tracking-[0.2em] text-muted">Legal</p>
             <h1 className="mt-5 text-[clamp(2.8rem,8vw,7rem)] font-semibold">

@@ -40,14 +40,18 @@ function Footer({ home = true }) {
 
   return (
     <footer className="relative isolate overflow-hidden bg-ink text-white">
-      <div aria-hidden="true" className="pf-gridlines-dark pointer-events-none absolute inset-0 -z-10 mx-auto max-w-[1400px]" />
       <div className="mx-auto max-w-[1400px] px-5 sm:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/15 py-12 sm:py-16">
-          <p className="max-w-xl text-[clamp(1.8rem,4vw,3.2rem)] font-semibold leading-[1.02] tracking-tight">Ready when you are.</p>
-          <JoinButton to={primary.to} label={primary.label} variant="light" size="lg" />
+        <div className="grid items-end gap-10 py-16 sm:py-24 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <p className="pf-mono text-[11px] uppercase tracking-[0.2em] text-white/45">Get started</p>
+            <p className="mt-5 text-[clamp(2.6rem,7.4vw,6.4rem)] font-semibold leading-[0.95] tracking-tight">Ready when you are.</p>
+          </div>
+          <div className="flex lg:col-span-4 lg:justify-end">
+            <JoinButton to={primary.to} label={primary.label} variant="light" size="lg" />
+          </div>
         </div>
 
-        <div className="grid gap-12 py-12 sm:py-14 lg:grid-cols-12">
+        <div className="grid gap-12 border-t border-white/15 py-12 sm:py-14 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <p className="pf-wordmark text-3xl leading-none">Vaultrix</p>
             <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-white/60">A clear, private picture of your own money. Income, daily expenses and loans in one place.</p>
@@ -57,7 +61,7 @@ function Footer({ home = true }) {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 lg:col-span-8">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4 lg:col-span-8">
             {columns.map((column) => (
               <nav key={column.title} aria-label={column.title}>
                 <p className="pf-mono text-[11px] uppercase tracking-[0.18em] text-white/45">{column.title}</p>
@@ -88,7 +92,7 @@ function Footer({ home = true }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/15 py-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/15 py-6">
           <span className="pf-mono text-[11px] uppercase tracking-[0.18em] text-white/45">Available in</span>
           {languages.map((language) => (
             <span key={language} className="text-sm font-medium text-white/70">
@@ -114,6 +118,10 @@ function Footer({ home = true }) {
             </button>
           </div>
         </div>
+      </div>
+
+      <div aria-hidden="true" className="pointer-events-none select-none overflow-hidden px-2">
+        <p className="pf-wordmark -mb-[0.16em] text-center text-[clamp(4.5rem,22vw,21rem)] leading-[0.82] text-white/[0.05]">Vaultrix</p>
       </div>
     </footer>
   );

@@ -6,7 +6,6 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { links, nav } from '../content.js';
 import { JoinButton } from './Buttons.jsx';
-import { Scramble } from './ui.jsx';
 
 export const scrollToId = (id, reduced) => {
   const el = document.getElementById(id);
@@ -84,14 +83,16 @@ function Nav({ home = true }) {
   const primary = isAuthenticated ? { to: links.app, label: 'Open Vaultrix' } : { to: links.join, label: 'Join Vaultrix' };
 
   const itemClass = (id) =>
-    `relative whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ink ${active === id ? 'text-white' : 'text-ink/65 hover:text-ink'}`;
+    `relative whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ink ${active === id ? 'text-ink' : 'text-ink/55 hover:text-ink'}`;
 
   return (
     <>
       <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-5 sm:pt-4">
         <div
-          className={`pointer-events-auto relative flex w-full items-center justify-between gap-2 rounded-full border px-2.5 py-2 backdrop-blur-xl transition-all duration-500 sm:px-3 ${
-            scrolled ? 'max-w-[1060px] border-ink/10 bg-white/85 shadow-[0_14px_44px_-20px_rgba(17,17,20,0.4)]' : 'max-w-[1180px] border-ink/5 bg-white/55'
+          className={`pointer-events-auto relative flex w-full items-center justify-between gap-2 rounded-full border px-2.5 py-2 transition-all duration-500 sm:px-3 ${
+            scrolled
+              ? 'max-w-[1060px] border-white/70 bg-white/55 shadow-[0_18px_50px_-24px_rgba(17,17,20,0.5),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl backdrop-saturate-150'
+              : 'max-w-[1180px] border-white/50 bg-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md'
           }`}
         >
           <Link to="/" aria-label="Vaultrix home" className="flex items-center gap-2.5 rounded-full py-1 pe-3 ps-1 outline-none focus-visible:ring-2 focus-visible:ring-ink">
@@ -103,27 +104,18 @@ function Nav({ home = true }) {
             {nav.map((item) =>
               home ? (
                 <a key={item.id} href={`#${item.id}`} onClick={(event) => go(event, item.id)} className={itemClass(item.id)}>
-                  {active === item.id && <motion.span layoutId="pf-nav-pill" transition={{ type: 'spring', stiffness: 380, damping: 32 }} className="absolute inset-0 rounded-full bg-ink" />}
-                  <span className="relative">
-                    <Scramble text={item.label} />
-                  </span>
+                  {item.label}
+                  {active === item.id && <span aria-hidden="true" className="absolute inset-x-3.5 bottom-[3px] h-px bg-ink" />}
                 </a>
               ) : (
                 <Link key={item.id} to={`/#${item.id}`} className={itemClass(item.id)}>
-                  <span className="relative">
-                    <Scramble text={item.label} />
-                  </span>
+                  {item.label}
                 </Link>
               )
             )}
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {!isAuthenticated && (
-              <Link to={links.login} className="hidden whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium text-ink/70 outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-ink xl:block">
-                Sign in
-              </Link>
-            )}
             <span className="hidden sm:block">
               <JoinButton to={primary.to} label={primary.label} size="sm" className="!rounded-full" />
             </span>
@@ -190,11 +182,6 @@ function Nav({ home = true }) {
             </nav>
             <div className="flex flex-col gap-3 pt-6">
               <JoinButton to={primary.to} label={primary.label} variant="light" size="lg" className="w-full justify-between" />
-              {!isAuthenticated && (
-                <Link to={links.login} className="py-3 text-center text-[15px] font-medium text-white/80">
-                  Already have an account? Sign in
-                </Link>
-              )}
             </div>
           </motion.div>
         )}

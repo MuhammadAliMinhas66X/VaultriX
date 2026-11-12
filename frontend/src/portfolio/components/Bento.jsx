@@ -7,8 +7,8 @@ import es from '../../i18n/locales/es.js';
 import ar from '../../i18n/locales/ar.js';
 import hi from '../../i18n/locales/hi.js';
 import ur from '../../i18n/locales/ur.js';
-import { LogoCluster } from './Logos.jsx';
-import { Reveal, SectionTag, SplitText } from './ui.jsx';
+import { LogoPulse } from './Logos.jsx';
+import { Reveal, SectionTag, SplitText, useTicker } from './ui.jsx';
 
 const tiles = [
   { native: 'English', dir: 'ltr', text: en['dashboard.inAccount'] },
@@ -22,27 +22,34 @@ const tiles = [
 function Languages() {
   const reduced = useAppReducedMotion();
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+
   useEffect(() => {
-    if (reduced) return undefined;
-    const timer = setInterval(() => setActive((value) => (value + 1) % tiles.length), 1900);
+    if (reduced || paused) return undefined;
+    const timer = setInterval(() => setActive((value) => (value + 1) % tiles.length), 2000);
     return () => clearInterval(timer);
-  }, [reduced]);
+  }, [reduced, paused]);
+
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       {tiles.map((tile, index) => {
         const on = index === active;
         return (
           <button
             key={tile.native}
             type="button"
-            onClick={() => setActive(index)}
             dir={tile.dir}
-            aria-pressed={on}
-            className={`relative overflow-hidden rounded-xl border p-3 text-start sm:p-3.5 outline-none transition-colors duration-500 focus-visible:ring-2 focus-visible:ring-ink ${on ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink hover:border-ink/40'}`}
+            onClick={() => setActive(index)}
+            className="relative overflow-hidden rounded-xl border border-border bg-white px-4 py-4 text-start outline-none focus-visible:ring-2 focus-visible:ring-ink"
           >
-            <span className="block text-xl font-semibold leading-none tracking-tight sm:text-2xl">{tile.native}</span>
-            <span className={`mt-3 block text-[12px] leading-snug transition-colors duration-500 ${on ? 'text-white/70' : 'text-muted'}`}>{tile.text}</span>
-            {on && <motion.span layoutId="pf-lang-bar" className="absolute inset-x-0 bottom-0 h-[3px] bg-white" />}
+            {on && <motion.span layoutId="pf-lang-active" transition={{ type: 'spring', stiffness: 380, damping: 34 }} className="absolute inset-0 rounded-xl bg-ink" />}
+            <span className="relative flex items-start justify-between gap-2">
+              <span className={`block text-xl font-semibold transition-colors duration-300 ${on ? 'text-white' : 'text-ink'}`}>{tile.native}</span>
+              {tile.dir === 'rtl' && (
+                <span className={`pf-mono rounded-full border px-1.5 py-0.5 text-[9px] tracking-[0.14em] transition-colors duration-300 ${on ? 'border-white/40 text-white/80' : 'border-ink/20 text-ink/50'}`}>RTL</span>
+              )}
+            </span>
+            <span className={`relative mt-3 block text-sm transition-colors duration-300 ${on ? 'text-white/80' : 'text-ink/50'}`}>{tile.text}</span>
           </button>
         );
       })}
@@ -50,34 +57,41 @@ function Languages() {
   );
 }
 
+const shapes = [
+  { label: 'Phone', width: 46, height: 84, radius: 12 },
+  { label: 'Tablet', width: 80, height: 84, radius: 10 },
+  { label: 'Desktop', width: 132, height: 78, radius: 6 },
+];
+
 function Devices() {
   const reduced = useAppReducedMotion();
-  const [active, setActive] = useState(0);
-  useEffect(() => {
-    if (reduced) return undefined;
-    const timer = setInterval(() => setActive((value) => (value + 1) % 3), 1600);
-    return () => clearInterval(timer);
-  }, [reduced]);
-  const shapes = [
-    { label: 'Phone', box: 'h-[4.5rem] w-10 rounded-[0.8rem]' },
-    { label: 'Tablet', box: 'h-16 w-14 rounded-[0.6rem]' },
-    { label: 'Desktop', box: 'h-12 w-24 rounded-md' },
-  ];
+  const active = useTicker(shapes.length, 2000, !reduced);
+  const shape = shapes[active];
   return (
-    <div className="flex items-end gap-5">
-      {shapes.map((shape, index) => (
-        <div key={shape.label} className="flex flex-col items-center gap-3">
-          <motion.div
-            animate={{ borderColor: active === index ? '#111114' : '#e5e5e7', backgroundColor: active === index ? '#111114' : '#ffffff' }}
-            transition={{ duration: 0.5 }}
-            className={`border-2 ${shape.box}`}
+    <div>
+      <div className="flex h-[112px] flex-col items-center justify-center">
+        <motion.div
+          animate={{ width: shape.width, height: shape.height, borderRadius: shape.radius }}
+          transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+          className="relative flex flex-col gap-1.5 border-2 border-ink bg-white p-2"
+        >
+          <span className="h-1.5 w-1/2 rounded-full bg-ink" />
+          <span className="h-1 w-full rounded-full bg-ink/15" />
+          <span className="h-1 w-4/5 rounded-full bg-ink/15" />
+          <span className="mt-auto h-4 w-full rounded bg-ink/10" />
+        </motion.div>
+        <motion.span aria-hidden="true" animate={{ opacity: active === 2 ? 1 : 0, scaleX: active === 2 ? 1 : 0.4 }} transition={{ duration: 0.4 }} className="mt-1 block h-1 w-14 rounded-full bg-ink" />
+      </div>
+      <div className="mt-3 flex items-center justify-center gap-2">
+        {shapes.map((item, index) => (
+          <span
+            key={item.label}
+            className={`pf-mono rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.16em] transition-colors duration-300 ${index === active ? 'border-ink bg-ink text-white' : 'border-ink/20 text-ink/55'}`}
           >
-            <span className={`m-1.5 block h-1 rounded-full ${active === index ? 'bg-white/70' : 'bg-border'}`} />
-            <span className={`m-1.5 mt-2 block h-1 w-1/2 rounded-full ${active === index ? 'bg-white/40' : 'bg-border'}`} />
-          </motion.div>
-          <span className="pf-mono text-[10px] uppercase tracking-[0.14em] text-muted">{shape.label}</span>
-        </div>
-      ))}
+            {item.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -85,18 +99,41 @@ function Devices() {
 function Calm() {
   const reduced = useAppReducedMotion();
   const [on, setOn] = useState(true);
+  const [manual, setManual] = useState(false);
+
   useEffect(() => {
-    if (reduced) return undefined;
-    const timer = setInterval(() => setOn((value) => !value), 2200);
+    if (reduced || manual) return undefined;
+    const timer = setInterval(() => setOn((value) => !value), 2600);
     return () => clearInterval(timer);
-  }, [reduced]);
+  }, [reduced, manual]);
+
   return (
-    <button type="button" onClick={() => setOn((value) => !value)} aria-pressed={on} className="flex items-center gap-4 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ink">
-      <span className={`relative h-9 w-16 rounded-full border-2 border-ink transition-colors duration-500 ${on ? 'bg-ink' : 'bg-white'}`}>
-        <motion.span animate={{ x: on ? 28 : 3 }} transition={{ type: 'spring', stiffness: 420, damping: 28 }} className={`absolute top-[3px] h-6 w-6 rounded-full ${on ? 'bg-white' : 'bg-ink'}`} />
-      </span>
-      <span className="pf-mono text-[11px] uppercase tracking-[0.16em] text-ink">Animations {on ? 'on' : 'off'}</span>
-    </button>
+    <div className="flex shrink-0 items-center gap-5">
+      <div aria-hidden="true" className="flex h-9 w-[4.5rem] items-center justify-center gap-1.5 rounded-full bg-surface">
+        {[0, 1, 2].map((dot) => (
+          <motion.span
+            key={dot}
+            className="h-2 w-2 rounded-full bg-ink"
+            animate={on && !reduced ? { y: [0, -7, 0] } : { y: 0 }}
+            transition={on && !reduced ? { duration: 0.9, repeat: Infinity, delay: dot * 0.14, ease: 'easeInOut' } : { duration: 0.25 }}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label="Animations"
+        onClick={() => {
+          setManual(true);
+          setOn((value) => !value);
+        }}
+        className={`relative h-9 w-16 shrink-0 rounded-full border outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-ink ${on ? 'border-ink bg-ink' : 'border-ink/25 bg-white'}`}
+      >
+        <motion.span className={`absolute top-1 h-7 w-7 rounded-full shadow ${on ? 'bg-white' : 'bg-ink'}`} animate={{ left: on ? 32 : 4 }} transition={{ type: 'spring', stiffness: 500, damping: 32 }} />
+      </button>
+      <span className="pf-mono w-[9rem] whitespace-nowrap text-[11px] uppercase tracking-[0.16em] text-ink/70">{on ? 'Animations on' : 'Animations off'}</span>
+    </div>
   );
 }
 
@@ -120,7 +157,7 @@ function Bento() {
           <Reveal delay={0.08} className={`${cell} lg:col-span-5`}>
             <p className="text-xl font-semibold tracking-tight">Your banks, your wallets</p>
             <p className="mb-4 mt-1 text-sm text-ink/65">Pick cash, a bank or a wallet for every payment in and out.</p>
-            <LogoCluster names={['Meezan Bank', 'Habib Bank Limited (HBL)', 'United Bank Limited (UBL)', 'MCB Bank']} />
+            <LogoPulse names={['Meezan Bank', 'Habib Bank Limited (HBL)', 'United Bank Limited (UBL)', 'MCB Bank']} labels={['Meezan Bank', 'HBL', 'UBL', 'MCB Bank']} />
           </Reveal>
           <Reveal delay={0.12} className={`${cell} lg:col-span-5`}>
             <p className="text-xl font-semibold tracking-tight">Every screen size</p>

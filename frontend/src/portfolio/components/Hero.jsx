@@ -55,8 +55,6 @@ function Hero() {
 
   return (
     <section id="top" onPointerMove={move} className="pf-snap-target relative isolate overflow-hidden border-b border-border pt-24 sm:pt-28">
-      <div aria-hidden="true" className="pf-gridlines pf-fade-y pointer-events-none absolute inset-0 -z-10 mx-auto max-w-[1400px]" />
-
       <div className="mx-auto grid max-w-[1400px] items-center gap-8 px-5 pb-14 sm:px-8 lg:min-h-[calc(100svh-7rem)] lg:grid-cols-12 lg:pb-16">
         <div className="lg:col-span-6">
           <h1 className="text-[clamp(2.9rem,6.2vw,6.2rem)] font-semibold">
@@ -117,18 +115,18 @@ function Hero() {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-3 divide-x divide-border px-0">
+        <dl className="mx-auto grid max-w-[1400px] grid-cols-3">
           {[
             { value: <CountUp to={4} />, label: 'Screens that work together' },
             { value: <CountUp to={6} />, label: 'Languages, right to left too' },
             { value: '0', label: 'Data shared between organizations' },
-          ].map((stat) => (
-            <div key={stat.label} className="px-4 py-5 sm:px-8 sm:py-6">
-              <p className="text-[clamp(1.8rem,4.4vw,3.2rem)] font-semibold leading-none tracking-tight tabular-nums">{stat.value}</p>
-              <p className="pf-mono mt-3 text-[10px] uppercase leading-snug tracking-[0.14em] text-muted sm:text-[11px]">{stat.label}</p>
+          ].map((stat, index) => (
+            <div key={stat.label} className={`flex min-w-0 flex-col-reverse justify-end gap-3 px-4 py-6 sm:px-8 sm:py-8 ${index > 0 ? 'border-s border-border' : ''}`}>
+              <dt className="pf-mono text-[10px] uppercase leading-snug tracking-[0.14em] text-muted sm:text-[11px]">{stat.label}</dt>
+              <dd className="m-0 text-[clamp(2rem,4.8vw,3.6rem)] font-semibold leading-none tracking-tight tabular-nums">{stat.value}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       </div>
 
       <div className="border-t border-border bg-surface py-5">

@@ -58,15 +58,19 @@
   background-image: linear-gradient(#fff, #fff);
 }
 
-.pf-gridlines {
-  background-image: linear-gradient(to right, var(--pf-line) 1px, transparent 1px);
-  background-size: 25% 100%;
-  background-position: -1px 0;
+.pf-ruler {
+  background-image: repeating-linear-gradient(to right, currentColor 0 1px, transparent 1px 9px);
+  opacity: 0.32;
 }
 
-.pf-gridlines-dark {
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-  background-size: 25% 100%;
+.pf-ruler-left {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 55%);
+  mask-image: linear-gradient(to right, transparent, #000 55%);
+}
+
+.pf-ruler-right {
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 55%);
+  mask-image: linear-gradient(to left, transparent, #000 55%);
 }
 
 .pf-fade-y {
