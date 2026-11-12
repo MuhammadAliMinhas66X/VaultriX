@@ -249,7 +249,7 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
-            <RemindersPanel items={reminders} />
+            <RemindersPanel items={reminders} ready={Boolean(bills)} />
             {bills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
             {latestCard}
           </div>

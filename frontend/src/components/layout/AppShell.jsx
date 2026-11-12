@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import Sidebar, { useSidebarCollapsed } from './Sidebar.jsx';
 import BottomNav from './BottomNav.jsx';
 import AccountMenu from './AccountMenu.jsx';
+import NotificationsBell from './NotificationsBell.jsx';
 import SecureGuard from '../security/SecureGuard.jsx';
 import SecureBadge from '../security/SecureBadge.jsx';
 import Logo from '../Logo.jsx';
@@ -41,6 +42,7 @@ export function AppFrame({ title, showLogo = false, pageTitle, items, activeId, 
             <span className="hidden truncate text-sm font-medium text-muted lg:block">{pageTitle}</span>
           </div>
           <SecureBadge />
+          <NotificationsBell />
           <AccountMenu hideSettings={hideSettingsLink} />
         </header>
         <main className="min-w-0 flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>

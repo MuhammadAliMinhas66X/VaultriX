@@ -1133,6 +1133,21 @@ function PreferencesSection() {
   const [pendingCurrency, setPendingCurrency] = useState(currency);
   const [saving, setSaving] = useState(false);
   const [countryError, setCountryError] = useState('');
+  const [savingReminders, setSavingReminders] = useState(false);
+
+  const saveReminderEmails = async (value) => {
+    if (Boolean(user?.reminderEmails) === value) return;
+    setSavingReminders(true);
+    try {
+      const data = await updateProfile({ reminderEmails: value });
+      updateUser(data.user);
+      notify.success(t(value ? 'reminders.emailOnSaved' : 'reminders.emailOffSaved'));
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setSavingReminders(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -1243,6 +1258,31 @@ function PreferencesSection() {
                 reportSecurityEvent(option.id ? 'secure_on' : 'secure_off');
               }}
               className={`rounded-lg px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${secureOn === option.id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">{t('reminders.emailLabel')}</p>
+          <p className="mt-0.5 text-xs text-muted">{t('reminders.emailHint')}</p>
+        </div>
+        <div role="radiogroup" aria-label={t('reminders.emailLabel')} className="flex shrink-0 rounded-xl border border-border bg-surface p-1">
+          {[
+            { id: false, label: t('reminders.off') },
+            { id: true, label: t('reminders.on') },
+          ].map((option) => (
+            <button
+              key={String(option.id)}
+              type="button"
+              role="radio"
+              aria-checked={Boolean(user?.reminderEmails) === option.id}
+              disabled={savingReminders}
+              onClick={() => saveReminderEmails(option.id)}
+              className={`rounded-lg px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 ${Boolean(user?.reminderEmails) === option.id ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'}`}
             >
               {option.label}
             </button>

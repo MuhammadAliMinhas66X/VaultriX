@@ -16,13 +16,13 @@ function Pill({ days, t }) {
 }
 
 // Bills and loans that are overdue or due within a week. Renders nothing when
-// there is nothing to chase, so the Dashboard stays quiet on a good day.
-function RemindersPanel({ items }) {
+// there is nothing to chase it says so, so it is always clear where reminders live.
+function RemindersPanel({ items, ready = true }) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
-  if (!items || items.length === 0) return null;
-  const shown = items.slice(0, SHOWN);
-  const rest = items.length - shown.length;
+  if (!ready) return null;
+  const shown = (items || []).slice(0, SHOWN);
+  const rest = (items || []).length - shown.length;
 
   return (
     <section className="rounded-2xl border border-border bg-white" aria-label={t('reminders.title')}>
@@ -33,8 +33,11 @@ function RemindersPanel({ items }) {
           </span>
           {t('reminders.title')}
         </h2>
-        <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-ink">{items.length}</span>
+        {(items || []).length > 0 && <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-ink">{items.length}</span>}
       </div>
+      {shown.length === 0 ? (
+        <p className="px-5 py-6 text-sm text-muted">{t('reminders.empty')}</p>
+      ) : (
       <ul>
         {shown.map((item) => {
           const Icon = iconOf[item.kind];
@@ -58,6 +61,7 @@ function RemindersPanel({ items }) {
           );
         })}
       </ul>
+      )}
       {rest > 0 && (
         <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs font-medium text-muted">
           {t('reminders.more', { count: rest })}

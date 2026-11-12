@@ -7,6 +7,7 @@
 const { chromium } = require('playwright');
 const out = (process.env.OUT || '.') + '/';
 const overspent = process.env.OVERSPENT === '1';
+const nothingDue = process.env.NOTHING_DUE === '1';
 const now = new Date();
 const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 const day = (offset) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T00:00:00.000Z`; };
@@ -34,12 +35,12 @@ const respond = (url) => {
   if (path === '/receipts/opening') return { success: true, opening: { amount: 50000, currency: 'PKR', asOf: day(-80).slice(0, 10) } };
   if (path === '/expenses/totals') return { success: true, totals };
   if (path === '/expenses') return { success: true, expenses: [] };
-  if (path === '/bills') return { success: true, bills: [
+  if (path === '/bills') return { success: true, bills: nothingDue ? [] : [
     { id: 'b1', billerName: 'IESCO', dueAt: day(-4), total: 8400, paid: 0, remaining: 8400, currency: 'PKR', cancelledAt: null, payments: [], frequency: 'none' },
     { id: 'b2', billerName: 'PTCL', dueAt: day(0), total: 3160, paid: 0, remaining: 3160, currency: 'PKR', cancelledAt: null, payments: [], frequency: 'none' },
   ] };
   if (path === '/categories') return { success: true, categories: [] };
-  if (path === '/loans') return { success: true, loans: [
+  if (path === '/loans') return { success: true, loans: nothingDue ? [] : [
     { id: 'l1', direction: 'borrowed', personName: 'Waqas', amount: 20000, remaining: 12000, paid: 8000, done: false, currency: 'PKR', dueAt: day(3), sentAt: day(-30), payments: [], entries: [] },
     { id: 'l2', direction: 'lent', personName: 'Shahid', amount: 5000, remaining: 5000, paid: 0, done: false, currency: 'PKR', dueAt: day(-2), sentAt: day(-30), payments: [], entries: [] },
   ] };
@@ -60,6 +61,13 @@ const respond = (url) => {
     let overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (overflow > 0) problems.push(`${name} /dashboard horizontal overflow ${overflow}px`);
     await page.screenshot({ path: `${out}bal-dash-${name}.png`, fullPage: true });
+    // Bell in the top bar: opens a list of what is overdue or due soon (or the all-clear text).
+    const bell = page.locator('button[aria-label^="Notifications"]:visible').first();
+    await bell.click();
+    await page.waitForSelector(process.env.NOTHING_DUE === '1' ? 'text=all caught up' : '[role=menu] >> text=IESCO', { timeout: 10000 });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${out}bal-bell-${name}.png` });
+    await page.keyboard.press('Escape');
     await page.goto('http://localhost:4173/income', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('text=Total balance', { timeout: 20000 });
     await page.waitForTimeout(800);
