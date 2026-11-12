@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (261 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (260 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -117,7 +117,7 @@ flowchart LR
   - services: loanService
   - utils: incomeMath, loanMath, useMediaQuery
 - `/expenses` -> `frontend/src/pages/ExpensesPage.jsx`
-  - components: AppShell, useAppNav, Drawer, MonthOverview, CategoryBreakdown, categoryIcons, ExpenseForm, CategoryFilter, Skeletons, loanOptions
+  - components: AppShell, useAppNav, Drawer, MonthOverview, categoryIcons, ExpenseForm, CategoryFilter, Skeletons, loanOptions
   - services: expenseService, loanService
   - utils: expenseMath
 - `/bills` -> `frontend/src/pages/BillsPage.jsx`
@@ -300,7 +300,7 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 76 files
+- `frontend/src/i18n/useTranslation.js` is imported by 75 files
 - `frontend/src/i18n/useFormat.js` is imported by 28 files
 - `frontend/src/context/AuthContext.jsx` is imported by 27 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 22 files
@@ -383,10 +383,9 @@ flowchart LR
 - `backend/src/routes/categoryRoutes.js`  (used by 1)
 - `backend/src/utils/categoryIcons.js`  (used by 1)
 - `frontend/src/components/bills/NewCategorySheet.jsx`  (used by 0)
-- `frontend/src/components/expenses/CategoryBreakdown.jsx`  (used by 1)
 - `frontend/src/components/expenses/CategoryFilter.jsx` - A filter icon in the corner of the list. Opens a small menu of the categories  (used by 1)
 - `frontend/src/components/expenses/CategoryPicker.jsx`  (used by 1)
-- `frontend/src/components/expenses/categoryIcons.jsx`  (used by 5)
+- `frontend/src/components/expenses/categoryIcons.jsx`  (used by 4)
 ### dashboard
 - `frontend/src/pages/DashboardPage.jsx`  (used by 1)
 ### expenses
@@ -556,7 +555,7 @@ flowchart LR
 - `frontend/src/i18n/translations.js`  (used by 1)
 - `frontend/src/i18n/useFormat.js`  (used by 28)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 7)
-- `frontend/src/i18n/useTranslation.js`  (used by 76)
+- `frontend/src/i18n/useTranslation.js`  (used by 75)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
