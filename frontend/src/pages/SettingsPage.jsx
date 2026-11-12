@@ -18,8 +18,10 @@ import {
   Link2,
   Link2Off,
   History,
+  FileSpreadsheet,
 } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
+import DataSection from '../components/settings/DataSection.jsx';
 import FormField from '../components/FormField.jsx';
 import Button from '../components/Button.jsx';
 import Combobox from '../components/Combobox.jsx';
@@ -1540,6 +1542,7 @@ const useSettingsSections = () => {
     { id: 'security', label: t('settings.sectionSecurity'), icon: LockKeyhole, Component: SecuritySection },
     { id: 'devices', label: t('settings.sectionDevices'), icon: Laptop, Component: DevicesSection },
     { id: 'preferences', label: t('settings.sectionPreferences'), icon: SlidersHorizontal, Component: PreferencesSection },
+    { id: 'data', label: t('settings.sectionData'), icon: FileSpreadsheet, Component: DataSection },
     { id: 'danger', label: t('settings.sectionDanger'), icon: AlertTriangle, Component: DangerZoneSection, danger: true },
   ];
 };
