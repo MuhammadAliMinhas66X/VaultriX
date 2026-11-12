@@ -9,6 +9,7 @@ import MonthOverview from '../components/expenses/MonthOverview.jsx';
 import CategoryBreakdown from '../components/expenses/CategoryBreakdown.jsx';
 import { CategoryIcon } from '../components/expenses/categoryIcons.jsx';
 import ExpenseForm from '../components/expenses/ExpenseForm.jsx';
+import CategoryFilter from '../components/expenses/CategoryFilter.jsx';
 import { ExpensesSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -358,8 +359,8 @@ function ExpensesPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <label className="relative block sm:w-52">
+                  <div className="flex items-center gap-2">
+                    <label className="relative block min-w-0 flex-1 sm:w-52 sm:flex-none">
                       <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                       <input
                         type="search"
@@ -370,6 +371,7 @@ function ExpensesPage() {
                         className="w-full rounded-lg border border-border bg-white py-2.5 pe-3.5 ps-9 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
                       />
                     </label>
+                    {rows.length > 0 && <CategoryFilter rows={rows} value={categoryFilter} onChange={setCategoryFilter} money={(value) => money(value)} />}
                   </div>
                 </div>
 
