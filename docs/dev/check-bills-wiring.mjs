@@ -21,6 +21,9 @@ const checks = [
   ['frontend/src/pages/ExpensesPage.jsx', 'bills.fromBill', 'Expenses lost the "Bill" label on bill payments'],
   ['frontend/src/pages/DashboardPage.jsx', 'BillsPanel', 'the Dashboard lost the Bills section'],
   ['frontend/src/data/resources.js', "registerResource('bills'", 'bills are not registered in the data store'],
+  ['frontend/src/App.jsx', '<MainShell />', 'the persistent MainShell is not wired: the sidebar is rebuilt (flickers) on every page change'],
+  ['frontend/src/App.jsx', '<ErrorBoundary', 'App.jsx lost the ErrorBoundary: a crash shows a blank white page'],
+  ['frontend/src/components/layout/NotificationsBell.jsx', 'useReminders', 'the notification bell is missing'],
 ];
 
 let failed = 0;
