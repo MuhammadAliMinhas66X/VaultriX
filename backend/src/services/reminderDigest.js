@@ -47,15 +47,65 @@ const when = (days) => (days < 0 ? `${Math.abs(days)} day${days === -1 ? '' : 's
 const what = (item) => (item.kind === 'bill' ? `Bill: ${item.name}` : item.kind === 'loanOwe' ? `You owe ${item.name}` : `${item.name} owes you`);
 const money = (item) => `${item.currency} ${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export const digestMail = (name, items) => {
-  const lines = items.map((item) => `- ${what(item)}: ${money(item)} (${when(item.days)})`);
+const esc = (value) => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const appUrl = () => {
+  const first = String(process.env.CLIENT_URL || '').split(',')[0].trim().replace(/\/$/, '');
+  return /^https?:\/\//.test(first) ? first : '';
+};
+
+const GROUPS = [
+  { key: 'late', title: 'Overdue', test: (item) => item.days < 0 },
+  { key: 'today', title: 'Due today', test: (item) => item.days === 0 },
+  { key: 'soon', title: 'Coming up', test: (item) => item.days > 0 },
+];
+
+export const digestMail = (name, items, url = appUrl()) => {
   const first = String(name || '').split(' ')[0] || 'there';
-  const text = `Hi ${first},\n\nThese need your attention in Vaultrix:\n\n${lines.join('\n')}\n\nYou can turn these emails off any time in Settings > Preferences.`;
-  const rows = items
-    .map((item) => `<tr><td style="padding:6px 0">${what(item).replace(/</g, '&lt;')}</td><td style="padding:6px 0 6px 16px;white-space:nowrap"><b>${money(item)}</b></td><td style="padding:6px 0 6px 16px;color:#6b6b70;white-space:nowrap">${when(item.days)}</td></tr>`)
-    .join('');
-  const html = `<div style="font-family:Arial,sans-serif;color:#111114"><p>Hi ${first.replace(/</g, '&lt;')},</p><p>These need your attention in Vaultrix:</p><table style="border-collapse:collapse;font-size:14px">${rows}</table><p style="color:#6b6b70;font-size:12px">You can turn these emails off any time in Settings &gt; Preferences.</p></div>`;
-  return { subject: `Vaultrix: ${items.length} ${items.length === 1 ? 'reminder' : 'reminders'}`, text, html };
+  const late = items.filter((item) => item.days < 0).length;
+  const total = items.length;
+  const summary = `${total} ${total === 1 ? 'item needs' : 'items need'} your attention${late > 0 ? `, ${late} overdue` : ''}.`;
+
+  const textGroups = GROUPS.map((group) => {
+    const rows = items.filter(group.test);
+    return rows.length ? `${group.title}\n${rows.map((item) => `  ${what(item)}  -  ${money(item)}  (${when(item.days)})`).join('\n')}` : '';
+  }).filter(Boolean);
+  const text = `Hi ${first},\n\n${summary}\n\n${textGroups.join('\n\n')}\n\n${url ? `Open Vaultrix: ${url}/dashboard\n\n` : ''}You get one email a day, only when something is due. Turn it off any time in Settings > Preferences.`;
+
+  const sections = GROUPS.map((group) => {
+    const rows = items.filter(group.test);
+    if (rows.length === 0) return '';
+    const badge = group.key === 'late' ? 'background:#111114;color:#ffffff' : group.key === 'today' ? 'background:#e9e9ec;color:#111114' : 'background:#f4f4f6;color:#6b6b70';
+    const lines = rows
+      .map(
+        (item) => `<tr>
+          <td style="padding:14px 0;border-top:1px solid #ececef;font-size:15px;color:#111114;line-height:1.35"><b>${esc(item.name)}</b><br><span style="font-size:12px;color:#6b6b70">${esc(item.kind === 'bill' ? 'Bill' : item.kind === 'loanOwe' ? 'You owe' : 'Owes you')}</span></td>
+          <td align="right" style="padding:14px 0;border-top:1px solid #ececef;font-size:15px;color:#111114;white-space:nowrap"><b>${esc(money(item))}</b><br><span style="display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;${badge}">${esc(when(item.days))}</span></td>
+        </tr>`
+      )
+      .join('');
+    return `<p style="margin:22px 0 4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b70;font-weight:700">${group.title}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${lines}</table>`;
+  }).join('');
+
+  const button = url
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 4px"><tr><td style="background:#111114;border-radius:10px"><a href="${esc(url)}/dashboard" style="display:inline-block;padding:12px 22px;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none">Open Vaultrix</a></td></tr></table>`
+    : '';
+
+  const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f4f4f6">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f6"><tr><td align="center" style="padding:28px 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#111114">
+      <tr><td style="background:#111114;padding:20px 28px;color:#ffffff;font-size:15px;font-weight:700;letter-spacing:.22em">VAULTRIX</td></tr>
+      <tr><td style="padding:28px 28px 8px">
+        <p style="margin:0 0 6px;font-size:20px;font-weight:700;letter-spacing:-.01em">Hi ${esc(first)},</p>
+        <p style="margin:0;font-size:14px;color:#6b6b70;line-height:1.5">${esc(summary)}</p>
+        ${sections}
+        ${button}
+      </td></tr>
+      <tr><td style="padding:18px 28px 26px;font-size:12px;color:#8a8a90;line-height:1.5;border-top:1px solid #ececef">You get one email a day, and only when something is due. Turn it off any time in Settings &gt; Preferences.</td></tr>
+    </table>
+  </td></tr></table></body></html>`;
+
+  return { subject: `Vaultrix: ${total} ${total === 1 ? 'reminder' : 'reminders'}${late > 0 ? ` (${late} overdue)` : ''}`, text, html };
 };
 
 export const runReminderDigest = async (now = new Date()) => {

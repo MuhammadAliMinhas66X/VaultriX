@@ -19,9 +19,13 @@ describe('reminder digest items', () => {
   it('counts part-paid bills by what is left and builds a readable mail', () => {
     const items = buildDigestItems([bill('IESCO', '2026-11-12', { payments: [{ amountMinor: 40000 }] })], [], today);
     expect(items[0].amount).toBe(600);
-    const mail = digestMail('Muhammad Ali', items);
+    const mail = digestMail('Muhammad Ali', items, 'https://app.example.com');
     expect(mail.subject).toBe('Vaultrix: 1 reminder');
+    expect(mail.html).toContain('Open Vaultrix');
+    expect(mail.html).not.toContain('<script');
     expect(mail.text).toContain('Bill: IESCO');
     expect(mail.text).toContain('due today');
+    expect(mail.text).toContain('https://app.example.com/dashboard');
+    expect(digestMail('<b>x</b>', [{ kind: 'bill', name: '<i>Jazz</i>', amount: 1, currency: 'PKR', days: -2 }], '').html).not.toContain('<i>Jazz</i>');
   });
 });
