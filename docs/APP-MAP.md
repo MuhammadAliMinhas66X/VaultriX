@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (262 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (265 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -297,16 +297,16 @@ flowchart LR
 - `PendingSignup`: email, name, passwordHash, otpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, expiresAt, deviceId, deviceFallbackId
 - `SecurityEvent`: event, userId, ip, path, details, capped
 - `Session`: 
-- `User`: orgId, name, email, passwordHash, authProvider, googleId, role, plan, country, currency, language, avatarUrl, avatarPublicId, onboardingCompleted, mfaEnabled, mfaSecret, mfaBackupCodes, usernameChangedAt, emailChangedAt, nameHistory, emailHistory, googleUnlinkedAt, tokenVersion, failedLoginAttempts, lockUntil, lockTier, lastLoginAt, signupDeviceId
+- `User`: orgId, name, email, passwordHash, authProvider, googleId, role, plan, country, currency, language, avatarUrl, avatarPublicId, onboardingCompleted, reminderEmails, lastReminderEmailOn, mfaEnabled, mfaSecret, mfaBackupCodes, usernameChangedAt, emailChangedAt, nameHistory, emailHistory, googleUnlinkedAt, tokenVersion, failedLoginAttempts, lockUntil, lockTier
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 76 files
-- `frontend/src/i18n/useFormat.js` is imported by 29 files
+- `frontend/src/i18n/useTranslation.js` is imported by 77 files
+- `frontend/src/i18n/useFormat.js` is imported by 30 files
 - `frontend/src/context/AuthContext.jsx` is imported by 27 files
+- `frontend/src/utils/dates.js` is imported by 23 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 22 files
 - `frontend/src/i18n/notifications.js` is imported by 22 files
-- `frontend/src/utils/dates.js` is imported by 22 files
 - `frontend/src/components/FormField.jsx` is imported by 13 files
 - `frontend/src/components/ErrorSlot.jsx` is imported by 13 files
 - `backend/src/middleware/rateLimiters.js` is imported by 13 files
@@ -359,7 +359,7 @@ flowchart LR
 - `frontend/src/services/authService.js`  (used by 6)
 ### bills
 - `backend/src/controllers/billController.js`  (used by 1)
-- `backend/src/models/Bill.js`  (used by 2)
+- `backend/src/models/Bill.js`  (used by 3)
 - `backend/src/routes/billRoutes.js`  (used by 1)
 - `backend/src/utils/billRecurrence.js`  (used by 2)
 - `frontend/src/components/bills/BillDetail.jsx`  (used by 1)
@@ -417,7 +417,7 @@ flowchart LR
 - `frontend/src/utils/taxRules.js`  (used by 2)
 ### loans
 - `backend/src/controllers/loanController.js`  (used by 1)
-- `backend/src/models/Loan.js`  (used by 5)
+- `backend/src/models/Loan.js`  (used by 6)
 - `backend/src/routes/loanRoutes.js`  (used by 1)
 - `frontend/src/components/loans/LoanAmounts.jsx`  (used by 2)
 - `frontend/src/components/loans/LoanCard.jsx`  (used by 1)
@@ -449,9 +449,10 @@ flowchart LR
 - `frontend/src/services/securityService.js`  (used by 2)
 ### settings
 - `backend/src/controllers/userController.js`  (used by 1)
-- `backend/src/models/User.js`  (used by 9)
+- `backend/src/models/User.js`  (used by 10)
 - `backend/src/routes/userRoutes.js`  (used by 1)
-- `frontend/src/data/useResource.js`  (used by 6)
+- `frontend/src/data/useResource.js`  (used by 7)
+- `frontend/src/hooks/useReminders.js` - Bills and loans that are overdue or due within a week. Shared by the bell in  (used by 1)
 - `frontend/src/pages/SettingsPage.jsx`  (used by 1)
 - `frontend/src/services/userService.js`  (used by 2)
 - `frontend/src/utils/avatar.js`  (used by 6)
@@ -471,6 +472,7 @@ flowchart LR
 - `backend/src/routes/receiptRoutes.js`  (used by 1)
 - `backend/src/server.js`  (used by 0)
 - `backend/src/services/imageStorage.js`  (used by 4)
+- `backend/src/services/reminderDigest.js` - Reminder emails. One digest per person per day, only when something is  (used by 1)
 - `backend/src/utils/backupCodes.js` - Excludes visually-confusable characters (0/O, 1/I/L) so a code is easy to  (used by 1)
 - `backend/src/utils/balanceTotals.js` - Pure helpers for the balance totals endpoint. Kept free of database calls so  (used by 1)
 - `backend/src/utils/cooldown.js` - Shared cooldown helpers for anything that locks for N days after a change  (used by 3)
@@ -482,7 +484,7 @@ flowchart LR
 - `backend/src/utils/emailValidation.js`  (used by 4)
 - `backend/src/utils/financeInput.js`  (used by 5)
 - `backend/src/utils/mailTemplates.js`  (used by 4)
-- `backend/src/utils/mailer.js`  (used by 4)
+- `backend/src/utils/mailer.js`  (used by 5)
 - `backend/src/utils/organizations.js`  (used by 3)
 - `backend/src/utils/tokens.js` - sessionId is optional only for backward compatibility with any  (used by 5)
 - `backend/src/utils/validators.js` - Letters (any script, via \p{L}) and combining marks (accents, via \p{M}), plus  (used by 13)
@@ -525,6 +527,7 @@ flowchart LR
 - `frontend/src/components/layout/AppShell.jsx`  (used by 8)
 - `frontend/src/components/layout/BottomNav.jsx`  (used by 1)
 - `frontend/src/components/layout/MainShell.jsx` - One shell for every main page, so moving between them only swaps the page.  (used by 1)
+- `frontend/src/components/layout/NotificationsBell.jsx` - The bell in the top bar: a badge with how many bills and loans need attention  (used by 1)
 - `frontend/src/components/layout/Sidebar.jsx`  (used by 1)
 - `frontend/src/components/layout/shellSlot.js`  (used by 2)
 - `frontend/src/components/layout/useAppNav.jsx`  (used by 6)
@@ -555,9 +558,9 @@ flowchart LR
 - `frontend/src/i18n/notifications.js`  (used by 22)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 29)
+- `frontend/src/i18n/useFormat.js`  (used by 30)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 7)
-- `frontend/src/i18n/useTranslation.js`  (used by 76)
+- `frontend/src/i18n/useTranslation.js`  (used by 77)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
@@ -583,7 +586,7 @@ flowchart LR
 - `frontend/src/services/requestCache.js`  (used by 2)
 - `frontend/src/utils/balanceMath.js` - One place for the balance rules, so the Dashboard, the Income page and each  (used by 3)
 - `frontend/src/utils/countries.js`  (used by 1)
-- `frontend/src/utils/dates.js`  (used by 22)
+- `frontend/src/utils/dates.js`  (used by 23)
 - `frontend/src/utils/deviceFallbackId.js` - A second, non-httpOnly device signal that backs up the server's own  (used by 1)
 - `frontend/src/utils/direction.js`  (used by 2)
 - `frontend/src/utils/emailRules.js`  (used by 4)
@@ -592,5 +595,5 @@ flowchart LR
 - `frontend/src/utils/options.js` - APPLICATION languages only: each code here must have a dictionary in  (used by 1)
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
-- `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
+- `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 2)
 - `frontend/src/utils/useMediaQuery.js`  (used by 2)
