@@ -742,6 +742,8 @@ export default {
   'expenses.today': 'آج',
   'expenses.yesterday': 'کل',
   'expenses.filterAll': 'سب',
+  'expenses.filterCategories': 'زمرے کے مطابق فلٹر کریں',
+  'expenses.allCategories': 'تمام زمرے',
   'expenses.filterToday': 'آج',
   'expenses.filterWeek': 'اس ہفتے',
   'expenses.allCategories': 'تمام زمرے',

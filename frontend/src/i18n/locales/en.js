@@ -742,6 +742,8 @@ export default {
   'expenses.today': 'Today',
   'expenses.yesterday': 'Yesterday',
   'expenses.filterAll': 'All',
+  'expenses.filterCategories': 'Filter by category',
+  'expenses.allCategories': 'All categories',
   'expenses.filterToday': 'Today',
   'expenses.filterWeek': 'This week',
   'expenses.allCategories': 'All categories',

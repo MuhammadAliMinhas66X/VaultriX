@@ -742,6 +742,8 @@ export default {
   'expenses.today': 'اليوم',
   'expenses.yesterday': 'أمس',
   'expenses.filterAll': 'الكل',
+  'expenses.filterCategories': 'التصفية حسب الفئة',
+  'expenses.allCategories': 'كل الفئات',
   'expenses.filterToday': 'اليوم',
   'expenses.filterWeek': 'هذا الأسبوع',
   'expenses.allCategories': 'كل الفئات',

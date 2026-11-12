@@ -742,6 +742,8 @@ export default {
   'expenses.today': 'आज',
   'expenses.yesterday': 'कल',
   'expenses.filterAll': 'सभी',
+  'expenses.filterCategories': 'श्रेणी से फ़िल्टर करें',
+  'expenses.allCategories': 'सभी श्रेणियाँ',
   'expenses.filterToday': 'आज',
   'expenses.filterWeek': 'इस हफ़्ते',
   'expenses.allCategories': 'सभी श्रेणियां',
