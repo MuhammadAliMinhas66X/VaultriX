@@ -122,9 +122,12 @@ export const expenseTotals = async (req, res, next) => {
       {
         $group: {
           _id: {
-            month: { $dateToString: { format: '%Y-%m', date: '$spentAt' } },
+            // Grouped per day (spentAt is always UTC midnight) and put into months in
+            // buildTotals, so no date operator is needed in the database.
+            day: '$spentAt',
             currency: '$currency',
-            paidBy: { $cond: [{ $eq: ['$paidBy', 'other'] }, 'other', 'self'] },
+            // Missing paidBy (old rows) counts as 'self' in buildTotals.
+            paidBy: '$paidBy',
           },
           minor: { $sum: '$amountMinor' },
         },

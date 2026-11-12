@@ -11,8 +11,11 @@ export const repaidMinorOf = (expense, loanSummary) => {
   return Math.round(expense.amountMinor * share);
 };
 
-// Turns grouped rows ({ _id: { month, currency, paidBy }, minor }) into
+// Turns grouped rows ({ _id: { day | month, currency, paidBy }, minor }) into
 // [{ month, currency, selfMinor, otherMinor, repaidMinor }] sorted by month.
+// A row carries either a `month` ('YYYY-MM') or a `day` (a Date, UTC midnight).
+const monthOf = (id) => id.month || new Date(id.day).toISOString().slice(0, 7);
+
 export const buildTotals = (groups, repaidByKey = new Map()) => {
   const rows = new Map();
   const rowFor = (month, currency) => {
@@ -21,7 +24,7 @@ export const buildTotals = (groups, repaidByKey = new Map()) => {
     return rows.get(key);
   };
   groups.forEach((group) => {
-    const row = rowFor(group._id.month, group._id.currency);
+    const row = rowFor(monthOf(group._id), group._id.currency);
     if (group._id.paidBy === 'other') row.otherMinor += group.minor;
     else row.selfMinor += group.minor;
   });
