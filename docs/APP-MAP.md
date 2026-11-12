@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (260 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (262 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -104,9 +104,9 @@ flowchart LR
   - services: userService
   - utils: avatar
 - `/dashboard` -> `frontend/src/pages/DashboardPage.jsx`
-  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, Skeletons, incomeOptions
+  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, RemindersPanel, Skeletons, incomeOptions
   - hooks/data: useBalance, useResource
-  - utils: incomeMath, balanceMath, dates, billMath, expenseMath
+  - utils: reminders, incomeMath, balanceMath, dates, billMath, expenseMath
 - `/income` -> `frontend/src/pages/IncomePage.jsx`
   - components: Skeletons, AppShell, useAppNav, IncomeForm, IncomeCard, IncomeDetail, BalanceOverview, OpeningBalanceSheet, Drawer
   - services: incomeStreamService
@@ -267,6 +267,7 @@ flowchart LR
 
 - resource `bills`
 - resource `expenses`
+- resource `loans`
 - resource `categories`
 - resource `receipts`
 - resource `opening`
@@ -275,7 +276,7 @@ flowchart LR
 - a save to `/bills` reloads bills, expenses, expenseTotals
 - a save to `/expenses` reloads expenses, expenseTotals
 - a save to `/categories` reloads categories, expenses, bills
-- a save to `/loans` reloads expenses, expenseTotals
+- a save to `/loans` reloads loans, expenses, expenseTotals
 - a save to `/income-streams` reloads receipts
 - a save to `/receipts` reloads receipts, opening, expenseTotals
 
@@ -300,8 +301,8 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 75 files
-- `frontend/src/i18n/useFormat.js` is imported by 28 files
+- `frontend/src/i18n/useTranslation.js` is imported by 76 files
+- `frontend/src/i18n/useFormat.js` is imported by 29 files
 - `frontend/src/context/AuthContext.jsx` is imported by 27 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 22 files
 - `frontend/src/i18n/notifications.js` is imported by 22 files
@@ -373,7 +374,7 @@ flowchart LR
 - `frontend/src/pages/BillsPage.jsx`  (used by 1)
 - `frontend/src/services/billService.js`  (used by 2)
 - `frontend/src/utils/billDates.js`  (used by 2)
-- `frontend/src/utils/billMath.js`  (used by 7)
+- `frontend/src/utils/billMath.js`  (used by 8)
 - `frontend/src/utils/billPdf.js`  (used by 1)
 - `frontend/src/utils/billPrefs.js` - Remembers what you chose last time so entering many bills is quick.  (used by 2)
 - `frontend/src/utils/billers.js` - Companies people in Pakistan pay bills to. `domains` is used to fetch the  (used by 4)
@@ -397,7 +398,7 @@ flowchart LR
 - `frontend/src/hooks/useExpenseCategories.js`  (used by 1)
 - `frontend/src/pages/ExpensesPage.jsx`  (used by 1)
 - `frontend/src/services/expenseService.js`  (used by 3)
-- `frontend/src/utils/expenseMath.js`  (used by 6)
+- `frontend/src/utils/expenseMath.js`  (used by 7)
 ### income
 - `backend/src/controllers/incomeStreamController.js`  (used by 1)
 - `backend/src/models/IncomeReceipt.js` - One real payment that came in (a salary on 1 Nov, a freelance invoice paid on  (used by 3)
@@ -426,7 +427,7 @@ flowchart LR
 - `frontend/src/components/loans/loanOptions.js`  (used by 7)
 - `frontend/src/components/loans/loanStatus.js`  (used by 2)
 - `frontend/src/pages/LoansPage.jsx`  (used by 1)
-- `frontend/src/services/loanService.js`  (used by 2)
+- `frontend/src/services/loanService.js`  (used by 3)
 - `frontend/src/utils/loanMath.js`  (used by 8)
 ### rates
 - `backend/src/controllers/fxController.js`  (used by 1)
@@ -513,6 +514,7 @@ flowchart LR
 - `frontend/src/components/Skeletons.jsx`  (used by 5)
 - `frontend/src/components/ToastViewport.jsx`  (used by 1)
 - `frontend/src/components/dashboard/BalanceCard.jsx`  (used by 1)
+- `frontend/src/components/dashboard/RemindersPanel.jsx`  (used by 1)
 - `frontend/src/components/expenses/DailyChart.jsx`  (used by 1)
 - `frontend/src/components/expenses/MonthOverview.jsx`  (used by 1)
 - `frontend/src/components/icons/NavIcons.jsx`  (used by 1)
@@ -553,9 +555,9 @@ flowchart LR
 - `frontend/src/i18n/notifications.js`  (used by 22)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 28)
+- `frontend/src/i18n/useFormat.js`  (used by 29)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 7)
-- `frontend/src/i18n/useTranslation.js`  (used by 75)
+- `frontend/src/i18n/useTranslation.js`  (used by 76)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
@@ -590,4 +592,5 @@ flowchart LR
 - `frontend/src/utils/options.js` - APPLICATION languages only: each code here must have a dictionary in  (used by 1)
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
+- `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
 - `frontend/src/utils/useMediaQuery.js`  (used by 2)
