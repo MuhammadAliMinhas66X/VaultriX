@@ -6,6 +6,7 @@ validateEnv();
 const { default: app } = await import('./app.js');
 const { default: connectDatabase } = await import('./config/database.js');
 const { startOrganizationSweeper } = await import('./utils/organizations.js');
+const { startReminderJob } = await import('./services/reminderDigest.js');
 
 const port = process.env.PORT || 5000;
 
@@ -21,6 +22,7 @@ process.on('uncaughtException', (error) => {
 const start = async () => {
   await connectDatabase();
   startOrganizationSweeper();
+  startReminderJob();
 
   const server = app.listen(port, () => {
     console.log(`Vaultrix API running on port ${port}`);

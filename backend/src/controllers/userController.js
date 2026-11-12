@@ -81,6 +81,7 @@ const publicUser = (user) => ({
   country: user.country,
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
+  reminderEmails: Boolean(user.reminderEmails),
   mfaEnabled: Boolean(user.mfaEnabled),
   hasPassword: Boolean(user.passwordHash),
   googleLinked: Boolean(user.googleId),
@@ -93,7 +94,7 @@ const publicUser = (user) => ({
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, country, currency, language, completeOnboarding } = req.body;
+    const { name, country, currency, language, completeOnboarding, reminderEmails } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -147,6 +148,12 @@ export const updateProfile = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'That language is not supported.' });
       }
       user.language = language;
+    }
+    if (reminderEmails !== undefined) {
+      if (typeof reminderEmails !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'That selection is not valid.' });
+      }
+      user.reminderEmails = reminderEmails;
     }
     if (completeOnboarding) user.onboardingCompleted = true;
 

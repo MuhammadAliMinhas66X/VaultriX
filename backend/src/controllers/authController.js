@@ -122,6 +122,7 @@ const publicUser = (user) => ({
   country: user.country,
   avatarUrl: user.avatarUrl,
   onboardingCompleted: user.onboardingCompleted,
+  reminderEmails: Boolean(user.reminderEmails),
   mfaEnabled: Boolean(user.mfaEnabled),
   hasPassword: Boolean(user.passwordHash),
   googleLinked: Boolean(user.googleId),

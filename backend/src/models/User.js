@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: '' },
     avatarPublicId: { type: String, default: '' },
     onboardingCompleted: { type: Boolean, default: false },
+    // Opt-in email digest of overdue / soon-due bills and loans (services/reminderDigest.js).
+    reminderEmails: { type: Boolean, default: false },
+    lastReminderEmailOn: { type: String, default: '' },
     mfaEnabled: { type: Boolean, default: false },
     mfaSecret: { type: String }, // encrypted at rest, see utils/mfaCrypto.js
     mfaBackupCodes: {
