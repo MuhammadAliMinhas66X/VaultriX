@@ -6,7 +6,6 @@ import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import Drawer from '../components/Drawer.jsx';
 import MonthOverview from '../components/expenses/MonthOverview.jsx';
-import CategoryBreakdown from '../components/expenses/CategoryBreakdown.jsx';
 import { CategoryIcon } from '../components/expenses/categoryIcons.jsx';
 import ExpenseForm from '../components/expenses/ExpenseForm.jsx';
 import CategoryFilter from '../components/expenses/CategoryFilter.jsx';
@@ -340,8 +339,6 @@ function ExpensesPage() {
               </div>
             ) : (
               <>
-                {rows.length > 0 && <CategoryBreakdown rows={rows} activeKey={categoryFilter} onPick={pickCategory} money={(value) => money(value)} />}
-
                 <div ref={listRef} className="scroll-mt-20" />
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div role="group" aria-label={t('expenses.title')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
@@ -371,7 +368,7 @@ function ExpensesPage() {
                         className="w-full rounded-lg border border-border bg-white py-2.5 pe-3.5 ps-9 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm"
                       />
                     </label>
-                    {rows.length > 0 && <CategoryFilter rows={rows} value={categoryFilter} onChange={setCategoryFilter} money={(value) => money(value)} />}
+                    {rows.length > 0 && <CategoryFilter rows={rows} value={categoryFilter} onChange={pickCategory} money={(value) => money(value)} />}
                   </div>
                 </div>
 

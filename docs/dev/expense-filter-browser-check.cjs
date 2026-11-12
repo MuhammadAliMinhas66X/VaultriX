@@ -33,7 +33,7 @@ const respond = (url) => {
     await btn.waitFor({ timeout: 20000 });
     await btn.click();
     await page.waitForTimeout(400);
-    await page.screenshot({ path: `/tmp/o/filter-${tag}.png` });
+    await btn.scrollIntoViewIfNeeded(); await page.evaluate(() => window.scrollBy(0, 300)); await page.screenshot({ path: `/tmp/o/filter-${tag}.png` });
     await page.locator('[role="menuitemradio"]', { hasText: 'Internet' }).click();
     await page.waitForTimeout(300);
     const text = await page.locator('main, body').first().innerText();

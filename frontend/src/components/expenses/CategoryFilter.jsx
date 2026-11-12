@@ -62,7 +62,7 @@ function CategoryFilter({ rows, value, onChange, money }) {
             className="absolute end-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] origin-top-right overflow-hidden rounded-2xl border border-border bg-white shadow-[0_18px_40px_-16px_rgba(17,17,20,0.35)]"
           >
             <p className="border-b border-border px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{t('expenses.filterCategories')}</p>
-            <div className="max-h-72 overflow-y-auto py-1">
+            <div className="max-h-60 overflow-y-scroll py-1 [scrollbar-color:#c4c4c9_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#c4c4c9] [&::-webkit-scrollbar-track]:bg-transparent">
               <button type="button" role="menuitemradio" aria-checked={!value} onClick={() => pick('')} className={row}>
                 <span className="flex-1 font-medium text-ink">{t('expenses.allCategories')}</span>
                 {!value && <Check className="h-4 w-4 text-ink" strokeWidth={2.25} />}
