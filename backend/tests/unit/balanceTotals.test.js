@@ -27,17 +27,6 @@ describe('buildTotals', () => {
     expect(rows.map((row) => `${row.month}|${row.currency}`)).toEqual(['2026-10|PKR', '2026-11|PKR', '2026-11|USD']);
     expect(rows[0]).toMatchObject({ selfMinor: 0, otherMinor: 3000 });
   });
-  it('puts per-day rows into their month', () => {
-    const rows = buildTotals([
-      { _id: { day: new Date('2026-11-03T00:00:00.000Z'), currency: 'PKR', paidBy: 'self' }, minor: 1000 },
-      { _id: { day: new Date('2026-11-30T00:00:00.000Z'), currency: 'PKR', paidBy: 'self' }, minor: 500 },
-      { _id: { day: new Date('2026-12-01T00:00:00.000Z'), currency: 'PKR', paidBy: 'other' }, minor: 700 },
-    ]);
-    expect(rows).toEqual([
-      { month: '2026-11', currency: 'PKR', selfMinor: 1500, otherMinor: 0, repaidMinor: 0 },
-      { month: '2026-12', currency: 'PKR', selfMinor: 0, otherMinor: 700, repaidMinor: 0 },
-    ]);
-  });
   it('caps repaid at what others paid', () => {
     const rows = buildTotals(
       [{ _id: { month: '2026-11', currency: 'PKR', paidBy: 'other' }, minor: 1000 }],
