@@ -34,9 +34,15 @@ const respond = (url) => {
   if (path === '/receipts/opening') return { success: true, opening: { amount: 50000, currency: 'PKR', asOf: day(-80).slice(0, 10) } };
   if (path === '/expenses/totals') return { success: true, totals };
   if (path === '/expenses') return { success: true, expenses: [] };
-  if (path === '/bills') return { success: true, bills: [] };
+  if (path === '/bills') return { success: true, bills: [
+    { id: 'b1', billerName: 'IESCO', dueAt: day(-4), total: 8400, paid: 0, remaining: 8400, currency: 'PKR', cancelledAt: null, payments: [], frequency: 'none' },
+    { id: 'b2', billerName: 'PTCL', dueAt: day(0), total: 3160, paid: 0, remaining: 3160, currency: 'PKR', cancelledAt: null, payments: [], frequency: 'none' },
+  ] };
   if (path === '/categories') return { success: true, categories: [] };
-  if (path === '/loans') return { success: true, loans: [] };
+  if (path === '/loans') return { success: true, loans: [
+    { id: 'l1', direction: 'borrowed', personName: 'Waqas', amount: 20000, remaining: 12000, paid: 8000, done: false, currency: 'PKR', dueAt: day(3), sentAt: day(-30), payments: [], entries: [] },
+    { id: 'l2', direction: 'lent', personName: 'Shahid', amount: 5000, remaining: 5000, paid: 0, done: false, currency: 'PKR', dueAt: day(-2), sentAt: day(-30), payments: [], entries: [] },
+  ] };
   return { success: true };
 };
 (async () => {
