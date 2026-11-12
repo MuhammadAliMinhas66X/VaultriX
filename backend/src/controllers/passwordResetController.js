@@ -29,6 +29,10 @@ const refreshCookieOptions = {
   sameSite: 'lax',
 };
 
+// res.clearCookie must not receive maxAge (deprecated in Express 4.21+, ignored in Express 5).
+const refreshClearCookieOptions = { ...refreshCookieOptions };
+delete refreshClearCookieOptions.maxAge;
+
 const MESSAGES = {
   wait: 'Please wait a moment before requesting another code.',
   hourly: 'Too many code requests. Please try again in an hour.',
@@ -223,7 +227,7 @@ export const resetPassword = async (req, res, next) => {
 
     await PasswordReset.deleteMany({ email: record.email });
 
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
     sendInBackground(passwordChangedEmail({ name: user.name }), user.email);
 
     res.json({ success: true });

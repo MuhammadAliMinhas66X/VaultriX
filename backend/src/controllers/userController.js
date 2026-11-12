@@ -40,6 +40,10 @@ const refreshCookieOptions = {
   maxAge: REFRESH_TOKEN_TTL_MS,
 };
 
+// res.clearCookie must not receive maxAge (deprecated in Express 4.21+, ignored in Express 5).
+const refreshClearCookieOptions = { ...refreshCookieOptions };
+delete refreshClearCookieOptions.maxAge;
+
 const createSession = (req, user) =>
   Session.create({
     userId: user._id,
@@ -318,7 +322,7 @@ export const logoutAllSessions = async (req, res, next) => {
     await Session.deleteMany({ userId: req.user.id });
     await User.updateOne({ _id: req.user.id }, { $inc: { tokenVersion: 1 } });
 
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
     res.json({ success: true });
   } catch (error) {
     next(error);
@@ -626,7 +630,7 @@ export const confirmAccountDeletion = async (req, res, next) => {
     securityLog('account_deleted', req, { userId: String(userId) });
     sendInBackground(accountDeletedEmail({ name: user.name }), user.email);
 
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
     res.json({ success: true });
   } catch (error) {
     next(error);

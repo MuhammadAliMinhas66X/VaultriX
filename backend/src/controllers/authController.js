@@ -106,6 +106,10 @@ const refreshCookieOptions = {
   maxAge: REFRESH_TOKEN_TTL_MS,
 };
 
+// res.clearCookie must not receive maxAge (deprecated in Express 4.21+, ignored in Express 5).
+const refreshClearCookieOptions = { ...refreshCookieOptions };
+delete refreshClearCookieOptions.maxAge;
+
 const publicUser = (user) => ({
   id: user._id,
   name: user.name,
@@ -614,7 +618,7 @@ export const logout = async (req, res) => {
     }
   }
 
-  res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+  res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
   res.json({ success: true });
 };
 
@@ -632,7 +636,7 @@ export const refresh = async (req, res) => {
     const user = await User.findById(payload.sub);
 
     if (!user || (user.tokenVersion || 0) !== payload.tokenVersion) {
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
       return fail(res, 401, 'Please sign in again.');
     }
 
@@ -642,7 +646,7 @@ export const refresh = async (req, res) => {
     // fails even though the token itself hasn't expired yet.
     const session = await Session.findOne({ _id: payload.jti, userId: user._id });
     if (!session) {
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
       return fail(res, 401, 'Please sign in again.');
     }
 
@@ -656,14 +660,14 @@ export const refresh = async (req, res) => {
     const rotatedRecently = session.refreshRotatedAt && Date.now() - session.refreshRotatedAt.getTime() < REFRESH_GRACE_MS;
 
     if (claimed > current) {
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
       return fail(res, 401, 'Please sign in again.');
     }
 
     if (claimed < current && !(claimed === current - 1 && rotatedRecently)) {
       await Session.deleteOne({ _id: session._id });
       securityLog('refresh_reuse', req, { userId: String(user._id) });
-      res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+      res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
       return fail(res, 401, 'Please sign in again.');
     }
 
@@ -684,7 +688,7 @@ export const refresh = async (req, res) => {
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     res.json({ success: true, accessToken, user: publicUser(user) });
   } catch (error) {
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshClearCookieOptions);
     fail(res, 401, 'Please sign in again.');
   }
 };
