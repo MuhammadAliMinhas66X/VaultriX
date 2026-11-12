@@ -13,7 +13,7 @@ function OpeningBalanceSheet({ opening, currency, currencies, onDone }) {
   const has = Boolean(opening && opening.amount > 0);
   const [amount, setAmount] = useState(has ? String(opening.amount) : '');
   const [code, setCode] = useState(has && opening.currency ? opening.currency : currency);
-  const [asOf, setAsOf] = useState(has && opening.asOf ? opening.asOf : todayInput());
+  const [asOf, setAsOf] = useState(has && opening.asOf ? opening.asOf : `${todayInput().slice(0, 7)}-01`);
   const [busy, setBusy] = useState(false);
 
   const save = async (clear) => {
