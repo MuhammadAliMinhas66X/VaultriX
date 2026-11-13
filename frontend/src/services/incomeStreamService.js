@@ -1,9 +1,10 @@
 import api from './api.js';
 import { toApiError } from './apiError.js';
 
+// Always asks for archived streams too: the balance still needs them for old receipts.
 export const listIncomeStreams = async () => {
   try {
-    const { data } = await api.get('/income-streams');
+    const { data } = await api.get('/income-streams', { params: { includeArchived: 'true' } });
     return data;
   } catch (error) {
     throw toApiError(error);

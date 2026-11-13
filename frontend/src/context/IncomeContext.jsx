@@ -12,13 +12,13 @@ export function IncomeProvider({ children }) {
   const { currency } = useAuth();
   const { tServer } = useTranslation();
 
-  const [streams, setStreams] = useState([]);
+  const [allStreams, setAllStreams] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
       const result = await listIncomeStreams();
-      setStreams(result.incomeStreams);
+      setAllStreams(result.incomeStreams);
     } catch (error) {
       notify.error(tServer(error));
     } finally {
@@ -29,6 +29,20 @@ export function IncomeProvider({ children }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Everything on screen uses the active streams. Archived ones are kept in
+  // `allStreams` so receipts they already received still count in the balance.
+  const streams = useMemo(() => allStreams.filter((item) => !item.isArchived), [allStreams]);
+  const archivedStreams = useMemo(() => allStreams.filter((item) => item.isArchived), [allStreams]);
+  const setStreams = useCallback(
+    (updater) =>
+      setAllStreams((prev) => {
+        const active = prev.filter((item) => !item.isArchived);
+        const next = typeof updater === 'function' ? updater(active) : updater;
+        return [...next, ...prev.filter((item) => item.isArchived)];
+      }),
+    []
+  );
 
   const neededSymbols = useMemo(
     () =>
@@ -48,8 +62,8 @@ export function IncomeProvider({ children }) {
   const ratesUpdatedAt = ratesData ? ratesData.liveAt || ratesData.updatedAt || ratesData.fetchedAt || null : null;
 
   const value = useMemo(
-    () => ({ streams, setStreams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt }),
-    [streams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt]
+    () => ({ streams, archivedStreams, allStreams, setStreams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt }),
+    [streams, archivedStreams, allStreams, setStreams, loading, load, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt]
   );
 
   return <IncomeContext.Provider value={value}>{children}</IncomeContext.Provider>;

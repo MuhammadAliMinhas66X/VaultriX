@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Archive, Pencil, Trash2 } from 'lucide-react';
 import BrandMark from '../BrandMark.jsx';
 import SalaryCutsPanel from './SalaryCutsPanel.jsx';
 import ReceiptsPanel from './ReceiptsPanel.jsx';
@@ -20,7 +20,7 @@ function Detail({ label, children }) {
   );
 }
 
-function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsChange, cutsStatus }) {
+function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onArchive, onCutsChange, cutsStatus }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [confirming, setConfirming] = useState(false);
@@ -47,6 +47,9 @@ function IncomeDetail({ stream, converted, currency, onEdit, onDelete, onCutsCha
         <div className="flex shrink-0 items-center gap-2">
           <button type="button" onClick={onEdit} title={t('income.edit')} aria-label={t('income.edit')} className={iconButton}>
             <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </button>
+          <button type="button" onClick={onArchive} title={t('income.archive')} aria-label={t('income.archive')} className={iconButton}>
+            <Archive className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </button>
           <button
             type="button"

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Banknote, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, Banknote, ChevronDown, Plus } from 'lucide-react';
 import { IncomeSkeleton } from '../components/Skeletons.jsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import IncomeForm, { emptyForm, formFromStream } from '../components/income/IncomeForm.jsx';
+import { typeLabelKey } from '../components/income/incomeOptions.js';
 import IncomeCard from '../components/income/IncomeCard.jsx';
 import IncomeDetail from '../components/income/IncomeDetail.jsx';
 import BalanceOverview from '../components/income/BalanceOverview.jsx';
@@ -34,7 +35,7 @@ function IncomePage() {
   const { t, tServer } = useTranslation();
   const { formatMoney } = useFormat();
   const { currencies } = useLocalizedOptions();
-  const { streams, setStreams, loading, load, rates } = useIncome();
+  const { streams, archivedStreams, setStreams, loading, load, rates } = useIncome();
   const { items, activeId } = useAppNav();
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ function IncomePage() {
   const [busy, setBusy] = useState(false);
   const [cutsStatus, setCutsStatus] = useState({});
   const [flashId, setFlashId] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
   const currentMonth = monthKey(new Date());
   const [month, setMonth] = useState(currentMonth);
   const [openingOpen, setOpeningOpen] = useState(false);
@@ -188,6 +190,20 @@ function IncomePage() {
     }
   };
 
+  const setArchived = async (stream, archived) => {
+    try {
+      await updateIncomeStream(stream.id, { isArchived: archived });
+      notify.success(t(archived ? 'income.archivedBody' : 'income.restoredBody', { name: stream.name }), { title: t(archived ? 'income.archivedToast' : 'income.restoredToast') });
+      if (archived) {
+        setSelectedId(null);
+        setEditingId(null);
+      }
+      await load();
+    } catch (error) {
+      notify.error(tServer(error), { title: t(archived ? 'income.archiveFailedTitle' : 'income.restoreFailedTitle') });
+    }
+  };
+
   const addForm = (
     <IncomeForm initial={emptyForm(currency)} currencies={currencies} onCancel={() => setAdding(false)} onSubmit={handleCreate} submitLabel={t('income.save')} busy={busy} />
   );
@@ -213,9 +229,51 @@ function IncomePage() {
         setEditingId(stream.id);
       }}
       onDelete={() => handleDelete(stream)}
+      onArchive={() => setArchived(stream, true)}
       onCutsChange={(patch, options) => handleCutsChange(stream.id, patch, options)}
       cutsStatus={cutsStatus[stream.id]}
     />
+  );
+
+  const archivedBlock = archivedStreams.length > 0 && (
+      
+        <div className="rounded-2xl border border-border bg-white">
+          <button
+            type="button"
+            onClick={() => setShowArchived((value) => !value)}
+            aria-expanded={showArchived}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-start outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+              <Archive className="h-4 w-4 text-muted" strokeWidth={1.75} />
+              {t('income.archivedTitle')}
+              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-semibold tabular-nums text-muted">{archivedStreams.length}</span>
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted transition ${showArchived ? 'rotate-180' : ''}`} />
+          </button>
+          {showArchived && (
+            <div className="border-t border-border">
+              <p className="px-4 pt-3 text-xs text-muted">{t('income.archivedHint')}</p>
+              <ul className="divide-y divide-border">
+                {archivedStreams.map((stream) => (
+                  <li key={stream.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-ink">{stream.name}</span>
+                      <span className="block truncate text-xs text-muted">{t(typeLabelKey(stream.incomeType))}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setArchived(stream, false)}
+                      className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-sm font-medium text-ink outline-none transition hover:border-ink/30 hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      <ArchiveRestore className="h-4 w-4" strokeWidth={1.75} /> {t('income.restore')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
   );
 
   const sidePanel = adding ? addForm : editing ? editForm : selected ? detailFor(selected) : null;
@@ -251,6 +309,7 @@ function IncomePage() {
         {loading ? (
           <IncomeSkeleton />
         ) : streams.length === 0 && !adding ? (
+          <>
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted">
               <Banknote className="h-6 w-6" strokeWidth={1.5} />
@@ -260,6 +319,8 @@ function IncomePage() {
               <Plus className="h-4 w-4" /> {t('income.add')}
             </button>
           </div>
+          {archivedBlock && <div className="mt-4">{archivedBlock}</div>}
+          </>
         ) : (
           <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
             <div className="flex min-w-0 flex-col gap-3">
@@ -281,6 +342,7 @@ function IncomePage() {
                   </li>
                 ))}
               </ul>
+              {archivedBlock}
             </div>
 
             {wide && <div className="min-w-0">{sidePanel}</div>}

@@ -27,7 +27,7 @@ function DashboardPage() {
   const { currency, user } = useAuth();
   const { t } = useTranslation();
   const { formatMoney, formatNumber, formatDate } = useFormat();
-  const { streams, loading, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt } = useIncome();
+  const { streams, allStreams, loading, rates, ratesLoading, ratesLive, ratesStale, ratesUpdatedAt } = useIncome();
   const { items, activeId } = useAppNav();
 
   const balance = useBalance(monthKey(new Date()));
@@ -44,7 +44,7 @@ function DashboardPage() {
   const spentByOthers = data ? data.month.other : 0;
   const repaid = data ? data.month.repaid : 0;
   const left = data ? data.month.left : 0;
-  const streamsById = useMemo(() => new Map(streams.map((stream) => [stream.id, stream])), [streams]);
+  const streamsById = useMemo(() => new Map(allStreams.map((stream) => [stream.id, stream])), [allStreams]);
   const latest = useMemo(() => balance.receipts.slice(0, LATEST_LIMIT), [balance.receipts]);
 
   const rateLines = useMemo(() => {

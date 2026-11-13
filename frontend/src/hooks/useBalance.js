@@ -9,7 +9,7 @@ const NONE = [];
 // The one source of balance numbers. status: 'wait' | 'error' | 'ready'.
 export function useBalance(month) {
   const { currency } = useAuth();
-  const { streams, rates, loading: streamsLoading, ratesLoading } = useIncome();
+  const { allStreams: streams, rates, loading: streamsLoading, ratesLoading } = useIncome();
   const receiptsResource = useResource('receipts');
   const openingResource = useResource('opening');
   const opening = openingResource.data ? openingResource.data.opening : null;
