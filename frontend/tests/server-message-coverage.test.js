@@ -16,6 +16,13 @@ import { translations } from '../src/i18n/translations.js';
 // confused user. Keep this list in sync with the backend's MESSAGES
 // objects and inline fail()/res.json(...) calls.
 const KNOWN_BACKEND_MESSAGES = [
+  'This workspace already has the most people it can hold.',
+  'That invite code is not valid or has expired.',
+  'There is already an open invite for that email.',
+  'That person is already in this workspace.',
+  'Your account already has data of its own, so it cannot join another workspace.',
+  'You are already sharing a workspace with other people.',
+  'The owner cannot be changed or removed.',
   'This bill already has payments, so its currency cannot be changed.',
   'The total cannot be lower than what is already paid.',
   'This bill is cancelled, so it cannot take payments.',
