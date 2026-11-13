@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (270 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (271 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -242,7 +242,7 @@ flowchart LR
 - POST /api/loans/:id/payments/:paymentId/proof  (write)
 - DELETE /api/loans/:id/payments/:paymentId/proof  (write)
 ### /api/expenses
-- controller `backend/src/controllers/expenseController.js`; models: Expense, Category, Loan; helpers: validators, expenseLoanLink, financeInput, balanceTotals
+- controller `backend/src/controllers/expenseController.js`; models: Expense, Category, Loan; helpers: validators, expenseLoanLink, financeInput, expenseRepeat, billRecurrence, balanceTotals
 - GET /api/expenses/totals
 - GET /api/expenses
 - POST /api/expenses  (write)
@@ -294,7 +294,7 @@ flowchart LR
 - `Account`: orgId, name, type, currency, balanceMinor, color, isArchived, createdBy
 - `Bill`: amountMinor, paidAt, payMethod, payName, note, expenseId, seq, dueAt, periodStart, periodEnd, nextBillAt, orgId, createdBy, billerName, billerId, categoryId, amountMinor, installationMinor, currency, dueAt, periodStart, periodEnd, billerAccount, payMethod, payName, note, frequency, seriesState
 - `Category`: orgId, name, type, color, icon, isArchived, isDefault, createdBy
-- `Expense`: orgId, createdBy, amountMinor, currency, categoryId, spentAt, note, payMethod, payName, paidBy, payerName, givenTo, billId, billPaymentId, loanId
+- `Expense`: orgId, createdBy, amountMinor, currency, categoryId, spentAt, note, payMethod, payName, paidBy, payerName, givenTo, billId, billPaymentId, loanId, repeatFrequency, repeatAnchor, repeatStep, repeatOf, repeatKey
 - `IncomeReceipt`: orgId, streamId, receivedAt, amountMinor, currency, note, source, createdBy
 - `IncomeStream`: orgId, name, incomeType, typeDetail, payerName, receivedAt, taxEnabled, deductionsEnabled, deductFromTotal, deductions, frequency, destinationMethod, destinationName, expectedAmountMinor, currency, isArchived, createdBy
 - `Loan`: publicId, version, amountMinor, paidAt, note, proof, orgId, createdBy, direction, personName, amountMinor, scale, currency, sentAt, dueAt, note, receivedMethod, receivedName, receivedProof, payoutName, payoutMethod, payoutInstitution, payoutNumber, payments, source
@@ -370,7 +370,7 @@ flowchart LR
 - `backend/src/controllers/billController.js`  (used by 1)
 - `backend/src/models/Bill.js`  (used by 4)
 - `backend/src/routes/billRoutes.js`  (used by 1)
-- `backend/src/utils/billRecurrence.js`  (used by 2)
+- `backend/src/utils/billRecurrence.js`  (used by 4)
 - `frontend/src/components/bills/BillDetail.jsx`  (used by 1)
 - `frontend/src/components/bills/BillFilter.jsx`  (used by 1)
 - `frontend/src/components/bills/BillForm.jsx`  (used by 1)
@@ -400,9 +400,10 @@ flowchart LR
 - `frontend/src/pages/DashboardPage.jsx`  (used by 1)
 ### expenses
 - `backend/src/controllers/expenseController.js`  (used by 1)
-- `backend/src/models/Expense.js`  (used by 7)
+- `backend/src/models/Expense.js`  (used by 8)
 - `backend/src/routes/expenseRoutes.js`  (used by 1)
 - `backend/src/utils/expenseLoanLink.js`  (used by 2)
+- `backend/src/utils/expenseRepeat.js` - Makes the copies of repeating expenses that are due up to `now` (inclusive).  (used by 1)
 - `frontend/src/components/expenses/ExpenseForm.jsx`  (used by 1)
 - `frontend/src/hooks/useExpenseCategories.js`  (used by 1)
 - `frontend/src/pages/ExpensesPage.jsx`  (used by 1)
