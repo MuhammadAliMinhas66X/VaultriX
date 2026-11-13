@@ -4,8 +4,9 @@ import Bill from '../models/Bill.js';
 import Loan from '../models/Loan.js';
 import IncomeReceipt from '../models/IncomeReceipt.js';
 import IncomeStream from '../models/IncomeStream.js';
+import mongoose from 'mongoose';
 import { toCsv } from '../utils/csv.js';
-import { isCurrencyCode } from '../utils/validators.js';
+import { isCurrencyCode, cleanLabel } from '../utils/validators.js';
 import { toMajor, parseAmountMinor, parseDay, optionalText } from '../utils/financeInput.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
@@ -163,6 +164,171 @@ export const importExpenses = async (req, res, next) => {
       return res.status(201).json({ success: true, created: fresh.length, skipped });
     }
     res.status(200).json({ success: true, created: 0, skipped });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const IMPORT_KINDS = ['expense', 'income', 'bill', 'loan', 'loanPayment'];
+const dayKey = (date) => new Date(date).toISOString().slice(0, 10);
+const IMPORT_STREAM = 'Imported income';
+
+// Smart import: every row says what it is (expense, income, bill, loan, loan
+// payment) and the date it belongs on. Each kind goes to its own module, with
+// the row's date as that module's date. Rows that already exist are skipped.
+export const importMixed = async (req, res, next) => {
+  try {
+    const rows = req.body && req.body.rows;
+    if (!Array.isArray(rows) || rows.length === 0 || rows.length > MAX_IMPORT_ROWS) return fail(res, 400, GENERIC_INVALID);
+
+    const orgId = req.user.orgId;
+    const createdBy = req.user.id;
+    const created = { expense: 0, income: 0, bill: 0, loan: 0, loanPayment: 0 };
+    const skipped = [];
+
+    const categories = await Category.find({ orgId, type: 'expense', isArchived: { $ne: true } }).select('name').lean();
+    const byName = new Map(categories.map((category) => [category.name.trim().toLowerCase(), category._id]));
+    let stream = null;
+    const getStream = async (currency) => {
+      if (stream) return stream;
+      stream = await IncomeStream.findOne({ orgId, name: IMPORT_STREAM, isArchived: { $ne: true } });
+      if (!stream) {
+        stream = await IncomeStream.create({
+          orgId,
+          createdBy,
+          name: IMPORT_STREAM,
+          incomeType: 'other',
+          typeDetail: 'Added from a file you imported',
+          frequency: 'variable',
+          destinationMethod: 'bank',
+          currency,
+        });
+      }
+      return stream;
+    };
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const raw = rows[index] && typeof rows[index] === 'object' ? rows[index] : {};
+      const line = Number.isInteger(raw.row) ? raw.row : index + 1;
+      const bad = (reason = 'invalid') => skipped.push({ row: line, reason });
+      const kind = raw.kind;
+      if (!IMPORT_KINDS.includes(kind)) {
+        bad();
+        continue;
+      }
+      const date = parseDay(typeof raw.date === 'string' ? raw.date : '', { maxFutureDays: kind === 'bill' ? 3650 : 1 });
+      const amountMinor = parseAmountMinor(raw.amount);
+      const note = optionalText(raw.note, 200);
+      if (!date || amountMinor === undefined || !isCurrencyCode(raw.currency) || note === undefined) {
+        bad();
+        continue;
+      }
+      const currency = raw.currency;
+      const text = note || '';
+
+      if (kind === 'expense') {
+        const exists = await Expense.exists({ orgId, spentAt: date, amountMinor, currency, note: text });
+        if (exists) {
+          bad('duplicate');
+          continue;
+        }
+        const categoryId = typeof raw.category === 'string' ? byName.get(raw.category.trim().toLowerCase()) || null : null;
+        await Expense.create({ orgId, createdBy, amountMinor, currency, categoryId, spentAt: date, note: text });
+        created.expense += 1;
+      } else if (kind === 'income') {
+        const exists = await IncomeReceipt.exists({ orgId, receivedAt: date, amountMinor, currency, note: text });
+        if (exists) {
+          bad('duplicate');
+          continue;
+        }
+        const target = await getStream(currency);
+        await IncomeReceipt.create({ orgId, createdBy, streamId: target._id, receivedAt: date, amountMinor, currency, note: text, source: 'manual' });
+        created.income += 1;
+      } else if (kind === 'bill') {
+        const billerName = cleanLabel(typeof raw.billerName === 'string' ? raw.billerName : '') || cleanLabel(text.slice(0, 60)) || 'Bill';
+        const exists = await Bill.exists({ orgId, billerName, dueAt: date, amountMinor, currency });
+        if (exists) {
+          bad('duplicate');
+          continue;
+        }
+        const billerId = typeof raw.billerId === 'string' ? raw.billerId.slice(0, 40) : '';
+        const _id = new mongoose.Types.ObjectId();
+        const paymentId = new mongoose.Types.ObjectId();
+        const paid = raw.paid !== false && date.getTime() <= Date.now() + 24 * 60 * 60 * 1000;
+        let expense = null;
+        try {
+          if (paid) {
+            expense = await Expense.create({
+              orgId,
+              createdBy,
+              amountMinor,
+              currency,
+              categoryId: null,
+              spentAt: date,
+              note: (text ? `${billerName} - ${text}` : billerName).slice(0, 200),
+              billId: _id,
+              billPaymentId: paymentId,
+            });
+          }
+          await Bill.create({
+            _id,
+            orgId,
+            createdBy,
+            billerName,
+            billerId,
+            amountMinor,
+            currency,
+            dueAt: date,
+            note: text,
+            frequency: 'none',
+            seriesId: _id,
+            sequence: 1,
+            nextSeq: 2,
+            payments: paid ? [{ _id: paymentId, amountMinor, paidAt: date, payMethod: '', payName: '', note: '', expenseId: expense._id }] : [],
+          });
+          created.bill += 1;
+        } catch (error) {
+          if (expense) await Expense.deleteOne({ _id: expense._id }).catch(() => null);
+          throw error;
+        }
+      } else {
+        const direction = raw.direction === 'lent' ? 'lent' : raw.direction === 'borrowed' ? 'borrowed' : null;
+        const personName = cleanLabel(typeof raw.person === 'string' ? raw.person : '') || 'Unknown';
+        if (!direction) {
+          bad();
+          continue;
+        }
+        if (kind === 'loan') {
+          const exists = await Loan.exists({ orgId, personName, direction, amountMinor, sentAt: date });
+          if (exists) {
+            bad('duplicate');
+            continue;
+          }
+          await Loan.create({ orgId, createdBy, direction, personName, amountMinor, scale: 100, currency, sentAt: date, note: text, source: 'manual' });
+          created.loan += 1;
+        } else {
+          // Repayment: goes on the oldest open loan with this person that was
+          // already given/taken on or before this date and still has room.
+          const loans = await Loan.find({ orgId, personName, direction, currency, sentAt: { $lte: date } }).sort({ sentAt: 1, createdAt: 1 });
+          const target = loans.find((loan) => loan.amountMinor - sum(loan.payments) >= amountMinor);
+          if (!target) {
+            bad(loans.length === 0 ? 'noLoan' : 'tooMuch');
+            continue;
+          }
+          const same = target.payments.some((payment) => payment.amountMinor === amountMinor && dayKey(payment.paidAt) === dayKey(date));
+          if (same) {
+            bad('duplicate');
+            continue;
+          }
+          target.payments.push({ amountMinor, paidAt: date, note: text });
+          await target.save();
+          created.loanPayment += 1;
+        }
+      }
+    }
+
+    const total = Object.values(created).reduce((a, b) => a + b, 0);
+    res.status(total > 0 ? 201 : 200).json({ success: true, created, skipped });
   } catch (error) {
     next(error);
   }
