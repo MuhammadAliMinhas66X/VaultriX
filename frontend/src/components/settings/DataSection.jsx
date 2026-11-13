@@ -4,13 +4,14 @@ import { Download, FileSpreadsheet, Loader2, Upload, Banknote, Receipt, HandCoin
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { notify } from '../../i18n/notifications.js';
-import { downloadExport, importExpenseRows } from '../../services/dataService.js';
-import { parseCsv, toExpenseRows } from '../../utils/csvImport.js';
+import { downloadExport, importMixedRows } from '../../services/dataService.js';
+import { parseCsv } from '../../utils/csvImport.js';
+import { analyzeTable, countByKind, orderForImport, toApiRow, KINDS } from '../../utils/smartImport.js';
 
-const CHUNK = 40;
+const CHUNK = 20;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const MAX_ROWS = 5000;
-const SAMPLE = 'Date,Amount,Currency,Category,Note\r\n2026-11-01,250.50,PKR,Food,Lunch\r\n2026-11-02,1200,PKR,Transport,Fuel\r\n';
+const SAMPLE = 'Date,Description,Debit,Credit\r\n01/11/2026,Salary,,90000\r\n02/11/2026,Lunch,250,\r\n03/11/2026,IESCO electricity,8400,\r\n05/11/2026,Borrowed from Waqas,,20000\r\n10/11/2026,Repaid to Waqas,5000,\r\n';
 
 const card = 'rounded-xl border border-border bg-white p-5 sm:p-6';
 
@@ -67,12 +68,24 @@ function ExportBlock() {
   );
 }
 
+const KIND_STYLE = {
+  expense: 'bg-surface text-ink',
+  income: 'bg-ink text-white',
+  bill: 'border border-ink text-ink',
+  loan: 'bg-muted/20 text-ink',
+  loanPayment: 'bg-muted/20 text-ink',
+};
+const KIND_KEY = { expense: 'data.kindExpense', income: 'data.kindIncome', bill: 'data.kindBill', loan: 'data.kindLoan', loanPayment: 'data.kindLoanPayment' };
+const PREVIEW = 8;
+
 function ImportBlock() {
   const { t, tServer } = useTranslation();
   const { currency } = useAuth();
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [parsed, setParsed] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [showAll, setShowAll] = useState(false);
   const [problem, setProblem] = useState('');
   const [progress, setProgress] = useState(null);
   const [result, setResult] = useState(null);
@@ -80,6 +93,8 @@ function ImportBlock() {
   const reset = () => {
     setFileName('');
     setParsed(null);
+    setRows([]);
+    setShowAll(false);
     setProblem('');
     setProgress(null);
     setResult(null);
@@ -89,8 +104,10 @@ function ImportBlock() {
   const pick = async (event) => {
     const file = event.target.files && event.target.files[0];
     setParsed(null);
+    setRows([]);
     setResult(null);
     setProblem('');
+    setShowAll(false);
     if (!file) return;
     setFileName(file.name);
     if (file.size > MAX_FILE_BYTES) {
@@ -98,49 +115,71 @@ function ImportBlock() {
       return;
     }
     try {
-      const out = toExpenseRows(parseCsv(await file.text()), currency);
+      const table = parseCsv(await file.text());
+      const out = analyzeTable(table, currency);
       if (out.error === 'empty') setProblem(t('data.fileEmpty'));
       else if (out.error === 'columns') setProblem(t('data.fileColumns'));
       else if (out.rows.length === 0) setProblem(t('data.noneReady'));
       else if (out.rows.length > MAX_ROWS) setProblem(t('data.tooManyRows', { count: MAX_ROWS }));
-      else setParsed(out);
+      else {
+        setParsed({ ...out, header: table[0] });
+        setRows(out.rows);
+      }
     } catch (error) {
       setProblem(t('data.fileEmpty'));
     }
   };
 
+  const setKind = (line, kind) =>
+    setRows((list) =>
+      list.map((row) => {
+        if (row.row !== line) return row;
+        const next = { ...row, kind, confidence: 'high' };
+        if ((kind === 'loan' || kind === 'loanPayment') && !next.direction) next.direction = 'borrowed';
+        if ((kind === 'loan' || kind === 'loanPayment') && !next.person) next.person = row.note.slice(0, 40) || 'Unknown';
+        return next;
+      })
+    );
+
   const start = async () => {
-    if (!parsed) return;
-    let created = 0;
+    if (rows.length === 0) return;
+    const ordered = orderForImport(rows);
+    const created = { expense: 0, income: 0, bill: 0, loan: 0, loanPayment: 0 };
     let duplicates = 0;
+    let unmatched = 0;
     let invalid = parsed.bad.length;
     setResult(null);
+    const total = () => Object.values(created).reduce((a, b) => a + b, 0);
     try {
-      for (let at = 0; at < parsed.rows.length; at += CHUNK) {
-        setProgress({ done: at, total: parsed.rows.length });
-        const data = await importExpenseRows(parsed.rows.slice(at, at + CHUNK));
-        created += data.created;
+      for (let at = 0; at < ordered.length; at += CHUNK) {
+        setProgress({ done: at, total: ordered.length });
+        const data = await importMixedRows(ordered.slice(at, at + CHUNK).map(toApiRow));
+        Object.keys(created).forEach((key) => {
+          created[key] += (data.created && data.created[key]) || 0;
+        });
         data.skipped.forEach((item) => {
           if (item.reason === 'duplicate') duplicates += 1;
+          else if (item.reason === 'noLoan' || item.reason === 'tooMuch') unmatched += 1;
           else invalid += 1;
         });
       }
-      setResult({ created, duplicates, invalid });
+      setResult({ created, count: total(), duplicates, invalid, unmatched });
       setParsed(null);
-      notify.success(t('data.done', { count: created }));
+      setRows([]);
+      notify.success(t('data.done', { count: total() }));
     } catch (error) {
       notify.error(tServer(error));
-      if (created > 0) setResult({ created, duplicates, invalid, partial: true });
+      if (total() > 0) setResult({ created, count: total(), duplicates, invalid, unmatched, partial: true });
     } finally {
       setProgress(null);
     }
   };
 
   const sample = () => {
-    const url = URL.createObjectURL(new Blob([`﻿${SAMPLE}`], { type: 'text/csv' }));
+    const url = URL.createObjectURL(new Blob([`\ufeff${SAMPLE}`], { type: 'text/csv' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'vaultrix-expenses-sample.csv';
+    link.download = 'vaultrix-import-sample.csv';
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -148,6 +187,14 @@ function ImportBlock() {
   };
 
   const busy = Boolean(progress);
+  const counts = countByKind(rows);
+  const shown = showAll ? rows : rows.slice(0, PREVIEW);
+  const kindLabel = (row) => {
+    const base = t(KIND_KEY[row.kind]);
+    if (row.kind === 'bill') return `${base} · ${row.paid === false ? t('data.billUnpaid') : t('data.billPaid')}`;
+    if (row.kind === 'loan' || row.kind === 'loanPayment') return `${base} · ${row.direction === 'lent' ? t('data.loanLent') : t('data.loanBorrowed')}`;
+    return base;
+  };
 
   return (
     <Block title={t('data.importTitle')} hint={t('data.importHint')}>
@@ -164,38 +211,55 @@ function ImportBlock() {
 
       {problem && <p role="alert" className="mt-4 rounded-xl bg-surface px-4 py-3 text-sm text-ink">{problem}</p>}
 
-      {parsed && (
+      {parsed && rows.length > 0 && (
         <div className="mt-5">
-          <p className="text-sm font-semibold text-ink">{t('data.ready', { count: parsed.rows.length })}</p>
-          {parsed.bad.length > 0 && <p className="mt-1 text-sm text-muted">{t('data.badLines', { count: parsed.bad.length, lines: parsed.bad.slice(0, 8).join(', ') })}</p>}
-          <div className="mt-3 overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[26rem] text-start text-sm">
-              <thead className="bg-surface text-[11px] uppercase tracking-[0.1em] text-muted">
-                <tr>
-                  <th className="px-3 py-2 text-start font-semibold">{t('data.colDate')}</th>
-                  <th className="px-3 py-2 text-end font-semibold">{t('data.colAmount')}</th>
-                  <th className="px-3 py-2 text-start font-semibold">{t('data.colCategory')}</th>
-                  <th className="px-3 py-2 text-start font-semibold">{t('data.colNote')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {parsed.rows.slice(0, 5).map((row) => (
-                  <tr key={row.row} className="border-t border-border">
-                    <td className="whitespace-nowrap px-3 py-2 tabular-nums text-ink">{row.date}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-end tabular-nums text-ink">{row.amount} {row.currency}</td>
-                    <td className="max-w-[8rem] truncate px-3 py-2 text-muted">{row.category || '-'}</td>
-                    <td className="max-w-[10rem] truncate px-3 py-2 text-muted">{row.note || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <p className="text-sm font-semibold text-ink">{t('data.ready', { count: rows.length })}</p>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{t('data.foundTitle')}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {KINDS.filter((kind) => counts[kind] > 0).map((kind) => (
+              <span key={kind} className={`rounded-full px-3 py-1 text-xs font-semibold tabular-nums ${KIND_STYLE[kind]}`}>
+                {counts[kind]} {t(KIND_KEY[kind])}
+              </span>
+            ))}
           </div>
-          {parsed.rows.length > 5 && <p className="mt-2 text-xs text-muted">{t('data.more', { count: parsed.rows.length - 5 })}</p>}
+          {parsed.bad.length > 0 && <p className="mt-2 text-sm text-muted">{t('data.badLines', { count: parsed.bad.length, lines: parsed.bad.slice(0, 8).join(', ') })}</p>}
+          <p className="mt-3 text-xs text-muted">{t('data.reviewHint')}</p>
+
+          <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl border border-border">
+            {shown.map((row) => (
+              <li key={row.row} className="flex flex-col gap-2 px-3.5 py-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{row.biller || row.person || row.note || row.category || '-'}</p>
+                  <p className="mt-0.5 text-xs tabular-nums text-muted">{row.date}</p>
+                </div>
+                <p className="whitespace-nowrap text-sm font-semibold tabular-nums text-ink sm:text-end">{row.amount} {row.currency}</p>
+                <label className="block">
+                  <span className="sr-only">{t('data.colType')}</span>
+                  <select
+                    value={row.kind}
+                    onChange={(event) => setKind(row.row, event.target.value)}
+                    disabled={busy}
+                    className={`w-full rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium text-ink outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:w-auto ${row.confidence === 'medium' && row.kind !== 'expense' ? 'border-ink/40' : 'border-border'}`}
+                    aria-label={`${t('data.colType')}: ${kindLabel(row)}`}
+                  >
+                    {KINDS.map((kind) => (
+                      <option key={kind} value={kind}>{kind === row.kind ? kindLabel(row) : t(KIND_KEY[kind])}</option>
+                    ))}
+                  </select>
+                </label>
+              </li>
+            ))}
+          </ul>
+          {rows.length > PREVIEW && (
+            <button type="button" onClick={() => setShowAll((value) => !value)} className="mt-2 text-sm font-medium text-ink underline underline-offset-2">
+              {showAll ? t('data.showLess') : `${t('data.showAll')} (${rows.length})`}
+            </button>
+          )}
           <p className="mt-3 text-xs text-muted">{t('data.rules')}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <button type="button" onClick={start} disabled={busy} className="flex items-center gap-2 rounded-xl bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {busy ? t('data.importing', { done: progress.done, total: progress.total }) : t('data.importBtn', { count: parsed.rows.length })}
+              {busy ? t('data.importing', { done: progress.done, total: progress.total }) : t('data.importBtn', { count: rows.length })}
             </button>
             {!busy && (
               <button type="button" onClick={reset} className={outline}>
@@ -212,10 +276,18 @@ function ImportBlock() {
             <Check className="h-3.5 w-3.5" strokeWidth={3} />
           </span>
           <div className="min-w-0 text-sm">
-            <p className="font-semibold text-ink">{t('data.done', { count: result.created })}</p>
+            <p className="font-semibold text-ink">{t('data.done', { count: result.count })}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {KINDS.filter((kind) => result.created[kind] > 0).map((kind) => (
+                <span key={kind} className={`rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums ${KIND_STYLE[kind]}`}>
+                  {result.created[kind]} {t(KIND_KEY[kind])}
+                </span>
+              ))}
+            </div>
             {(result.duplicates > 0 || result.invalid > 0) && (
-              <p className="mt-0.5 text-muted">{t('data.skippedSummary', { duplicates: result.duplicates, invalid: result.invalid })}</p>
+              <p className="mt-1.5 text-muted">{t('data.skippedSummary', { duplicates: result.duplicates, invalid: result.invalid })}</p>
             )}
+            {result.unmatched > 0 && <p className="mt-0.5 text-muted">{t('data.unmatched', { count: result.unmatched })}</p>}
             {result.partial && <p className="mt-0.5 text-muted">{t('data.partial')}</p>}
             <button type="button" onClick={reset} className="mt-2 text-sm font-medium text-ink underline underline-offset-2">{t('data.importAnother')}</button>
           </div>

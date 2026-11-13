@@ -24,3 +24,5 @@ export const downloadExport = async (kind) => {
 };
 
 export const importExpenseRows = (rows) => run(() => api.post('/data/import/expenses', { rows }));
+
+export const importMixedRows = (rows) => run(() => api.post('/data/import', { rows }));
