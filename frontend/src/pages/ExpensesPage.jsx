@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CornerDownRight, Plus, Receipt, Search, X } from 'lucide-react';
+import { CornerDownRight, Plus, Receipt, Repeat, Search, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -181,6 +181,8 @@ function ExpensesPage() {
         payCustom: customFor(expense.payMethod, expense.payName),
         date: dayKey(expense.spentAt),
         note: expense.note || '',
+        repeat: expense.repeat || 'none',
+        repeatOf: expense.repeatOf || null,
         kind: expense.givenTo ? 'given' : expense.paidBy === 'other' ? 'borrowed' : 'spent',
         payer: expense.givenTo || expense.paidBy === 'other' ? (people.includes(expense.givenTo || expense.payerName) ? `person:${expense.givenTo || expense.payerName}` : 'new') : 'self',
         payerName: (expense.givenTo || expense.paidBy === 'other') && !people.includes(expense.givenTo || expense.payerName) ? expense.givenTo || expense.payerName : '',
@@ -196,6 +198,8 @@ function ExpensesPage() {
       payCustom: last.payCustom || '',
       date: todayKey,
       note: '',
+      repeat: 'none',
+      repeatOf: null,
       kind: 'spent',
       payer: 'self',
       payerName: '',
@@ -411,6 +415,12 @@ function ExpensesPage() {
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
                                     {expense.billId && <span className="shrink-0 rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('bills.fromBill')}</span>}
+                                    {(expense.repeat !== 'none' || expense.repeatOf) && (
+                                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-ink ring-1 ring-border">
+                                        <Repeat className="h-3 w-3" strokeWidth={2.25} />
+                                        {t('expenses.repeatPill')}
+                                      </span>
+                                    )}
                                     {expense.paidBy === 'other' && (
                                       <span className="max-w-[55%] shrink-0 truncate rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('expenses.paidByName', { name: expense.payerName })}</span>
                                     )}

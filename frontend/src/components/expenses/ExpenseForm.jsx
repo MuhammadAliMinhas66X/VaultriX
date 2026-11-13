@@ -82,8 +82,11 @@ function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categorie
       note: form.note,
       payMethod: where.method,
       payName: where.name,
+      ...(form.repeatOf ? {} : { repeat: kind === 'spent' ? form.repeat || 'none' : 'none' }),
     });
   };
+
+  const repeatItems = ['none', 'daily', 'weekly', 'monthly', 'yearly'].map((value) => ({ value, label: t(`expenses.repeat${value[0].toUpperCase()}${value.slice(1)}`) }));
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-6 rounded-2xl border border-border bg-white p-4 sm:p-6">
@@ -208,6 +211,15 @@ function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categorie
           placeholder={t('expenses.notePlaceholder')}
         />
       </div>
+
+      {kind === 'spent' && !form.repeatOf && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">{t('expenses.repeatLabel')}</span>
+          <Combobox items={repeatItems} searchable={false} ariaLabel={t('expenses.repeatLabel')} value={form.repeat || 'none'} onChange={set('repeat')} />
+          <p className="text-xs text-muted">{t('expenses.repeatHint')}</p>
+        </div>
+      )}
+      {form.repeatOf && <p className="text-xs text-muted">{t('expenses.repeatCopy')}</p>}
 
       <p className="-mt-3 text-xs text-muted">{t('loans.enteredOn', { date: formatDate(new Date(enteredAt || Date.now()), dateOptions) })}</p>
 
