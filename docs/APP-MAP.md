@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (269 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (270 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -144,7 +144,7 @@ flowchart LR
 - `frontend/src/services/adminService.js`: GET /admin/overview | GET /admin/users | GET /admin/users/:id | PATCH /admin/users/:id | POST /admin/users/:id/deactivate | POST /admin/users/:id/reactivate | DELETE /admin/users/:id | POST /admin/users/:id/force-password-reset | POST /admin/users/:id/disable-mfa | DELETE /admin/users/:id/sessions/:id | GET /admin/audit-log | GET /admin/security-overview | POST /admin/users/:id/unlock | GET /admin/users/export
 - `frontend/src/services/authService.js`: POST /auth/signup | POST /auth/signup/verify | POST /auth/login | POST /auth/login-status | POST /auth/logout | POST /auth/refresh | GET /auth/me | POST /auth/google | POST /auth/link-google | POST /auth/unlink-google | POST /auth/verify-device | POST /auth/verify-mfa | POST /auth/validate-email | POST /auth/forgot-password | POST /auth/verify-reset-code | POST /auth/reset-password
 - `frontend/src/services/billService.js`: GET /bills | POST /bills | PATCH /bills/:id | DELETE /bills/:id | POST /bills/:id/payments | DELETE /bills/:id/payments/:id | POST /bills/:id/cancel | POST /bills/:id/recurring
-- `frontend/src/services/dataService.js`: GET /data/export/:id | POST /data/import/expenses
+- `frontend/src/services/dataService.js`: GET /data/export/:id | POST /data/import/expenses | POST /data/import
 - `frontend/src/services/expenseService.js`: GET /expenses | POST /expenses | PATCH /expenses/:id | DELETE /expenses/:id | GET /categories | POST /categories | PATCH /categories/:id | DELETE /categories/:id
 - `frontend/src/services/fxService.js`: GET /fx/rates
 - `frontend/src/services/incomeStreamService.js`: GET /income-streams | POST /income-streams | PATCH /income-streams/:id | DELETE /income-streams/:id
@@ -270,6 +270,7 @@ flowchart LR
 - controller `backend/src/controllers/dataController.js`; models: Expense, Category, Bill, Loan, IncomeReceipt, IncomeStream; helpers: csv, validators, financeInput
 - GET /api/data/export/:kind
 - POST /api/data/import/expenses
+- POST /api/data/import
 
 ## 6. Data store (frontend/src/data/resources.js)
 
@@ -385,7 +386,7 @@ flowchart LR
 - `frontend/src/utils/billMath.js`  (used by 8)
 - `frontend/src/utils/billPdf.js`  (used by 1)
 - `frontend/src/utils/billPrefs.js` - Remembers what you chose last time so entering many bills is quick.  (used by 2)
-- `frontend/src/utils/billers.js` - Companies people in Pakistan pay bills to. `domains` is used to fetch the  (used by 4)
+- `frontend/src/utils/billers.js` - Companies people in Pakistan pay bills to. `domains` is used to fetch the  (used by 5)
 ### categories
 - `backend/src/controllers/categoryController.js`  (used by 1)
 - `backend/src/models/Category.js` - Not wired into any UI yet (that's the Transactions phase) - created now  (used by 5)
@@ -597,7 +598,7 @@ flowchart LR
 - `frontend/src/services/requestCache.js`  (used by 2)
 - `frontend/src/utils/balanceMath.js` - One place for the balance rules, so the Dashboard, the Income page and each  (used by 3)
 - `frontend/src/utils/countries.js`  (used by 1)
-- `frontend/src/utils/csvImport.js` - Reads a CSV file of expenses. Works with commas or semicolons, quoted cells,  (used by 1)
+- `frontend/src/utils/csvImport.js` - Reads a CSV file of expenses. Works with commas or semicolons, quoted cells,  (used by 2)
 - `frontend/src/utils/dates.js`  (used by 22)
 - `frontend/src/utils/deviceFallbackId.js` - A second, non-httpOnly device signal that backs up the server's own  (used by 1)
 - `frontend/src/utils/direction.js`  (used by 2)
@@ -608,4 +609,5 @@ flowchart LR
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
 - `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
+- `frontend/src/utils/smartImport.js` - Reads a table (from parseCsv) and works out, on its own:  (used by 1)
 - `frontend/src/utils/useMediaQuery.js`  (used by 2)
