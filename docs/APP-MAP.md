@@ -111,7 +111,7 @@ flowchart LR
   - hooks/data: useBalance, useResource
   - utils: incomeMath, balanceMath, dates, billMath, expenseMath
 - `/income` -> `frontend/src/pages/IncomePage.jsx`
-  - components: Skeletons, AppShell, useAppNav, IncomeForm, IncomeCard, IncomeDetail, BalanceOverview, OpeningBalanceSheet, Drawer
+  - components: Skeletons, AppShell, useAppNav, IncomeForm, incomeOptions, IncomeCard, IncomeDetail, BalanceOverview, OpeningBalanceSheet, Drawer
   - services: incomeStreamService
   - hooks/data: useBalance
   - utils: expenseMath, salaryCuts, incomeMath, useMediaQuery
@@ -418,10 +418,10 @@ flowchart LR
 - `frontend/src/components/income/IncomeDetail.jsx`  (used by 1)
 - `frontend/src/components/income/IncomeForm.jsx`  (used by 1)
 - `frontend/src/components/income/SalaryCutsPanel.jsx`  (used by 1)
-- `frontend/src/components/income/incomeOptions.js`  (used by 4)
+- `frontend/src/components/income/incomeOptions.js`  (used by 5)
 - `frontend/src/context/IncomeContext.jsx`  (used by 8)
 - `frontend/src/pages/IncomePage.jsx`  (used by 1)
-- `frontend/src/services/incomeStreamService.js`  (used by 2)
+- `frontend/src/services/incomeStreamService.js` - Always asks for archived streams too: the balance still needs them for old receipts.  (used by 2)
 - `frontend/src/utils/incomeMath.js`  (used by 7)
 - `frontend/src/utils/salaryCuts.js`  (used by 6)
 - `frontend/src/utils/taxRules.js`  (used by 2)
