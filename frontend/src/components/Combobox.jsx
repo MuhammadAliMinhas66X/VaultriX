@@ -103,18 +103,50 @@ function Combobox({
     };
   }, [open]);
 
+  const placed = place !== null;
+
+  // Focus the search box as soon as the menu is on screen (it cannot take focus
+  // while it is still hidden for measuring), so typing works with no extra click.
   useEffect(() => {
-    if (open) {
+    if (open && placed) {
       const fine = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
-      if (fine || !searchable) inputRef.current?.focus({ preventScroll: true });
-      setHighlighted(0);
+      if (fine || !searchable) {
+        const input = inputRef.current;
+        if (input) {
+          input.focus({ preventScroll: true });
+          const end = input.value.length;
+          input.setSelectionRange?.(end, end);
+        }
+      }
     }
+  }, [open, placed, searchable]);
+
+  useEffect(() => {
+    if (open) setHighlighted(0);
   }, [open, query]);
+
+  const close = (refocus) => {
+    setOpen(false);
+    setQuery('');
+    if (refocus) triggerRef.current?.focus({ preventScroll: true });
+  };
 
   const selectItem = (item) => {
     onChange(item.value);
-    setOpen(false);
-    setQuery('');
+    close(true);
+  };
+
+  // On the closed button: arrows open the list, and typing a letter opens it with that letter already searched.
+  const handleTriggerKeyDown = (event) => {
+    if (loading || open) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      setOpen(true);
+    } else if (searchable && event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      setQuery(event.key);
+      setOpen(true);
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -128,8 +160,12 @@ function Combobox({
       event.preventDefault();
       if (filtered[highlighted]) selectItem(filtered[highlighted]);
     } else if (event.key === 'Escape') {
-      setOpen(false);
-      setQuery('');
+      event.preventDefault();
+      close(true);
+    } else if (event.key === 'Tab') {
+      // Tab keeps the flow of the form: pick what was found (if anything was typed) and move on.
+      if (query.trim() && filtered[highlighted]) onChange(filtered[highlighted].value);
+      close(true);
     }
   };
 
@@ -144,6 +180,7 @@ function Combobox({
           if (loading) return;
           setOpen((prev) => !prev);
         }}
+        onKeyDown={handleTriggerKeyDown}
         disabled={loading}
         aria-label={ariaLabel}
         aria-haspopup="listbox"

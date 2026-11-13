@@ -8,6 +8,7 @@ function Select({ items, value, onChange, ariaLabel, placeholder = '' }) {
   const [highlighted, setHighlighted] = useState(0);
   const [openUpward, setOpenUpward] = useState(false);
   const rootRef = useRef(null);
+  const typed = useRef({ text: '', at: 0 });
 
   const selected = items.find((item) => item.value === value) || null;
 
@@ -51,6 +52,18 @@ function Select({ items, value, onChange, ariaLabel, placeholder = '' }) {
       if (items[highlighted]) choose(items[highlighted]);
     } else if (event.key === 'Escape') {
       setOpen(false);
+    } else if (event.key === 'Tab') {
+      setOpen(false);
+    } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey && event.key !== ' ') {
+      // Type-ahead: typing "mo" jumps to the first item starting with "mo".
+      const now = Date.now();
+      typed.current = { text: (now - typed.current.at < 800 ? typed.current.text : '') + event.key.toLowerCase(), at: now };
+      const hit = items.findIndex((item) => String(item.label).toLowerCase().startsWith(typed.current.text));
+      if (hit >= 0) {
+        event.preventDefault();
+        if (!open) onChange(items[hit].value);
+        else setHighlighted(hit);
+      }
     }
   };
 

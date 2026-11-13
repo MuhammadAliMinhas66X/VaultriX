@@ -63,15 +63,7 @@ function DeductionRow({ item, salary, currency, onChange, onRemove }) {
         maxLength={60}
         className={`${inputClass} px-3 sm:col-span-1`}
       />
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={t('income.removeDeduction')}
-        className="flex h-10 w-10 items-center justify-center self-center rounded-lg text-muted transition hover:bg-red-50 hover:text-red-600 sm:order-4"
-      >
-        <X className="h-4 w-4" />
-      </button>
-      <div className="relative col-span-2 grid grid-cols-2 gap-2 sm:contents">
+      <div className="relative col-span-2 row-start-2 grid grid-cols-2 gap-2 sm:contents">
         <div className="relative">
           <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">{currency}</span>
           <input
@@ -98,6 +90,14 @@ function DeductionRow({ item, salary, currency, onChange, onRemove }) {
           <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted">%</span>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={t('income.removeDeduction')}
+        className="flex h-10 w-10 items-center justify-center self-center rounded-lg text-muted transition hover:bg-red-50 hover:text-red-600 col-start-2 row-start-1 sm:col-start-4"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </div>
       <FieldError>{issue ? t(issue) : ''}</FieldError>
     </div>
