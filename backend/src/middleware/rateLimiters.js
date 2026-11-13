@@ -51,6 +51,10 @@ export const apiLimiter = build(15 * 60 * 1000, 100000, { skip: (req) => req.ori
 // Brute force protection for the admin password check. Not a volume limit.
 export const stepUpLimiter = build(15 * 60 * 1000, 10, { skipSuccessfulRequests: true, keyGenerator: userKey });
 
+// Inviting sends an email, and joining checks a code, so both stay small.
+export const inviteLimiter = build(60 * 60 * 1000, 30, { keyGenerator: userKey });
+export const joinLimiter = build(15 * 60 * 1000, 20, { skipSuccessfulRequests: true, keyGenerator: userKey });
+export const teamLimiter = build(15 * 60 * 1000, 3000, { keyGenerator: userKey });
 export const financeLimiter = build(15 * 60 * 1000, 20000, { keyGenerator: userKey });
 export const uploadLimiter = build(15 * 60 * 1000, 1000, { keyGenerator: userKey });
 export const fxLimiter = build(15 * 60 * 1000, 20000, { keyGenerator: userKey });

@@ -7,6 +7,7 @@ import Loan from '../models/Loan.js';
 import Expense from '../models/Expense.js';
 import Bill from '../models/Bill.js';
 import IncomeReceipt from '../models/IncomeReceipt.js';
+import Invite from '../models/Invite.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
 import { destroyByPrefix, loansPrefix } from '../services/imageStorage.js';
 
@@ -26,6 +27,7 @@ export const removeOrganizationIfEmpty = async (orgId) => {
     Expense.deleteMany({ orgId }),
     Bill.deleteMany({ orgId }),
     IncomeReceipt.deleteMany({ orgId }),
+    Invite.deleteMany({ orgId }),
   ]);
   await Organization.deleteOne({ _id: orgId });
   return true;

@@ -177,3 +177,15 @@ export const mfaDisabledByAdminEmail = ({ name }) => ({
      <p style="margin:0;font-size:14px;line-height:1.6;color:#3b3b40;">If you did not request this, contact support right away.</p>`
   ),
 });
+
+export const inviteEmail = ({ inviterName, workspace, role, code, days }) => ({
+  subject: `${inviterName} invited you to Vaultrix`,
+  text: `${inviterName} invited you to share the workspace "${workspace}" on Vaultrix as ${role}.\n\nYour invite code: ${code}\nIt works for ${days} days and only with this email address.\n\nSign in (or create an account with this email), open Settings, then People, and choose "Join with a code".\n\nNote: joining only works on an account that has no data of its own yet.\n`,
+  html: shell(
+    'You are invited',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">${escapeHtml(inviterName)} invited you to share the workspace <strong>${escapeHtml(workspace)}</strong> on Vaultrix as <strong>${escapeHtml(role)}</strong>.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:26px;font-weight:700;letter-spacing:6px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">Sign in, or create an account with this email address. Then open <strong>Settings</strong>, then <strong>People</strong>, and choose <strong>Join with a code</strong>.</p>
+     <p style="margin:0;font-size:13px;line-height:1.6;color:#6b6b70;">The code works for ${days} days, only with this email address, and only on an account that has no data of its own yet.</p>`
+  ),
+});
