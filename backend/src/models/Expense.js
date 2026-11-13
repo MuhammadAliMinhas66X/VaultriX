@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 export const EXPENSE_METHODS = ['cash', 'bank', 'wallet'];
+export const EXPENSE_REPEATS = ['none', 'daily', 'weekly', 'monthly', 'yearly'];
 
 const expenseSchema = new mongoose.Schema(
   {
@@ -19,6 +20,14 @@ const expenseSchema = new mongoose.Schema(
     billId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bill', default: null },
     billPaymentId: { type: mongoose.Schema.Types.ObjectId, default: null },
     loanId: { type: mongoose.Schema.Types.ObjectId, ref: 'Loan', default: null },
+    // Repeating expense. The expense the person typed is the "head": it keeps
+    // `repeatFrequency`, and the server makes a copy (`repeatOf` = head id) each
+    // time the next date arrives. Copies never repeat on their own.
+    repeatFrequency: { type: String, enum: EXPENSE_REPEATS, default: 'none' },
+    repeatAnchor: { type: Date, default: null },
+    repeatStep: { type: Number, default: 1 },
+    repeatOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Expense', default: null },
+    repeatKey: { type: String, default: '' },
   },
   { timestamps: true }
 );
@@ -26,5 +35,7 @@ const expenseSchema = new mongoose.Schema(
 expenseSchema.index({ orgId: 1, spentAt: -1 });
 expenseSchema.index({ billPaymentId: 1 }, { unique: true, partialFilterExpression: { billPaymentId: { $type: 'objectId' } } });
 expenseSchema.index({ billId: 1 });
+expenseSchema.index({ orgId: 1, repeatFrequency: 1 });
+expenseSchema.index({ repeatOf: 1, repeatKey: 1 }, { unique: true, partialFilterExpression: { repeatOf: { $type: 'objectId' } } });
 
 export default mongoose.model('Expense', expenseSchema);

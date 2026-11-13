@@ -16,6 +16,9 @@ import {
   summarizeLoans,
 } from '../utils/expenseLoanLink.js';
 import { toMajor, parseAmountMinor, parseDay, parseWhere, optionalText } from '../utils/financeInput.js';
+import { EXPENSE_REPEATS } from '../models/Expense.js';
+import { generateRepeats } from '../utils/expenseRepeat.js';
+import { addSteps } from '../utils/billRecurrence.js';
 import { repaidMinorOf, buildTotals } from '../utils/balanceTotals.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
@@ -40,6 +43,8 @@ const toExpenseDto = (expense) => ({
   givenTo: expense.givenTo || '',
   billId: expense.billId ? String(expense.billId) : null,
   loanId: expense.loanId ? String(expense.loanId) : null,
+  repeat: expense.repeatFrequency || 'none',
+  repeatOf: expense.repeatOf ? String(expense.repeatOf) : null,
   createdAt: expense.createdAt,
 });
 
@@ -83,6 +88,13 @@ const parsePayer = (body, current) => {
   return { paidBy, payerName: '', givenTo: given };
 };
 
+// Only a plain "I spent it" expense can repeat: not a bill payment, not a copy,
+// and nothing tied to another person or a loan.
+const parseRepeat = (raw) => {
+  if (raw === undefined) return undefined;
+  return EXPENSE_REPEATS.includes(raw) ? raw : false;
+};
+
 const withLoans = async (orgId, expenses) => {
   const summaries = await summarizeLoans(orgId, expenses.map((expense) => expense.loanId));
   return expenses.map((expense) => ({ ...toExpenseDto(expense), loan: expense.loanId ? summaries.get(String(expense.loanId)) || null : null }));
@@ -93,6 +105,7 @@ export const listExpenses = async (req, res, next) => {
     const range = parseMonth(req.query.month);
     if (!range) return fail(res, 400, GENERIC_INVALID);
 
+    await generateRepeats(req.user.orgId);
     const expenses = await Expense.find({ orgId: req.user.orgId, spentAt: { $gte: range.start, $lt: range.end } })
       .sort({ spentAt: -1, createdAt: -1 })
       .limit(2000)
@@ -109,6 +122,7 @@ export const listExpenses = async (req, res, next) => {
 // `since` (YYYY-MM-DD) is the opening-balance date; omit it to count everything.
 export const expenseTotals = async (req, res, next) => {
   try {
+    await generateRepeats(req.user.orgId);
     const orgId = new mongoose.Types.ObjectId(String(req.user.orgId));
     const match = { orgId };
     if (req.query.since !== undefined && req.query.since !== '') {
@@ -180,6 +194,11 @@ export const createExpense = async (req, res, next) => {
     const where = payer.paidBy === 'self' ? parseWhere(body.payMethod, body.payName) : { method: '', name: '' };
     if (!where) return fail(res, 400, GENERIC_INVALID);
 
+    const repeat = parseRepeat(body.repeat);
+    if (repeat === false) return fail(res, 400, GENERIC_INVALID);
+    if (repeat && repeat !== 'none' && payer.paidBy !== 'self') return fail(res, 400, GENERIC_INVALID);
+    if (repeat && repeat !== 'none' && payer.givenTo) return fail(res, 400, GENERIC_INVALID);
+
     const relation = relationOf(payer);
     let loan = null;
     if (relation !== 'none') {
@@ -211,6 +230,9 @@ export const createExpense = async (req, res, next) => {
         payerName: payer.payerName,
         givenTo: payer.givenTo,
         loanId: loan ? loan._id : null,
+        repeatFrequency: repeat || 'none',
+        repeatAnchor: repeat && repeat !== 'none' ? spentAt : null,
+        repeatStep: 1,
       });
     } catch (error) {
       if (loan) {
@@ -277,6 +299,15 @@ export const updateExpense = async (req, res, next) => {
     if (payer.paidBy === 'other') {
       update.payMethod = '';
       update.payName = '';
+    }
+
+    const repeat = parseRepeat(body.repeat);
+    if (repeat === false) return fail(res, 400, GENERIC_INVALID);
+    if (repeat !== undefined && repeat !== expense.repeatFrequency && (expense.repeatOf || expense.billId)) return fail(res, 400, GENERIC_INVALID);
+    if (repeat && repeat !== 'none' && (payer.paidBy !== 'self' || payer.givenTo)) return fail(res, 400, GENERIC_INVALID);
+    if (repeat === undefined && expense.repeatFrequency !== 'none' && (payer.paidBy !== 'self' || payer.givenTo)) {
+      update.repeatFrequency = 'none';
+      update.repeatAnchor = null;
     }
 
     const next_ = {
@@ -346,6 +377,19 @@ export const updateExpense = async (req, res, next) => {
     } else if (newRelation !== oldRelation || !sameName(person, oldPerson)) {
       const target = await attach(null);
       loanId = target._id;
+    }
+
+    if (repeat !== undefined && repeat !== expense.repeatFrequency) {
+      if (repeat === 'none') {
+        update.repeatFrequency = 'none';
+        update.repeatAnchor = null;
+      } else {
+        // Carry on from the last date already made, in the new rhythm.
+        const last = expense.repeatFrequency !== 'none' ? addSteps(expense.repeatAnchor || expense.spentAt, expense.repeatFrequency, (expense.repeatStep || 1) - 1) : update.spentAt || expense.spentAt;
+        update.repeatFrequency = repeat;
+        update.repeatAnchor = last;
+        update.repeatStep = 1;
+      }
     }
 
     Object.assign(expense, update, { paidBy: payer.paidBy, payerName: payer.payerName, givenTo: payer.givenTo, loanId });
