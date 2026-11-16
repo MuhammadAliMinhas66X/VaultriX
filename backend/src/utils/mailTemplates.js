@@ -189,3 +189,15 @@ export const inviteEmail = ({ inviterName, workspace, role, code, days }) => ({
      <p style="margin:0;font-size:13px;line-height:1.6;color:#6b6b70;">The code works for ${days} days, only with this email address, and only on an account that has no data of its own yet.</p>`
   ),
 });
+
+export const groupInviteEmail = ({ inviterName, group, code, days }) => ({
+  subject: `${inviterName} added you to the group "${group}" on Vaultrix`,
+  text: `${inviterName} invited you to the group "${group}" on Vaultrix, to split shared costs like rent and food.\n\nYour invite code: ${code}\nIt works for ${days} days and only with this email address.\n\nSign in (or create an account with this email), open Groups, and choose "Join with a code". Your own money stays private: only what you add to the group is shared.\n`,
+  html: shell(
+    'Join a group',
+    `<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#3b3b40;">${escapeHtml(inviterName)} invited you to the group <strong>${escapeHtml(group)}</strong> to split shared costs like rent and food.</p>
+     <div style="margin:0 0 20px;padding:18px 0;text-align:center;background:#f7f7f8;border:1px solid #e5e5e7;border-radius:10px;font-family:'SFMono-Regular',Consolas,monospace;font-size:26px;font-weight:700;letter-spacing:6px;">${escapeHtml(code)}</div>
+     <p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:#3b3b40;">Sign in, or create an account with this email address. Open <strong>Groups</strong> and choose <strong>Join with a code</strong>.</p>
+     <p style="margin:0;font-size:13px;line-height:1.6;color:#6b6b70;">Your own income, expenses and loans stay private. Only what you add to the group is shared. The code works for ${days} days and only with this email address.</p>`
+  ),
+});

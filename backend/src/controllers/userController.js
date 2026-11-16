@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
 import { removeOrganizationIfEmpty } from '../utils/organizations.js';
+import { leaveGroupsOnDelete } from '../utils/groups.js';
 import PendingEmailChange from '../models/PendingEmailChange.js';
 import PendingDeviceLogin from '../models/PendingDeviceLogin.js';
 import PendingAccountDeletion from '../models/PendingAccountDeletion.js';
@@ -631,6 +632,7 @@ export const confirmAccountDeletion = async (req, res, next) => {
     ]);
 
     await User.deleteOne({ _id: userId });
+    await leaveGroupsOnDelete(userId);
 
     await removeOrganizationIfEmpty(orgId);
 

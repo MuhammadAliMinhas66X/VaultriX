@@ -23,6 +23,7 @@ import billRoutes from './routes/billRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
 import dataRoutes from './routes/dataRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
+import groupRoutes from './routes/groupRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,6 +113,7 @@ app.use('/api/bills', billRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/groups', groupRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });

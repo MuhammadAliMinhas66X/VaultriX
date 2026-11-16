@@ -23,6 +23,8 @@ const expenseSchema = new mongoose.Schema(
     // Repeating expense. The expense the person typed is the "head": it keeps
     // `repeatFrequency`, and the server makes a copy (`repeatOf` = head id) each
     // time the next date arrives. Copies never repeat on their own.
+    // My share of a group cost that I copied into my own expenses (stops doing it twice).
+    groupExpenseId: { type: mongoose.Schema.Types.ObjectId, default: null },
     repeatFrequency: { type: String, enum: EXPENSE_REPEATS, default: 'none' },
     repeatAnchor: { type: Date, default: null },
     repeatStep: { type: Number, default: 1 },
@@ -35,6 +37,7 @@ const expenseSchema = new mongoose.Schema(
 expenseSchema.index({ orgId: 1, spentAt: -1 });
 expenseSchema.index({ billPaymentId: 1 }, { unique: true, partialFilterExpression: { billPaymentId: { $type: 'objectId' } } });
 expenseSchema.index({ billId: 1 });
+expenseSchema.index({ orgId: 1, groupExpenseId: 1 }, { unique: true, partialFilterExpression: { groupExpenseId: { $type: 'objectId' } } });
 expenseSchema.index({ orgId: 1, repeatFrequency: 1 });
 expenseSchema.index({ repeatOf: 1, repeatKey: 1 }, { unique: true, partialFilterExpression: { repeatOf: { $type: 'objectId' } } });
 
