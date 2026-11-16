@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Users } from 'lucide-react';
 import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon } from '../icons/NavIcons.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -16,6 +16,7 @@ export default function useAppNav() {
   const onLoans = location.pathname === '/loans';
   const onExpenses = location.pathname === '/expenses';
   const onBills = location.pathname === '/bills';
+  const onGroups = location.pathname === '/groups' || location.pathname.startsWith('/groups/');
   const onDashboard = location.pathname === '/dashboard';
   const onAdmin = location.pathname === '/admin';
   const focusedId = onIncome && location.hash.startsWith('#stream-') ? location.hash.slice('#stream-'.length) : null;
@@ -42,9 +43,10 @@ export default function useAppNav() {
     { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
     { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills' },
     { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
+    { id: 'groups', label: t('nav.groups'), icon: Users, big: true, to: '/groups' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
+  const activeId = onGroups ? 'groups' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
   return { items, activeId };
 }

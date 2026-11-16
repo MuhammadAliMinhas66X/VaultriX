@@ -25,6 +25,10 @@ const checks = [
   ['frontend/src/pages/SettingsPage.jsx', 'DataSection', 'Settings lost the Data (export / import) section'],
   ['frontend/src/App.jsx', '<MainShell />', 'the persistent MainShell is not wired: the sidebar is rebuilt (flickers) on every page change'],
   ['frontend/src/App.jsx', '<ErrorBoundary', 'App.jsx lost the ErrorBoundary: a crash shows a blank white page'],
+  ['backend/src/app.js', "app.use('/api/team'", 'the /api/team route is not mounted (People)'],
+  ['backend/src/app.js', "app.use('/api/groups'", 'the /api/groups route is not mounted (Groups)'],
+  ['frontend/src/App.jsx', 'path="/groups"', 'the Groups route is missing from App.jsx'],
+  ['frontend/src/pages/SettingsPage.jsx', 'PeopleSection', 'Settings lost the People section'],
   ['frontend/src/components/layout/NotificationsBell.jsx', 'useReminders', 'the notification bell is missing'],
 ];
 

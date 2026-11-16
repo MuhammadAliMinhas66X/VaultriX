@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
@@ -9,6 +9,10 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { IncomeLayout } from './context/IncomeContext.jsx';
+import GroupsPage from './pages/GroupsPage.jsx';
+import GroupPage from './pages/GroupPage.jsx';
+import MainShell from './components/layout/MainShell.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import IncomePage from './pages/IncomePage.jsx';
 import LoansPage from './pages/LoansPage.jsx';
 import ExpensesPage from './pages/ExpensesPage.jsx';
@@ -23,9 +27,11 @@ const PortfolioPage = lazy(() => import('./portfolio/PortfolioPage.jsx'));
 const PrivacyPolicyPage = lazy(() => import('./portfolio/PrivacyPolicyPage.jsx'));
 
 function App() {
+  const location = useLocation();
   return (
     <>
       <OfflineBanner />
+      <ErrorBoundary resetKey={location.pathname}>
       <Routes>
         <Route
           path="/"
@@ -55,11 +61,16 @@ function App() {
 
           <Route element={<RequireOnboarding />}>
             <Route element={<IncomeLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/income" element={<IncomePage />} />
-              <Route path="/loans" element={<LoansPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/bills" element={<BillsPage />} />
+              {/* One persistent shell: the sidebar is never rebuilt when moving between these pages. */}
+              <Route element={<MainShell />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/income" element={<IncomePage />} />
+                <Route path="/loans" element={<LoansPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/bills" element={<BillsPage />} />
+                <Route path="/groups" element={<GroupsPage />} />
+                <Route path="/groups/:id" element={<GroupPage />} />
+              </Route>
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
 
@@ -71,6 +82,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </ErrorBoundary>
       <ToastViewport />
     </>
   );
