@@ -20,7 +20,7 @@ export const nav = [
   { id: 'privacy', label: 'Privacy' },
   { id: 'security', label: 'Security' },
   { id: 'details', label: 'Details' },
-  { id: 'founder', label: 'Founder' },
+  { id: 'faq', label: 'Questions' },
 ];
 
 export const features = [

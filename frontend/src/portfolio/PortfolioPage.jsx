@@ -8,7 +8,7 @@ import Flow from './components/Flow.jsx';
 import Trust from './components/Trust.jsx';
 import Security from './components/Security.jsx';
 import Bento from './components/Bento.jsx';
-import Founder from './components/Founder.jsx';
+import Faq from './components/Faq.jsx';
 import Footer from './components/Footer.jsx';
 
 const TITLE = 'Vaultrix | Every rupee, accounted for';
@@ -70,7 +70,7 @@ function PortfolioPage() {
         <Trust />
         <Security />
         <Bento />
-        <Founder />
+        <Faq />
       </main>
       <Footer />
     </div>

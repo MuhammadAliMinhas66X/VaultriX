@@ -48,6 +48,7 @@ function Nav({ home = true }) {
   const active = useActiveSection(ids, home);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(null);
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 });
 
@@ -83,7 +84,12 @@ function Nav({ home = true }) {
   const primary = isAuthenticated ? { to: links.app, label: 'Open Vaultrix' } : { to: links.join, label: 'Join Vaultrix' };
 
   const itemClass = (id) =>
-    `relative whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ink ${active === id ? 'text-ink' : 'text-ink/55 hover:text-ink'}`;
+    `relative isolate whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-ink ${active === id || hover === id ? 'text-ink' : 'text-ink/55'}`;
+
+  const pill = (id) =>
+    hover === id && <motion.span layoutId="pf-nav-hover" transition={{ type: 'spring', stiffness: 460, damping: 34 }} className="absolute inset-0 -z-10 rounded-full bg-ink/[0.07]" />;
+  const dot = (id) =>
+    active === id && <span aria-hidden="true" className="absolute bottom-[3px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-ink" />;
 
   return (
     <>
@@ -95,20 +101,21 @@ function Nav({ home = true }) {
               : 'max-w-[1180px] border-white/50 bg-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md'
           }`}
         >
-          <Link to="/" aria-label="Vaultrix home" className="flex items-center gap-2.5 rounded-full py-1 pe-3 ps-1 outline-none focus-visible:ring-2 focus-visible:ring-ink">
-            <span className="pf-wordmark flex h-9 w-9 items-center justify-center rounded-full bg-ink text-lg leading-none text-white">V</span>
-            <span className="pf-wordmark hidden text-xl leading-none sm:block">Vaultrix</span>
+          <Link to="/" aria-label="Vaultrix home" className="flex items-center rounded-full px-3 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ink">
+            <span className="pf-wordmark text-[1.4rem] leading-none">Vaultrix</span>
           </Link>
 
-          <nav aria-label="Sections" className="relative hidden items-center lg:flex">
+          <nav aria-label="Sections" onMouseLeave={() => setHover(null)} className="relative hidden items-center lg:flex">
             {nav.map((item) =>
               home ? (
-                <a key={item.id} href={`#${item.id}`} onClick={(event) => go(event, item.id)} className={itemClass(item.id)}>
+                <a key={item.id} href={`#${item.id}`} onClick={(event) => go(event, item.id)} onMouseEnter={() => setHover(item.id)} onFocus={() => setHover(item.id)} className={itemClass(item.id)}>
+                  {pill(item.id)}
                   {item.label}
-                  {active === item.id && <span aria-hidden="true" className="absolute inset-x-3.5 bottom-[3px] h-px bg-ink" />}
+                  {dot(item.id)}
                 </a>
               ) : (
-                <Link key={item.id} to={`/#${item.id}`} className={itemClass(item.id)}>
+                <Link key={item.id} to={`/#${item.id}`} onMouseEnter={() => setHover(item.id)} onFocus={() => setHover(item.id)} className={itemClass(item.id)}>
+                  {pill(item.id)}
                   {item.label}
                 </Link>
               )

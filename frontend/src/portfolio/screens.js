@@ -19,9 +19,3 @@ export const screens = {
   loansPhone,
   loansTablet,
 };
-
-export const ownerPhoto = (() => {
-  const found = import.meta.glob('./assets/owner/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP}', { eager: true, import: 'default' });
-  const first = Object.keys(found).sort()[0];
-  return first ? found[first] : null;
-})();

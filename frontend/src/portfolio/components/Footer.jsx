@@ -15,7 +15,7 @@ function Footer({ home = true }) {
   const columns = [
     { title: 'Product', items: [section('Dashboard', 'product'), section('Income', 'product'), section('Expenses', 'product'), section('Loans', 'product')] },
     { title: 'Trust', items: [section('How it connects', 'flow'), section('Privacy', 'privacy'), section('Security', 'security')] },
-    { title: 'Company', items: [section('Founder', 'founder'), section('Everyday details', 'details')] },
+    { title: 'Company', items: [section('Questions', 'faq'), section('Everyday details', 'details')] },
   ];
 
   const linkClass = 'text-[15px] font-medium text-white/70 outline-none transition hover:text-white focus-visible:underline';
