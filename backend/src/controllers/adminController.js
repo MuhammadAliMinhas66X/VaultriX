@@ -21,7 +21,7 @@ import {
 } from '../utils/mailTemplates.js';
 import { securityLog } from '../utils/securityLog.js';
 import { ADMIN_EMAIL } from '../config/env.js';
-import { removeOrganizationIfEmpty } from '../utils/organizations.js';
+import { removeOrganizationIfEmpty, handOverWorkspace } from '../utils/organizations.js';
 import { leaveGroupsOnDelete } from '../utils/groups.js';
 
 // Must match frontend/src/i18n/locales.
@@ -427,6 +427,7 @@ export const deleteUserAsAdmin = async (req, res, next) => {
       PasswordReset.deleteMany({ userId }),
     ]);
 
+    await handOverWorkspace(user);
     await User.deleteOne({ _id: userId });
     await leaveGroupsOnDelete(userId);
     await removeOrganizationIfEmpty(user.orgId);

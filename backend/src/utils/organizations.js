@@ -11,6 +11,19 @@ import Invite from '../models/Invite.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
 import { destroyByPrefix, loansPrefix } from '../services/imageStorage.js';
 
+// When the owner of a shared workspace leaves, someone else must own it: first an admin,
+// then a member, then a viewer (oldest account first). Returns the new owner id or null.
+export const handOverWorkspace = async (user) => {
+  if (!user || !user.orgId || user.role !== 'owner') return null;
+  const others = await User.find({ orgId: user.orgId, _id: { $ne: user._id } }).select('role createdAt').sort({ createdAt: 1 }).lean();
+  if (others.length === 0) return null;
+  const rank = { admin: 0, member: 1, viewer: 2, owner: 0 };
+  const next = [...others].sort((a, b) => (rank[a.role] ?? 3) - (rank[b.role] ?? 3))[0];
+  await User.updateOne({ _id: next._id }, { $set: { role: 'owner' } });
+  await Organization.updateOne({ _id: user.orgId }, { $set: { ownerId: next._id } });
+  return String(next._id);
+};
+
 export const removeOrganizationIfEmpty = async (orgId) => {
   if (!orgId) return false;
 
