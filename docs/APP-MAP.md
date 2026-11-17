@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (307 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (303 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -131,7 +131,7 @@ flowchart LR
   - hooks/data: useMotionPreference, useExpenseCategories, useResource
   - utils: billers, billMath, billDates, dates, billPrefs
 - `/salary` -> `frontend/src/pages/SalaryPage.jsx`
-  - components: AppShell, useAppNav, AllocationForm, AllocationList, SalaryHistory, SalaryOverview, ui
+  - components: AppShell, useAppNav, Combobox, MoneyInput, SalaryRing
   - services: salaryPlanService
   - hooks/data: useResource, useExpenseCategories, useMotionPreference
   - utils: expenseMath, salaryPlanMath
@@ -365,24 +365,24 @@ flowchart LR
 - `PendingDeviceLogin`: userId, otpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, userAgent, ip, expiresAt
 - `PendingEmailChange`: userId, newEmail, oldEmailOtpHash, newEmailOtpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, expiresAt
 - `PendingSignup`: email, name, passwordHash, otpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, expiresAt, deviceId, deviceFallbackId
-- `SalaryPlan`: label, amountMinor, categoryId, kind, orgId, month, streamId, lines, detached, salaryMinor, currency
+- `SalaryPlan`: label, amountMinor, categoryId, orgId, month, streamId, lines, detached, salaryMinor, currency
 - `SecurityEvent`: event, userId, ip, path, details, capped
 - `Session`: 
 - `User`: orgId, name, email, passwordHash, authProvider, googleId, role, plan, country, currency, language, avatarUrl, avatarPublicId, onboardingCompleted, reminderEmails, lastReminderEmailOn, mfaEnabled, mfaSecret, mfaBackupCodes, usernameChangedAt, emailChangedAt, nameHistory, emailHistory, googleUnlinkedAt, tokenVersion, failedLoginAttempts, lockUntil, lockTier
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 90 files
-- `frontend/src/i18n/useFormat.js` is imported by 36 files
+- `frontend/src/i18n/useTranslation.js` is imported by 87 files
+- `frontend/src/i18n/useFormat.js` is imported by 35 files
 - `frontend/src/context/AuthContext.jsx` is imported by 32 files
+- `frontend/src/hooks/useMotionPreference.js` is imported by 27 files
 - `frontend/src/i18n/notifications.js` is imported by 27 files
-- `frontend/src/hooks/useMotionPreference.js` is imported by 26 files
 - `frontend/src/utils/dates.js` is imported by 24 files
 - `backend/src/middleware/rateLimiters.js` is imported by 17 files
 - `frontend/src/components/FormField.jsx` is imported by 16 files
-- `frontend/src/components/Combobox.jsx` is imported by 16 files
 - `frontend/src/services/api.js` is imported by 16 files
 - `backend/src/middleware/auth.js` is imported by 16 files
+- `frontend/src/components/Combobox.jsx` is imported by 15 files
 - `frontend/src/components/Button.jsx` is imported by 15 files
 - `backend/src/utils/validators.js` is imported by 15 files
 - `frontend/src/services/apiError.js` is imported by 14 files
@@ -486,8 +486,7 @@ flowchart LR
 - `frontend/src/components/income/IncomeForm.jsx`  (used by 1)
 - `frontend/src/components/income/SalaryCutsPanel.jsx`  (used by 1)
 - `frontend/src/components/income/incomeOptions.js`  (used by 5)
-- `frontend/src/components/salary/SalaryHistory.jsx`  (used by 1)
-- `frontend/src/components/salary/SalaryOverview.jsx`  (used by 1)
+- `frontend/src/components/salary/SalaryRing.jsx`  (used by 1)
 - `frontend/src/context/IncomeContext.jsx`  (used by 9)
 - `frontend/src/pages/IncomePage.jsx`  (used by 1)
 - `frontend/src/pages/SalaryPage.jsx`  (used by 1)
@@ -495,7 +494,7 @@ flowchart LR
 - `frontend/src/services/salaryPlanService.js`  (used by 2)
 - `frontend/src/utils/incomeMath.js`  (used by 7)
 - `frontend/src/utils/salaryCuts.js`  (used by 7)
-- `frontend/src/utils/salaryPlanMath.js` - What a stream brings in per month after tax and deductions.  (used by 3)
+- `frontend/src/utils/salaryPlanMath.js` - What a stream brings in per month after tax and deductions.  (used by 1)
 - `frontend/src/utils/taxRules.js`  (used by 2)
 ### loans
 - `backend/src/controllers/loanController.js`  (used by 1)
@@ -589,19 +588,19 @@ flowchart LR
 - `frontend/src/components/BrandMark.jsx`  (used by 12)
 - `frontend/src/components/Button.jsx`  (used by 15)
 - `frontend/src/components/Captcha.jsx`  (used by 3)
-- `frontend/src/components/Combobox.jsx`  (used by 16)
+- `frontend/src/components/Combobox.jsx`  (used by 15)
 - `frontend/src/components/Drawer.jsx`  (used by 6)
 - `frontend/src/components/EmailField.jsx`  (used by 3)
 - `frontend/src/components/ErrorBoundary.jsx`  (used by 2)
 - `frontend/src/components/ErrorSlot.jsx`  (used by 13)
-- `frontend/src/components/FieldError.jsx`  (used by 10)
+- `frontend/src/components/FieldError.jsx`  (used by 9)
 - `frontend/src/components/FormField.jsx`  (used by 16)
 - `frontend/src/components/InlineAlert.jsx`  (used by 1)
 - `frontend/src/components/LanguageSwitcher.jsx` - Signed-out screens only (login / signup). Signed-in users change their language  (used by 1)
 - `frontend/src/components/LockScreen.jsx`  (used by 1)
 - `frontend/src/components/LockTimerBadge.jsx`  (used by 1)
 - `frontend/src/components/Logo.jsx`  (used by 5)
-- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 8)
+- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 7)
 - `frontend/src/components/OfflineBanner.jsx` - A dedicated, full-width status bar for connectivity - distinct from the  (used by 1)
 - `frontend/src/components/PageLoader.jsx`  (used by 4)
 - `frontend/src/components/ProtectedRoute.jsx`  (used by 1)
@@ -641,9 +640,6 @@ flowchart LR
 - `frontend/src/components/onboarding/PhotoPicker.jsx`  (used by 1)
 - `frontend/src/components/onboarding/ProfilePreview.jsx`  (used by 1)
 - `frontend/src/components/onboarding/WelcomeScreen.jsx`  (used by 1)
-- `frontend/src/components/salary/AllocationForm.jsx`  (used by 1)
-- `frontend/src/components/salary/AllocationList.jsx`  (used by 1)
-- `frontend/src/components/salary/ui.js` - One small button and field system for the salary planner.  (used by 5)
 - `frontend/src/components/settings/DataSection.jsx`  (used by 1)
 - `frontend/src/components/settings/PeopleSection.jsx`  (used by 1)
 - `frontend/src/data/dataStore.js`  (used by 2)
@@ -651,7 +647,7 @@ flowchart LR
 - `frontend/src/hooks/useBalance.js` - The one source of balance numbers. status: 'wait' | 'error' | 'ready'.  (used by 2)
 - `frontend/src/hooks/useEmailCheck.js`  (used by 1)
 - `frontend/src/hooks/useGroupInvites.js` - Group invitations waiting for the signed-in person. Feeds the bell, the Groups  (used by 3)
-- `frontend/src/hooks/useMotionPreference.js`  (used by 26)
+- `frontend/src/hooks/useMotionPreference.js`  (used by 27)
 - `frontend/src/i18n/languageStorage.js` - Only the *signed-out* language (login / signup screens) lives in localStorage.  (used by 1)
 - `frontend/src/i18n/locales/ar.js`  (used by 2)
 - `frontend/src/i18n/locales/en.js`  (used by 2)
@@ -662,9 +658,9 @@ flowchart LR
 - `frontend/src/i18n/notifications.js`  (used by 27)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 36)
+- `frontend/src/i18n/useFormat.js`  (used by 35)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 9)
-- `frontend/src/i18n/useTranslation.js`  (used by 90)
+- `frontend/src/i18n/useTranslation.js`  (used by 87)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/GroupPage.jsx`  (used by 1)
 - `frontend/src/pages/GroupsPage.jsx`  (used by 1)
@@ -677,7 +673,7 @@ flowchart LR
 - `frontend/src/portfolio/components/Faq.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Flow.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Footer.jsx`  (used by 2)
-- `frontend/src/portfolio/components/Hero.jsx` - Position, entrance and idle float of one device. Only translate and opacity animate (no blur  (used by 1)
+- `frontend/src/portfolio/components/Hero.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Logos.jsx`  (used by 2)
 - `frontend/src/portfolio/components/Nav.jsx`  (used by 4)
 - `frontend/src/portfolio/components/ProductStory.jsx` - One device per feature, shown alone and centered so it can be read. The  (used by 1)
