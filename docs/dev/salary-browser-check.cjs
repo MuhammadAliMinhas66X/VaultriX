@@ -81,6 +81,13 @@ let plans = {};
     await page.screenshot({ path: `${out}salary-detached-${tag}.png`, fullPage: true });
     if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) problems.push(`${tag}: horizontal scroll`);
     await page.getByText('Salary logs').waitFor();
+    await page.mouse.move(Math.round(w / 2), Math.round(h / 2));
+    await page.mouse.wheel(0, 900);
+    await page.waitForTimeout(600);
+    const heroTop = await page.evaluate(() => { const el = document.querySelector('section.sticky'); return el ? Math.round(el.getBoundingClientRect().top) : null; });
+    if (heroTop === null || heroTop < 0 || heroTop > 130) problems.push(`${tag}: ring card does not stay on screen while scrolling (top ${heroTop})`);
+    await page.screenshot({ path: `${out}salary-scrolled-${tag}.png` });
+    await page.mouse.wheel(0, -2000);
     await page.getByText('Planned saving').first().waitFor().catch(() => problems.push(`${tag}: log row missing`));
 
     await page.getByRole('button', { name: 'Remove' }).first().click();
