@@ -131,8 +131,8 @@ export default function SalaryPage() {
   const money = (value) => formatMoney(value, { decimals: 0, currency });
 
   const legend = [
-    { key: 'used', dot: 'linear-gradient(135deg,#ff2d55,#ffd60a)', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
-    { key: 'left', dot: 'linear-gradient(135deg,#00e0a4,#14b8ff)', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
+    { key: 'used', dot: 'linear-gradient(135deg,#ff2d95,#7c3aed)', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
+    { key: 'left', dot: 'linear-gradient(135deg,#c6f432,#00d68f)', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
     { key: 'salary', dot: '#d4d4d8', label: t('salary.income'), value: salary },
   ];
 
