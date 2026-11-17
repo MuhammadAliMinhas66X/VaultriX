@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, HandCoins, Receipt } from 'lucide-react';
+import { Bell, HandCoins, Receipt, Users } from 'lucide-react';
+import { useGroupInvites } from '../../hooks/useGroupInvites.js';
 import { useReminders } from '../../hooks/useReminders.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
@@ -16,6 +17,7 @@ function NotificationsBell() {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
   const { items } = useReminders();
+  const { invites } = useGroupInvites();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -37,7 +39,7 @@ function NotificationsBell() {
     };
   }, [open]);
 
-  const count = items.length;
+  const count = items.length + invites.length;
 
   return (
     <div ref={rootRef} className="relative">
@@ -66,9 +68,25 @@ function NotificationsBell() {
             className="absolute end-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-1.5rem)] origin-top-right overflow-hidden rounded-2xl border border-border bg-white shadow-[0_18px_40px_-16px_rgba(17,17,20,0.35)]"
           >
             <p className="border-b border-border px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{t('reminders.title')}</p>
+            {invites.length > 0 && (
+              <ul>
+                {invites.map((invite) => (
+                  <li key={invite.id} className="border-b border-border">
+                    <Link to="/join-group" onClick={() => setOpen(false)} className="flex items-center gap-3 bg-surface/60 px-4 py-3 outline-none transition hover:bg-surface focus-visible:bg-surface">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white"><Users className="h-4 w-4" strokeWidth={1.75} /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-ink">{invite.groupName}</span>
+                        <span className="block truncate text-xs text-muted">{invite.inviterName ? t('groups.invitedBy', { name: invite.inviterName }) : t('groups.invitedGeneric')}</span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{t('groups.accept')}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
             {count === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">{t('reminders.allClear')}</p>
-            ) : (
+            ) : items.length === 0 ? null : (
               <ul className="max-h-80 overflow-y-scroll [scrollbar-color:#c4c4c9_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#c4c4c9]">
                 {items.map((item) => {
                   const Icon = iconOf[item.kind];

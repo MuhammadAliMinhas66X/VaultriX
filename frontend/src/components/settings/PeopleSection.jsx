@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Copy, KeyRound, Loader2, Mail, Trash2, UserPlus, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Check, Copy, KeyRound, Loader2, Mail, Trash2, UserPlus, Users, Wallet, X } from 'lucide-react';
 import Combobox from '../Combobox.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
@@ -251,6 +252,28 @@ function JoinBlock() {
   );
 }
 
+function VersusBlock() {
+  const { t } = useTranslation();
+  const rows = [
+    { icon: Wallet, title: t('team.vsPeopleTitle'), body: t('team.vsPeopleBody') },
+    { icon: Users, title: t('team.vsGroupsTitle'), body: t('team.vsGroupsBody') },
+  ];
+  return (
+    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={card}>
+      <h2 className="text-base font-semibold tracking-tight text-ink">{t('team.vsTitle')}</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {rows.map((row) => (
+          <div key={row.title} className="rounded-xl bg-surface px-4 py-3.5">
+            <p className="flex items-center gap-2 text-sm font-semibold text-ink"><row.icon className="h-4 w-4" strokeWidth={1.75} /> {row.title}</p>
+            <p className="mt-1.5 text-sm leading-snug text-muted">{row.body}</p>
+          </div>
+        ))}
+      </div>
+      <Link to="/dashboard#groups" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink hover:underline">{t('team.openGroups')} <ArrowRight className="h-4 w-4" /></Link>
+    </motion.section>
+  );
+}
+
 export default function PeopleSection() {
   const { tServer } = useTranslation();
   const [team, setTeam] = useState(null);
@@ -278,6 +301,7 @@ export default function PeopleSection() {
   const manage = team.me.role === 'owner' || team.me.role === 'admin';
   return (
     <div className="flex flex-col gap-5">
+      <VersusBlock />
       <MembersBlock team={team} reload={load} />
       {manage && <InviteBlock team={team} reload={load} />}
       {team.members.length === 1 && <JoinBlock />}

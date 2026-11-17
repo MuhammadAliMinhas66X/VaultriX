@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { takeNext } from '../utils/returnPath.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera } from 'lucide-react';
 import Button from '../components/Button.jsx';
@@ -160,7 +161,7 @@ function OnboardingPage() {
 
     setWelcoming(true);
     setTimeout(() => {
-      navigate('/dashboard', { replace: true });
+      navigate(takeNext() || '/dashboard', { replace: true });
     }, WELCOME_MS);
   };
 

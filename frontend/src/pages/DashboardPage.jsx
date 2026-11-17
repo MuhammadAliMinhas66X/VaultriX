@@ -6,6 +6,7 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import BalanceCard from '../components/dashboard/BalanceCard.jsx';
 import BillsPanel from '../components/dashboard/BillsPanel.jsx';
+import GroupsHub from '../components/groups/GroupsHub.jsx';
 import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -248,6 +249,8 @@ function DashboardPage() {
             {latestCard}
           </div>
         )}
+
+        {!loading && <div className="mt-5"><GroupsHub /></div>}
       </div>
     </AppShell>
   );

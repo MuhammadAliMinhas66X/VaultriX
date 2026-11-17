@@ -11,6 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { IncomeLayout } from './context/IncomeContext.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
 import GroupPage from './pages/GroupPage.jsx';
+import JoinGroupPage from './pages/JoinGroupPage.jsx';
 import MainShell from './components/layout/MainShell.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import IncomePage from './pages/IncomePage.jsx';
@@ -68,6 +69,7 @@ function App() {
                 <Route path="/loans" element={<LoansPage />} />
                 <Route path="/expenses" element={<ExpensesPage />} />
                 <Route path="/bills" element={<BillsPage />} />
+                <Route path="/join-group" element={<JoinGroupPage />} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupPage />} />
               </Route>

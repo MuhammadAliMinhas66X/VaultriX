@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { readNext, takeNext } from '../utils/returnPath.js';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout.jsx';
@@ -31,6 +32,8 @@ const stepMotion = {
 
 function SignupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const nextPath = readNext(location);
   const { setSession } = useAuth();
   const { t, tServer } = useTranslation();
 
@@ -63,7 +66,8 @@ function SignupPage() {
     setSession(data);
     setRedirecting(true);
     setTimeout(() => {
-      navigate(data.user.onboardingCompleted ? '/dashboard' : '/onboarding', { replace: true });
+      if (data.user.onboardingCompleted) takeNext();
+      navigate(data.user.onboardingCompleted ? nextPath || '/dashboard' : '/onboarding', { replace: true });
     }, 500);
   };
 
@@ -259,7 +263,7 @@ function SignupPage() {
 
             <p className="mt-6 text-center text-sm text-muted">
               {t('auth.haveAccount')}{' '}
-              <Link to="/login" className="font-medium text-ink hover:underline">
+              <Link to="/login" state={nextPath ? { from: { pathname: nextPath } } : undefined} className="font-medium text-ink hover:underline">
                 {t('auth.signInLink')}
               </Link>
             </p>

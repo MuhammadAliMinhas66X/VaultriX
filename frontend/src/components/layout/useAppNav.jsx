@@ -43,10 +43,9 @@ export default function useAppNav() {
     { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
     { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills' },
     { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
-    { id: 'groups', label: t('nav.groups'), icon: Users, big: true, to: '/groups' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = onGroups ? 'groups' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
+  const activeId = onGroups ? 'dashboard' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
   return { items, activeId };
 }

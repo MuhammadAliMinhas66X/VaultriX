@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { readNext, takeNext } from '../utils/returnPath.js';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout.jsx';
 import FormField from '../components/FormField.jsx';
@@ -32,7 +33,8 @@ function LoginPage() {
   const location = useLocation();
   const { setSession } = useAuth();
   const { t, tServer } = useTranslation();
-  const redirectTo = location.state?.from?.pathname || '/dashboard';
+  const nextPath = readNext(location);
+  const redirectTo = nextPath || '/dashboard';
 
   const [email, setEmail] = useState(location.state?.email || '');
   const [emailStatus, setEmailStatus] = useState('idle');
@@ -124,6 +126,7 @@ function LoginPage() {
     setSession(data);
     setRedirecting(true);
     setTimeout(() => {
+      if (data.user.onboardingCompleted) takeNext();
       const destination = data.user.onboardingCompleted ? redirectTo : '/onboarding';
       navigate(destination, { replace: true });
     }, 500);
@@ -516,7 +519,7 @@ function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-muted">
         {t('auth.noAccount')}{' '}
-        <Link to="/signup" className="font-medium text-ink hover:underline">
+        <Link to="/signup" state={nextPath ? { from: { pathname: nextPath } } : undefined} className="font-medium text-ink hover:underline">
           {t('auth.createOne')}
         </Link>
       </p>

@@ -24,3 +24,6 @@ export const deleteGroupExpense = (id, expenseId) => run(() => api.delete(`/grou
 export const shareToMyExpenses = (id, expenseId) => run(() => api.post(`/groups/${id}/expenses/${expenseId}/my-expenses`));
 export const addSettlement = (id, payload) => run(() => api.post(`/groups/${id}/settlements`, payload));
 export const deleteSettlement = (id, settlementId) => run(() => api.delete(`/groups/${id}/settlements/${settlementId}`));
+export const listMyInvites = () => run(() => api.get('/groups/invites/mine'));
+export const acceptMyInvite = (inviteId) => run(() => api.post(`/groups/invites/${inviteId}/accept`));
+export const declineMyInvite = (inviteId) => run(() => api.delete(`/groups/invites/${inviteId}`));
