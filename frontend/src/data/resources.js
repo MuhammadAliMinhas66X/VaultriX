@@ -2,7 +2,7 @@ import { registerResource, registerRules } from './dataStore.js';
 import { listBills } from '../services/billService.js';
 import { listExpenses, listExpenseCategories } from '../services/expenseService.js';
 import { listLoans } from '../services/loanService.js';
-import { getSalaryPlan } from '../services/salaryPlanService.js';
+import { getSalaryPlan, listSalaryPlans } from '../services/salaryPlanService.js';
 import { getExchangeRates } from '../services/fxService.js';
 import { listReceipts, getOpeningBalance, getExpenseTotals } from '../services/receiptService.js';
 
@@ -11,6 +11,7 @@ registerResource('expenses', { fetch: ({ month }) => listExpenses(month), staleM
 registerResource('loans', { fetch: () => listLoans(), staleMs: 30000 });
 registerResource('categories', { fetch: () => listExpenseCategories(), staleMs: 5 * 60 * 1000 });
 registerResource('salaryPlan', { fetch: ({ month }) => getSalaryPlan(month), staleMs: 30000 });
+registerResource('salaryPlans', { fetch: () => listSalaryPlans(), staleMs: 30000 });
 registerResource('receipts', { fetch: () => listReceipts(), staleMs: 30000 });
 registerResource('opening', { fetch: () => getOpeningBalance(), staleMs: 30000 });
 registerResource('expenseTotals', { fetch: ({ since }) => getExpenseTotals(since), staleMs: 30000 });
@@ -29,6 +30,6 @@ registerRules([
   { prefix: '/loans', invalidates: ['loans', 'expenses', 'expenseTotals'] },
   // A new stream with an amount makes a receipt; deleting a stream removes its receipts.
   { prefix: '/income-streams', invalidates: ['receipts'] },
-  { prefix: '/salary-plan', invalidates: ['salaryPlan'] },
+  { prefix: '/salary-plan', invalidates: ['salaryPlan', 'salaryPlans'] },
   { prefix: '/receipts', invalidates: ['receipts', 'opening', 'expenseTotals'] },
 ]);

@@ -35,7 +35,11 @@ export const comparePlan = ({ income, lines, expenses, rates, currency }) => {
     if (!tracked.has(key)) outside += value;
   });
   const planned = round2(lines.reduce((sum, line) => sum + line.amount, 0));
+  const covered = rows.reduce((sum, line) => sum + (line.spent === null ? line.amount : Math.max(line.amount, line.spent)), 0);
+  const committed = round2(covered + outside);
   return {
+    committed,
+    saving: round2(income - committed),
     rows,
     planned,
     spent: round2(spent),
@@ -43,4 +47,14 @@ export const comparePlan = ({ income, lines, expenses, rates, currency }) => {
     leftToPlan: round2(income - planned),
     leftNow: round2(income - spent),
   };
+};
+
+export const spentInMonth = (totals, month, rates, currency) => {
+  let sum = 0;
+  (totals || []).forEach((row) => {
+    if (row.month !== month || !(row.self > 0)) return;
+    const value = convertAmount({ amount: row.self, currency: row.currency }, rates, currency);
+    if (value !== null && value !== undefined) sum += value;
+  });
+  return round2(sum);
 };

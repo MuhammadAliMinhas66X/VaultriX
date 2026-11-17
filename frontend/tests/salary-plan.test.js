@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { comparePlan, monthlyNet } from '../src/utils/salaryPlanMath.js';
+import { comparePlan, monthlyNet, spentInMonth } from '../src/utils/salaryPlanMath.js';
 
 describe('salary plan maths', () => {
   it('turns a weekly or monthly amount into a monthly figure', () => {
@@ -28,5 +28,29 @@ describe('salary plan maths', () => {
     expect(result.outside).toBe(9000);
     expect(result.leftToPlan).toBe(40000);
     expect(result.leftNow).toBe(83500);
+    expect(result.committed).toBe(69000);
+    expect(result.saving).toBe(31000);
+  });
+
+  it('counts a line at what was spent when spending went past the plan', () => {
+    const result = comparePlan({
+      income: 50000,
+      currency: 'PKR',
+      rates: { PKR: 1 },
+      lines: [{ id: 'a', label: 'Food', amount: 10000, categoryId: 'food' }],
+      expenses: [{ amount: 14000, currency: 'PKR', categoryId: 'food', paidBy: 'self' }],
+    });
+    expect(result.committed).toBe(14000);
+    expect(result.saving).toBe(36000);
+  });
+
+  it('adds up what was spent in one month across currencies', () => {
+    const totals = [
+      { month: '2026-10', currency: 'PKR', self: 30000, other: 0, repaid: 0 },
+      { month: '2026-10', currency: 'USD', self: 10, other: 0, repaid: 0 },
+      { month: '2026-09', currency: 'PKR', self: 99999, other: 0, repaid: 0 },
+    ];
+    expect(spentInMonth(totals, '2026-10', { PKR: 1, USD: 0.01 }, 'PKR')).toBe(31000);
+    expect(spentInMonth(totals, '2026-08', { PKR: 1 }, 'PKR')).toBe(0);
   });
 });

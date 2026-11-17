@@ -12,3 +12,4 @@ const run = async (request) => {
 
 export const getSalaryPlan = (month) => run(() => api.get(`/salary-plan/${month}`));
 export const saveSalaryPlan = (month, payload) => run(() => api.put(`/salary-plan/${month}`, payload));
+export const listSalaryPlans = () => run(() => api.get('/salary-plan'));
