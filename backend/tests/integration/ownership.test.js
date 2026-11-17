@@ -49,6 +49,7 @@ const cases = [
   {
     name: 'expenses',
     path: '/api/expenses',
+    listQuery: `?month=${new Date().toISOString().slice(0, 7)}`,
     patch: { note: 'Hacked' },
     make: (owner) => Expense.create({ orgId: owner.user.orgId, createdBy: owner.user._id, amountMinor: 5000, currency: 'PKR', spentAt: new Date(), note: 'Original' }),
     exists: async (id) => Boolean(await Expense.exists({ _id: id })),
@@ -87,11 +88,11 @@ const cases = [
   },
 ];
 
-describe.each(cases)('another account cannot touch $name', ({ path, patch, make, changed, exists }) => {
+describe.each(cases)('another account cannot touch $name', ({ path, listQuery = '', patch, make, changed, exists }) => {
   it('does not list another account\'s records', async () => {
     const { owner, attacker } = await setup();
     const record = await make(owner);
-    const res = await request(app).get(path).set('Authorization', attacker.authorization);
+    const res = await request(app).get(`${path}${listQuery}`).set('Authorization', attacker.authorization);
     expect(res.status).toBe(200);
     expect(JSON.stringify(res.body)).not.toContain(String(record._id));
   });
