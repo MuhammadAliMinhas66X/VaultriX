@@ -16,3 +16,16 @@ export const splitEqualMinor = (amountMinor, ids) => {
 
 // How much of the total is still not given to anyone in an exact split.
 export const leftToAssign = (amount, parts) => toMinor(amount) - Object.values(parts).reduce((sum, value) => sum + toMinor(value), 0);
+
+// Percent split preview, same rule as the server (pennies go to the biggest remainders).
+export const percentLeft = (parts) => Math.round((100 - Object.values(parts).reduce((sum, value) => sum + Number(value || 0), 0)) * 100) / 100;
+export const splitPercentMinor = (amountMinor, parts) => {
+  const rows = Object.entries(parts).map(([id, value]) => ({ id, exact: (amountMinor * Math.round(Number(value || 0) * 100)) / 10000 })).filter((row) => row.exact > 0);
+  const out = {};
+  rows.forEach((row) => { out[row.id] = Math.floor(row.exact); });
+  let rest = amountMinor - Object.values(out).reduce((sum, value) => sum + value, 0);
+  [...rows].sort((a, b) => (b.exact - Math.floor(b.exact)) - (a.exact - Math.floor(a.exact))).forEach((row) => {
+    if (rest > 0) { out[row.id] += 1; rest -= 1; }
+  });
+  return out;
+};

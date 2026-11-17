@@ -5,7 +5,7 @@ import FormField from '../FormField.jsx';
 import Button from '../Button.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
-import { splitEqualMinor, leftToAssign, toMinor, fromMinor } from '../../utils/groupSplit.js';
+import { splitEqualMinor, splitPercentMinor, percentLeft, leftToAssign, toMinor, fromMinor } from '../../utils/groupSplit.js';
 import { todayLocal } from '../loans/loanOptions.js';
 
 const field = 'w-full rounded-lg border border-border px-3.5 py-2.5 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm';
@@ -26,12 +26,15 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
   const [mode, setMode] = useState(initial ? initial.splitType : 'equal');
   const [included, setIncluded] = useState(() => new Set(initial ? initial.shares.map((share) => share.userId) : people.map((member) => member.id)));
   const [parts, setParts] = useState(() => Object.fromEntries((initial && initial.splitType === 'exact' ? initial.shares : []).map((share) => [share.userId, String(share.amount)])));
+  const [percents, setPercents] = useState(() => Object.fromEntries((initial && initial.splitType === 'percent' ? initial.shares : []).map((share) => [share.userId, String(share.percent ?? '')])));
   const [error, setError] = useState('');
 
   const total = toMinor(amount);
   const ids = people.filter((member) => included.has(member.id)).map((member) => member.id);
   const equal = splitEqualMinor(total, ids);
   const left = leftToAssign(amount, parts);
+  const pctLeft = percentLeft(percents);
+  const pctMinor = splitPercentMinor(total, percents);
 
   const toggle = (id) =>
     setIncluded((prev) => {
@@ -48,6 +51,11 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
     if (mode === 'equal') {
       if (ids.length === 0) return setError(t('groups.errCheck'));
       return onSubmit({ ...base, participants: ids });
+    }
+    if (mode === 'percent') {
+      const list = people.map((member) => ({ userId: member.id, percent: Number(percents[member.id] || 0) })).filter((row) => row.percent > 0);
+      if (list.length === 0 || pctLeft !== 0) return setError(t('groups.errCheck'));
+      return onSubmit({ ...base, percents: list });
     }
     const shares = people.map((member) => ({ userId: member.id, amount: Number(parts[member.id] || 0) })).filter((share) => share.amount > 0);
     if (shares.length === 0 || left !== 0) return setError(t('groups.errCheck'));
@@ -85,10 +93,11 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-ink">{t('groups.formSplit')}</span>
-        <div role="radiogroup" aria-label={t('groups.formSplit')} className="grid grid-cols-2 gap-1 rounded-2xl bg-surface p-1">
+        <div role="radiogroup" aria-label={t('groups.formSplit')} className="grid grid-cols-3 gap-1 rounded-2xl bg-surface p-1">
           {[
             ['equal', t('groups.splitEqual')],
             ['exact', t('groups.splitExact')],
+            ['percent', t('groups.splitPercent')],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -113,12 +122,25 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{member.id === me ? `${member.name} (${t('groups.you')})` : member.name}</span>
               {mode === 'equal' ? (
                 <span className="whitespace-nowrap text-sm tabular-nums text-muted">{included.has(member.id) ? formatMoney(fromMinor(equal[member.id] || 0), { decimals: 2, currency }) : '-'}</span>
+              ) : mode === 'percent' ? (
+                <span className="flex items-center gap-2">
+                  <span className="hidden whitespace-nowrap text-xs tabular-nums text-muted sm:inline">{pctMinor[member.id] ? formatMoney(fromMinor(pctMinor[member.id]), { decimals: 2, currency }) : ''}</span>
+                  <span className="relative w-24">
+                    <MoneyInput value={percents[member.id] || ''} onChange={(value) => setPercents((prev) => ({ ...prev, [member.id]: value }))} placeholder="0" aria-label={member.name} className={`${field} pe-7 text-end tabular-nums`} />
+                    <span className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-sm text-muted">%</span>
+                  </span>
+                </span>
               ) : (
                 <MoneyInput value={parts[member.id] || ''} onChange={(value) => setParts((prev) => ({ ...prev, [member.id]: value }))} placeholder="0" aria-label={member.name} className={`${field} w-28 text-end tabular-nums`} />
               )}
             </li>
           ))}
         </ul>
+        {mode === 'percent' && (
+          <p className={`text-sm font-medium tabular-nums ${pctLeft === 0 ? 'text-ink' : 'text-muted'}`}>
+            {pctLeft === 0 ? t('groups.assigned') : pctLeft > 0 ? t('groups.percentLeft', { percent: pctLeft }) : t('groups.percentOver', { percent: -pctLeft })}
+          </p>
+        )}
         {mode === 'exact' && (
           <p className={`text-sm font-medium tabular-nums ${left === 0 && total > 0 ? 'text-ink' : 'text-muted'}`}>
             {left === 0 && total > 0 ? t('groups.assigned') : left > 0 ? t('groups.leftToAssign', { amount: formatMoney(fromMinor(left), { decimals: 2, currency }) }) : t('groups.overAssigned', { amount: formatMoney(fromMinor(-left), { decimals: 2, currency }) })}
