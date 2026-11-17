@@ -94,4 +94,21 @@ describe('shared groups', () => {
     expect((await api(spy).del(`/api/groups/invites/${spyInvite}`)).status).toBe(200);
     expect((await api(spy).get('/api/groups/invites/mine')).body.invites).toHaveLength(0);
   });
+
+  it('splits a cost by percent and refuses percentages that do not make 100', async () => {
+    const ali = await createAuthedUser({ email: 'pali@vaultrix.test', name: 'Ali' });
+    const sara = await createAuthedUser({ email: 'psara@vaultrix.test', name: 'Sara' });
+    const id = (await api(ali).post('/api/groups', { name: 'Flat', currency: 'PKR' })).body.id;
+    const code = (await api(ali).post(`/api/groups/${id}/invites`, { email: 'psara@vaultrix.test' })).body.code;
+    await api(sara).post('/api/groups/join', { code });
+    const a = String(ali.user._id);
+    const b = String(sara.user._id);
+    const base = { description: 'Rent', amount: 1000, currency: 'PKR', spentAt: today(), paidBy: a, splitType: 'percent' };
+    expect((await api(ali).post(`/api/groups/${id}/expenses`, { ...base, percents: [{ userId: a, percent: 60 }, { userId: b, percent: 30 }] })).status).toBe(400);
+    const ok = await api(ali).post(`/api/groups/${id}/expenses`, { ...base, percents: [{ userId: a, percent: 60 }, { userId: b, percent: 40 }] });
+    expect(ok.status).toBe(201);
+    expect(ok.body.expense.shares.map((share) => share.amount)).toEqual([600, 400]);
+    const view = await api(sara).get(`/api/groups/${id}`);
+    expect(view.body.balances.find((row) => row.currency === 'PKR').balances.find((row) => row.userId === b).amount).toBe(-400);
+  });
 });

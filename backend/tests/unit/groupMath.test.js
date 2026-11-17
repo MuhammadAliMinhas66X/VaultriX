@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { splitEqual, computeBalances, suggestTransfers } from '../../src/utils/groupMath.js';
+import { splitByPercent, splitEqual, computeBalances, suggestTransfers } from '../../src/utils/groupMath.js';
 
 describe('group maths', () => {
   it('splits so the parts always add up', () => {
@@ -42,5 +42,12 @@ describe('group maths', () => {
       { fromUserId: 'sara', toUserId: 'ali', amountMinor: 8000 },
     ]);
     expect(suggestTransfers({ a: 0, b: 0 })).toEqual([]);
+  });
+
+  it('splits by percent and the parts add up', () => {
+    const parts = splitByPercent(1000, [{ userId: 'a', bp: 3333 }, { userId: 'b', bp: 3333 }, { userId: 'c', bp: 3334 }]);
+    expect(parts.reduce((sum, part) => sum + part.amountMinor, 0)).toBe(1000);
+    expect(splitByPercent(10000, [{ userId: 'a', bp: 7000 }, { userId: 'b', bp: 3000 }]).map((part) => part.amountMinor)).toEqual([7000, 3000]);
+    expect(splitByPercent(1000, [{ userId: 'a', bp: 5000 }, { userId: 'b', bp: 4000 }])).toBeNull();
   });
 });

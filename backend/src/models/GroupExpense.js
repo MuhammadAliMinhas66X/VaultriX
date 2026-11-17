@@ -4,6 +4,7 @@ const shareSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     amountMinor: { type: Number, required: true, min: 1 },
+    percentBp: { type: Number, min: 0, max: 10000 },
   },
   { _id: false }
 );
@@ -17,7 +18,7 @@ const groupExpenseSchema = new mongoose.Schema(
     currency: { type: String, required: true },
     spentAt: { type: Date, required: true },
     paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    splitType: { type: String, enum: ['equal', 'exact'], default: 'equal' },
+    splitType: { type: String, enum: ['equal', 'exact', 'percent'], default: 'equal' },
     shares: { type: [shareSchema], default: [] },
   },
   { timestamps: true }

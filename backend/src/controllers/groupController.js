@@ -11,7 +11,7 @@ import { groupInviteEmail } from '../utils/mailTemplates.js';
 import { parseEmail } from '../utils/emailValidation.js';
 import { isCurrencyCode, cleanLabel } from '../utils/validators.js';
 import { toMajor, parseAmountMinor, parseDay, optionalText } from '../utils/financeInput.js';
-import { splitEqual, computeBalances, suggestTransfers } from '../utils/groupMath.js';
+import { splitByPercent, splitEqual, computeBalances, suggestTransfers } from '../utils/groupMath.js';
 import { deleteGroupCompletely } from '../utils/groups.js';
 
 const MAX_MEMBERS = 12;
@@ -53,7 +53,7 @@ const expenseDto = (expense) => ({
   spentAt: expense.spentAt,
   paidBy: String(expense.paidBy),
   splitType: expense.splitType,
-  shares: expense.shares.map((share) => ({ userId: String(share.userId), amount: toMajor(share.amountMinor) })),
+  shares: expense.shares.map((share) => ({ userId: String(share.userId), amount: toMajor(share.amountMinor), percent: share.percentBp === undefined || share.percentBp === null ? undefined : share.percentBp / 100 })),
   createdBy: expense.createdBy ? String(expense.createdBy) : null,
 });
 
@@ -374,12 +374,26 @@ const readExpense = (group, body) => {
       shares.push({ userId, amountMinor: minor });
     }
     if (shares.reduce((sum, share) => sum + share.amountMinor, 0) !== amountMinor) return null;
+  } else if (body.splitType === 'percent') {
+    if (!Array.isArray(body.percents) || body.percents.length === 0 || body.percents.length > MAX_MEMBERS) return null;
+    const entries = [];
+    const seen = new Set();
+    for (const raw of body.percents) {
+      const userId = raw && typeof raw.userId === 'string' ? raw.userId : '';
+      const percent = Number(raw && raw.percent);
+      const bp = Math.round(percent * 100);
+      if (!ids.includes(userId) || seen.has(userId) || !Number.isFinite(percent) || percent <= 0 || percent > 100 || Math.abs(percent * 100 - bp) > 1e-6) return null;
+      seen.add(userId);
+      entries.push({ userId, bp });
+    }
+    shares = splitByPercent(amountMinor, entries);
+    if (!shares || shares.some((share) => share.amountMinor < 1)) return null;
   } else {
     const people = Array.isArray(body.participants) ? [...new Set(body.participants.map(String))] : [];
     if (people.length === 0 || people.some((id) => !ids.includes(id))) return null;
     shares = splitEqual(amountMinor, people);
   }
-  return { description, amountMinor, currency: body.currency, spentAt, paidBy: body.paidBy, splitType: body.splitType === 'exact' ? 'exact' : 'equal', shares };
+  return { description, amountMinor, currency: body.currency, spentAt, paidBy: body.paidBy, splitType: body.splitType === 'exact' || body.splitType === 'percent' ? body.splitType : 'equal', shares };
 };
 
 export const addGroupExpense = async (req, res, next) => {

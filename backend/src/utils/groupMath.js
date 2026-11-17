@@ -10,6 +10,25 @@ export const splitEqual = (amountMinor, userIds) => {
   return userIds.map((userId, index) => ({ userId: String(userId), amountMinor: base + (index < extra ? 1 : 0) }));
 };
 
+// Splits `amountMinor` by percentages given in basis points (50.5% = 5050). The points
+// must add up to 10000 (100%). Pennies left over go to the biggest remainders, so the
+// parts always add up exactly. Returns null when the percentages do not make 100%.
+export const splitByPercent = (amountMinor, entries) => {
+  if (!entries.length || entries.reduce((sum, entry) => sum + entry.bp, 0) !== 10000) return null;
+  const rows = entries.map((entry, index) => {
+    const exact = (amountMinor * entry.bp) / 10000;
+    return { index, userId: String(entry.userId), bp: entry.bp, amountMinor: Math.floor(exact), rest: exact - Math.floor(exact) };
+  });
+  let left = amountMinor - rows.reduce((sum, row) => sum + row.amountMinor, 0);
+  [...rows].sort((a, b) => b.rest - a.rest || a.index - b.index).forEach((row) => {
+    if (left > 0) {
+      row.amountMinor += 1;
+      left -= 1;
+    }
+  });
+  return rows.map(({ userId, bp, amountMinor: minor }) => ({ userId, amountMinor: minor, percentBp: bp }));
+};
+
 // Net per person per currency. Positive = the group owes them, negative = they owe the group.
 // Settlements move money from one person to another: the payer's balance goes up, the receiver's down.
 export const computeBalances = (expenses, settlements) => {
