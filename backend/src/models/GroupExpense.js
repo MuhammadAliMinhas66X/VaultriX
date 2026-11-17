@@ -20,10 +20,19 @@ const groupExpenseSchema = new mongoose.Schema(
     paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     splitType: { type: String, enum: ['equal', 'exact', 'percent'], default: 'equal' },
     shares: { type: [shareSchema], default: [] },
+    // Repeating cost (monthly rent). The cost the person typed is the "head"; the server
+    // makes a copy (`repeatOf` = head id) each time the next date arrives. Copies never repeat.
+    repeatFrequency: { type: String, enum: ['none', 'weekly', 'monthly', 'yearly'], default: 'none' },
+    repeatAnchor: { type: Date, default: null },
+    repeatStep: { type: Number, default: 1 },
+    repeatOf: { type: mongoose.Schema.Types.ObjectId, ref: 'GroupExpense', default: null },
+    repeatKey: { type: String, default: '' },
   },
   { timestamps: true }
 );
 
 groupExpenseSchema.index({ groupId: 1, spentAt: -1 });
+groupExpenseSchema.index({ groupId: 1, repeatFrequency: 1 });
+groupExpenseSchema.index({ repeatOf: 1, repeatKey: 1 }, { unique: true, partialFilterExpression: { repeatOf: { $type: 'objectId' } } });
 
 export default mongoose.model('GroupExpense', groupExpenseSchema);

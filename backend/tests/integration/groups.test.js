@@ -111,4 +111,33 @@ describe('shared groups', () => {
     const view = await api(sara).get(`/api/groups/${id}`);
     expect(view.body.balances.find((row) => row.currency === 'PKR').balances.find((row) => row.userId === b).amount).toBe(-400);
   });
+
+  it('repeats a monthly cost on its own, once per date, and stops when someone leaves', async () => {
+    const ali = await createAuthedUser({ email: 'rali@vaultrix.test', name: 'Ali' });
+    const sara = await createAuthedUser({ email: 'rsara@vaultrix.test', name: 'Sara' });
+    const id = (await api(ali).post('/api/groups', { name: 'Flat', currency: 'PKR' })).body.id;
+    const code = (await api(ali).post(`/api/groups/${id}/invites`, { email: 'rsara@vaultrix.test' })).body.code;
+    await api(sara).post('/api/groups/join', { code });
+    const a = String(ali.user._id);
+    const b = String(sara.user._id);
+    const back = new Date();
+    back.setUTCMonth(back.getUTCMonth() - 2);
+    const start = back.toISOString().slice(0, 10);
+    const made = await api(ali).post(`/api/groups/${id}/expenses`, { description: 'Rent', amount: 1000, currency: 'PKR', spentAt: start, paidBy: a, splitType: 'equal', participants: [a, b], repeat: 'monthly' });
+    expect(made.status).toBe(201);
+    expect(made.body.expense.repeat).toBe('monthly');
+
+    const first = await api(ali).get(`/api/groups/${id}`);
+    expect(first.body.expenses).toHaveLength(3);
+    const second = await api(sara).get(`/api/groups/${id}`);
+    expect(second.body.expenses).toHaveLength(3);
+    expect(second.body.expenses.filter((expense) => expense.repeatOf).length).toBe(2);
+    expect((await api(ali).post(`/api/groups/${id}/expenses`, { description: 'X', amount: 5, currency: 'PKR', spentAt: today(), paidBy: a, splitType: 'equal', participants: [a], repeat: 'hourly' })).status).toBe(400);
+
+    // switch it off: no more copies, the old ones stay
+    const head = second.body.expenses.find((expense) => !expense.repeatOf);
+    const off = await api(ali).patch(`/api/groups/${id}/expenses/${head.id}`, { description: 'Rent', amount: 1000, currency: 'PKR', spentAt: start, paidBy: a, splitType: 'equal', participants: [a, b], repeat: 'none' });
+    expect(off.body.expense.repeat).toBe('none');
+    expect((await api(ali).get(`/api/groups/${id}`)).body.expenses).toHaveLength(3);
+  });
 });

@@ -13,6 +13,7 @@ import { isCurrencyCode, cleanLabel } from '../utils/validators.js';
 import { toMajor, parseAmountMinor, parseDay, optionalText } from '../utils/financeInput.js';
 import { splitByPercent, splitEqual, computeBalances, suggestTransfers } from '../utils/groupMath.js';
 import { deleteGroupCompletely } from '../utils/groups.js';
+import { generateGroupRepeats, GROUP_REPEATS } from '../utils/groupRepeat.js';
 
 const MAX_MEMBERS = 12;
 const MAX_GROUPS = 20;
@@ -54,6 +55,8 @@ const expenseDto = (expense) => ({
   paidBy: String(expense.paidBy),
   splitType: expense.splitType,
   shares: expense.shares.map((share) => ({ userId: String(share.userId), amount: toMajor(share.amountMinor), percent: share.percentBp === undefined || share.percentBp === null ? undefined : share.percentBp / 100 })),
+  repeat: expense.repeatFrequency || 'none',
+  repeatOf: expense.repeatOf ? String(expense.repeatOf) : null,
   createdBy: expense.createdBy ? String(expense.createdBy) : null,
 });
 
@@ -97,6 +100,7 @@ export const listGroups = async (req, res, next) => {
     const groups = await Group.find({ members: { $elemMatch: { userId: req.user.id, left: { $ne: true } } } }).sort({ updatedAt: -1 }).limit(MAX_GROUPS).lean();
     const out = [];
     for (const group of groups) {
+      await generateGroupRepeats(group._id);
       const balances = await balancesFor(group._id);
       const mine = Object.entries(balances)
         .map(([currency, byUser]) => ({ currency, amount: toMajor(byUser[String(req.user.id)] || 0) }))
@@ -128,6 +132,7 @@ export const getGroup = async (req, res, next) => {
   try {
     const group = await findMine(req);
     if (!group) return fail(res, 404, NOT_FOUND);
+    await generateGroupRepeats(group._id);
     const [expenses, settlements, invites, balances] = await Promise.all([
       GroupExpense.find({ groupId: group._id }).sort({ spentAt: -1, createdAt: -1 }).limit(LIST_LIMIT).lean(),
       GroupSettlement.find({ groupId: group._id }).sort({ paidAt: -1, createdAt: -1 }).limit(LIST_LIMIT).lean(),
@@ -402,12 +407,20 @@ export const addGroupExpense = async (req, res, next) => {
     if (!group) return fail(res, 404, NOT_FOUND);
     const data = readExpense(group, req.body || {});
     if (!data) return fail(res, 400, GENERIC_INVALID);
-    const expense = await GroupExpense.create({ ...data, groupId: group._id, createdBy: req.user.id });
+    const repeat = parseRepeat(req.body && req.body.repeat);
+    if (repeat === false) return fail(res, 400, GENERIC_INVALID);
+    const expense = await GroupExpense.create({ ...data, groupId: group._id, createdBy: req.user.id, repeatFrequency: repeat, repeatAnchor: repeat === 'none' ? null : data.spentAt, repeatStep: 1 });
     await Group.updateOne({ _id: group._id }, { $set: { updatedAt: new Date() } });
     res.status(201).json({ success: true, expense: expenseDto(expense) });
   } catch (error) {
     next(error);
   }
+};
+
+// Only a head can repeat. Missing means "does not repeat".
+const parseRepeat = (raw) => {
+  if (raw === undefined || raw === null || raw === '') return 'none';
+  return typeof raw === 'string' && GROUP_REPEATS.includes(raw) ? raw : false;
 };
 
 const findExpense = async (group, id) => (mongoose.isValidObjectId(id) ? GroupExpense.findOne({ _id: id, groupId: group._id }) : null);
@@ -422,7 +435,14 @@ export const updateGroupExpense = async (req, res, next) => {
     if (!canEdit(group, req, doc)) return fail(res, 403, NO_ACCESS);
     const data = readExpense(group, req.body || {});
     if (!data) return fail(res, 400, GENERIC_INVALID);
+    const repeat = req.body && req.body.repeat === undefined ? doc.repeatFrequency : parseRepeat(req.body && req.body.repeat);
+    if (repeat === false || (repeat !== 'none' && repeat !== doc.repeatFrequency && doc.repeatOf)) return fail(res, 400, GENERIC_INVALID);
     Object.assign(doc, data);
+    if (!doc.repeatOf && repeat !== doc.repeatFrequency) {
+      doc.repeatFrequency = repeat;
+      doc.repeatAnchor = repeat === 'none' ? null : data.spentAt;
+      doc.repeatStep = 1;
+    }
     await doc.save();
     res.json({ success: true, expense: expenseDto(doc) });
   } catch (error) {
