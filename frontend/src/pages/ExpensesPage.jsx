@@ -49,7 +49,8 @@ const remember = (value) => {
 };
 
 function ExpensesPage() {
-  const { currency } = useAuth();
+  const { currency, user } = useAuth();
+  const canWrite = user?.role !== 'viewer';
   const { t, tServer } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const { currencies } = useLocalizedOptions();
@@ -298,7 +299,7 @@ function ExpensesPage() {
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('expenses.title')}</h1>
-          {!loading && hasMonth && (
+          {canWrite && !loading && hasMonth && (
             <button type="button" onClick={() => setPanel({ mode: 'add' })} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('expenses.add')}
@@ -337,9 +338,11 @@ function ExpensesPage() {
                   <Receipt className="h-6 w-6" strokeWidth={1.5} />
                 </span>
                 <p className="mt-4 text-base font-medium text-ink">{t('expenses.emptyTitle')}</p>
-                <button type="button" onClick={() => setPanel({ mode: 'add' })} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
-                  <Plus className="h-4 w-4" /> {t('expenses.add')}
-                </button>
+                {canWrite && (
+                  <button type="button" onClick={() => setPanel({ mode: 'add' })} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+                    <Plus className="h-4 w-4" /> {t('expenses.add')}
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -478,7 +481,7 @@ function ExpensesPage() {
       </div>
 
       <AnimatePresence>
-        {!loading && hasMonth && !panel && (
+        {canWrite && !loading && hasMonth && !panel && (
           <motion.button
             key="add-fab"
             type="button"

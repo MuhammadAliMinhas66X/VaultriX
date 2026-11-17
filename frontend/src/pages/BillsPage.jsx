@@ -58,7 +58,8 @@ const SECTION_KEY = {
 const NO_BILLS = [];
 
 function BillsPage() {
-  const { currency } = useAuth();
+  const { currency, user } = useAuth();
+  const canWrite = user?.role !== 'viewer';
   const reduced = useAppReducedMotion();
   const { t, tServer } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
@@ -260,7 +261,7 @@ function BillsPage() {
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('bills.title')}</h1>
-          {!loading && hasBills && (
+          {canWrite && !loading && hasBills && (
             <button type="button" onClick={() => setPanel({ mode: 'add' })} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('bills.add')}
@@ -293,9 +294,11 @@ function BillsPage() {
               <Receipt className="h-6 w-6" strokeWidth={1.5} />
             </span>
             <p className="mt-4 max-w-sm text-base font-medium text-ink">{t('bills.emptyTitle')}</p>
-            <button type="button" onClick={() => setPanel({ mode: 'add' })} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
-              <Plus className="h-4 w-4" /> {t('bills.add')}
-            </button>
+            {canWrite && (
+              <button type="button" onClick={() => setPanel({ mode: 'add' })} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+                <Plus className="h-4 w-4" /> {t('bills.add')}
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -370,7 +373,7 @@ function BillsPage() {
                               today={today}
                               categoryName={t(GROUP_KEY[groupOfBill(bill)])}
                               onSelect={() => setPanel({ mode: 'detail', id: bill.id })}
-                              onPay={() => setPanel({ mode: 'detail', id: bill.id, pay: true })}
+                              onPay={canWrite ? () => setPanel({ mode: 'detail', id: bill.id, pay: true }) : undefined}
                             />
                           </motion.div>
                         ))}
@@ -385,7 +388,7 @@ function BillsPage() {
       </div>
 
       <AnimatePresence>
-        {!loading && hasBills && !panel && (
+        {canWrite && !loading && hasBills && !panel && (
           <motion.button
             key="add-fab"
             type="button"

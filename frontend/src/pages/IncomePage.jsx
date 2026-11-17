@@ -31,7 +31,8 @@ const toPayloadDeductions = (items) =>
     .map((item) => ({ name: item.name.trim(), kind: item.kind, value: Number(item.value) }));
 
 function IncomePage() {
-  const { currency } = useAuth();
+  const { currency, user } = useAuth();
+  const canWrite = user?.role !== 'viewer';
   const { t, tServer } = useTranslation();
   const { formatMoney } = useFormat();
   const { currencies } = useLocalizedOptions();
@@ -286,7 +287,7 @@ function IncomePage() {
             <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('income.headerStream')}</h1>
             <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold tabular-nums text-muted ring-1 ring-border">{streams.length}</span>
           </div>
-          {!adding && !loading && streams.length > 0 && (
+          {canWrite && !adding && !loading && streams.length > 0 && (
             <button type="button" onClick={startAdding} className="hidden shrink-0 items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 lg:flex">
               <Plus className="h-4 w-4" />
               {t('income.add')}
@@ -315,9 +316,11 @@ function IncomePage() {
               <Banknote className="h-6 w-6" strokeWidth={1.5} />
             </span>
             <p className="mt-4 text-base font-medium text-ink">{t('income.emptyTitle')}</p>
-            <button type="button" onClick={startAdding} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
-              <Plus className="h-4 w-4" /> {t('income.add')}
-            </button>
+            {canWrite && (
+              <button type="button" onClick={startAdding} className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+                <Plus className="h-4 w-4" /> {t('income.add')}
+              </button>
+            )}
           </div>
           {archivedBlock && <div className="mt-4">{archivedBlock}</div>}
           </>
@@ -350,7 +353,7 @@ function IncomePage() {
         )}
       </div>
       <AnimatePresence>
-        {!wide && !loading && !adding && !editing && !selected && streams.length > 0 && (
+        {canWrite && !wide && !loading && !adding && !editing && !selected && streams.length > 0 && (
           <motion.button
             key="add-fab"
             type="button"

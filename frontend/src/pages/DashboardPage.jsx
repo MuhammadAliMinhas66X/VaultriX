@@ -238,9 +238,11 @@ function DashboardPage() {
               <Banknote className="h-6 w-6" strokeWidth={1.5} />
             </span>
             <p className="mt-4 text-base font-medium text-ink">{t('dashboard.emptyTitle')}</p>
-            <Link to="/income?add=1" className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
-              <Plus className="h-4 w-4" /> {t('income.add')}
-            </Link>
+            {user?.role !== 'viewer' && (
+              <Link to="/income?add=1" className="mt-5 flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">
+                <Plus className="h-4 w-4" /> {t('income.add')}
+              </Link>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-5">

@@ -43,7 +43,7 @@ function BillRow({ bill, today, categoryName, onSelect, onPay }) {
               <Repeat className={`h-3.5 w-3.5 shrink-0 ${bill.seriesState === 'paused' ? 'opacity-40' : ''}`} strokeWidth={2} aria-label={t('bills.repeatLabel')} />
             )}
           </span>
-          {payable && (
+          {payable && onPay && (
             <button
               type="button"
               onClick={(event) => {
