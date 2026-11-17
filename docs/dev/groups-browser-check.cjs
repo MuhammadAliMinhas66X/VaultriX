@@ -41,6 +41,8 @@ const respond = (url, method, body) => {
     await page.getByRole('button', { name: 'Add shared cost' }).first().click();
     await page.getByPlaceholder('Rent, groceries, electricity...').fill('Groceries');
     await page.getByPlaceholder('0').first().fill('1001');
+    await page.getByRole('button', { name: 'Repeats' }).click();
+    await page.getByRole('option', { name: 'Every month' }).click();
     await page.waitForTimeout(200);
     await page.screenshot({ path: `${out}group-add-${tag}.png` });
     await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -49,7 +51,7 @@ const respond = (url, method, body) => {
     if (!sent) problems.push(`${tag}: expense not sent`);
     else {
       const body = JSON.parse(sent.slice(8));
-      if (body.description !== 'Groceries' || body.amount !== 1001 || body.splitType !== 'equal' || body.participants.length !== 2 || body.paidBy !== 'u1') problems.push(`${tag}: bad payload ${sent}`);
+      if (body.description !== 'Groceries' || body.amount !== 1001 || body.splitType !== 'equal' || body.repeat !== 'monthly' || body.participants.length !== 2 || body.paidBy !== 'u1') problems.push(`${tag}: bad payload ${sent}`);
     }
 
     calls.length = 0;
