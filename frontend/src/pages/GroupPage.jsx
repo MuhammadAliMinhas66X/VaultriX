@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Copy, Loader2, Mail, Plus, Trash2, Wallet, X, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, Loader2, Mail, Plus, Repeat, Trash2, Wallet, X, Pencil } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import Drawer from '../components/Drawer.jsx';
@@ -195,7 +195,10 @@ export default function GroupPage() {
                   <li key={expense.id} className="px-5 py-4">
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-semibold text-ink">{expense.description}</p>
+                        <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                          <span className="truncate">{expense.description}</span>
+                          {(expense.repeat !== 'none' || expense.repeatOf) && <Repeat className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={2} aria-label={t('groups.repeatPill')} />}
+                        </p>
                         <p className="mt-0.5 text-sm text-muted">
                           {t('groups.paidBy', { name: nameOf(expense.paidBy) })} · {t('groups.splitWays', { count: expense.shares.length })} · {formatDate(new Date(expense.spentAt), { ...dateOptions, timeZone: 'UTC' })}
                         </p>

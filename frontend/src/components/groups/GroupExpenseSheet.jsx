@@ -27,6 +27,7 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
   const [included, setIncluded] = useState(() => new Set(initial ? initial.shares.map((share) => share.userId) : people.map((member) => member.id)));
   const [parts, setParts] = useState(() => Object.fromEntries((initial && initial.splitType === 'exact' ? initial.shares : []).map((share) => [share.userId, String(share.amount)])));
   const [percents, setPercents] = useState(() => Object.fromEntries((initial && initial.splitType === 'percent' ? initial.shares : []).map((share) => [share.userId, String(share.percent ?? '')])));
+  const [repeat, setRepeat] = useState(initial ? initial.repeat || 'none' : 'none');
   const [error, setError] = useState('');
 
   const total = toMinor(amount);
@@ -46,7 +47,7 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
 
   const submit = (event) => {
     event.preventDefault();
-    const base = { description: description.trim(), amount: Number(amount), currency, spentAt: date, paidBy, splitType: mode };
+    const base = { description: description.trim(), amount: Number(amount), currency, spentAt: date, paidBy, splitType: mode, ...(initial && initial.repeatOf ? {} : { repeat }) };
     if (!base.description || !(base.amount > 0) || !currency || !date || date > todayLocal()) return setError(t('groups.errCheck'));
     if (mode === 'equal') {
       if (ids.length === 0) return setError(t('groups.errCheck'));
@@ -61,6 +62,8 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
     if (shares.length === 0 || left !== 0) return setError(t('groups.errCheck'));
     return onSubmit({ ...base, shares });
   };
+
+  const repeatItems = ['none', 'weekly', 'monthly', 'yearly'].map((value) => ({ value, label: t(`expenses.repeat${value[0].toUpperCase()}${value.slice(1)}`) }));
 
   const payerItems = people.map((member) => ({
     value: member.id,
@@ -90,6 +93,16 @@ export default function GroupExpenseSheet({ members, me, currencies, defaultCurr
           <Combobox items={payerItems} searchable={people.length > 6} ariaLabel={t('groups.formPaidBy')} value={paidBy} onChange={setPaidBy} />
         </div>
       </div>
+
+      {!(initial && initial.repeatOf) ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-ink">{t('expenses.repeatLabel')}</span>
+          <Combobox items={repeatItems} searchable={false} ariaLabel={t('expenses.repeatLabel')} value={repeat} onChange={setRepeat} />
+          {repeat !== 'none' && <p className="text-xs text-muted">{t('groups.repeatHint')}</p>}
+        </div>
+      ) : (
+        <p className="text-xs text-muted">{t('groups.repeatCopy')}</p>
+      )}
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-ink">{t('groups.formSplit')}</span>
