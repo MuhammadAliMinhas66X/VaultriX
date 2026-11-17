@@ -178,7 +178,7 @@ export default function SalaryPage() {
               </div>
             )}
 
-            <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="sticky top-2 z-20 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
+            <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="sticky top-[4.25rem] z-10 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="w-[118px] shrink-0 sm:w-[150px]">
                   <SalaryRing total={salary} used={used} currency={currency} leftLabel={t('salary.ringLeft')} detached={detached} />
