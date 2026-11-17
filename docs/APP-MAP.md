@@ -556,7 +556,7 @@ flowchart LR
 - `backend/src/utils/groups.js` - When an account is deleted it leaves every group (balances stay, under the old name).  (used by 3)
 - `backend/src/utils/mailTemplates.js`  (used by 6)
 - `backend/src/utils/mailer.js`  (used by 7)
-- `backend/src/utils/organizations.js`  (used by 4)
+- `backend/src/utils/organizations.js` - When the owner of a shared workspace leaves, someone else must own it: first an admin,  (used by 4)
 - `backend/src/utils/tokens.js` - sessionId is optional only for backward compatibility with any  (used by 5)
 - `backend/src/utils/validators.js` - Letters (any script, via \p{L}) and combining marks (accents, via \p{M}), plus  (used by 15)
 - `frontend/src/App.jsx`  (used by 1)
