@@ -167,7 +167,7 @@ flowchart LR
 - `frontend/src/services/incomeStreamService.js`: GET /income-streams | POST /income-streams | PATCH /income-streams/:id | DELETE /income-streams/:id
 - `frontend/src/services/loanService.js`: GET /loans | POST /loans | PATCH /loans/:id | DELETE /loans/:id | POST /loans/:id/payments | DELETE /loans/:id/payments/:id | DELETE /loans/:id/received-proof | DELETE /loans/:id/payments/:id/proof
 - `frontend/src/services/receiptService.js`: GET /receipts | POST /receipts | PATCH /receipts/:id | DELETE /receipts/:id | GET /receipts/opening | PUT /receipts/opening | GET /expenses/totals
-- `frontend/src/services/salaryPlanService.js`: GET /salary-plan/:id | PUT /salary-plan/:id
+- `frontend/src/services/salaryPlanService.js`: GET /salary-plan/:id | PUT /salary-plan/:id | GET /salary-plan
 - `frontend/src/services/securityService.js`: POST /security/events
 - `frontend/src/services/teamService.js`: GET /team | POST /team/invites | DELETE /team/invites/:id | POST /team/join | POST /team/leave | PATCH /team/members/:id | DELETE /team/members/:id
 - `frontend/src/services/userService.js`: PATCH /users/me | POST /users/me/password | POST /users/me/avatar | GET /users/me/sessions | DELETE /users/me/sessions/:id | POST /users/me/sessions/logout-all | POST /users/me/email/request-change | POST /users/me/email/verify-change | POST /users/me/delete/request | POST /users/me/delete/confirm | POST /users/me/mfa/setup | POST /users/me/mfa/confirm | POST /users/me/mfa/disable
@@ -268,7 +268,8 @@ flowchart LR
 - PATCH /api/expenses/:id  (write)
 - DELETE /api/expenses/:id  (write)
 ### /api/salary-plan
-- controller `backend/src/controllers/salaryPlanController.js`; models: SalaryPlan, Category, IncomeStream; helpers: financeInput
+- controller `backend/src/controllers/salaryPlanController.js`; models: SalaryPlan, Category, IncomeStream; helpers: financeInput, currencies
+- GET /api/salary-plan
 - GET /api/salary-plan/:month
 - PUT /api/salary-plan/:month
 ### /api/bills
@@ -331,6 +332,7 @@ flowchart LR
 - resource `loans`
 - resource `categories`
 - resource `salaryPlan`
+- resource `salaryPlans`
 - resource `receipts`
 - resource `opening`
 - resource `expenseTotals`
@@ -340,7 +342,7 @@ flowchart LR
 - a save to `/categories` reloads categories, expenses, bills
 - a save to `/loans` reloads loans, expenses, expenseTotals
 - a save to `/income-streams` reloads receipts
-- a save to `/salary-plan` reloads salaryPlan
+- a save to `/salary-plan` reloads salaryPlan, salaryPlans
 - a save to `/receipts` reloads receipts, opening, expenseTotals
 
 ## 7. Models (field names)
@@ -363,7 +365,7 @@ flowchart LR
 - `PendingDeviceLogin`: userId, otpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, userAgent, ip, expiresAt
 - `PendingEmailChange`: userId, newEmail, oldEmailOtpHash, newEmailOtpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, expiresAt
 - `PendingSignup`: email, name, passwordHash, otpHash, otpExpiresAt, attempts, sendCount, windowStartedAt, lastSentAt, expiresAt, deviceId, deviceFallbackId
-- `SalaryPlan`: label, amountMinor, categoryId, orgId, month, streamId, lines
+- `SalaryPlan`: label, amountMinor, categoryId, orgId, month, streamId, lines, detached, salaryMinor, currency
 - `SecurityEvent`: event, userId, ip, path, details, capped
 - `Session`: 
 - `User`: orgId, name, email, passwordHash, authProvider, googleId, role, plan, country, currency, language, avatarUrl, avatarPublicId, onboardingCompleted, reminderEmails, lastReminderEmailOn, mfaEnabled, mfaSecret, mfaBackupCodes, usernameChangedAt, emailChangedAt, nameHistory, emailHistory, googleUnlinkedAt, tokenVersion, failedLoginAttempts, lockUntil, lockTier
@@ -484,7 +486,7 @@ flowchart LR
 - `frontend/src/components/income/IncomeForm.jsx`  (used by 1)
 - `frontend/src/components/income/SalaryCutsPanel.jsx`  (used by 1)
 - `frontend/src/components/income/incomeOptions.js`  (used by 5)
-- `frontend/src/components/salary/SalaryRing.jsx` - Numbers that roll up to their value (still when the person prefers less motion).  (used by 1)
+- `frontend/src/components/salary/SalaryRing.jsx`  (used by 1)
 - `frontend/src/context/IncomeContext.jsx`  (used by 9)
 - `frontend/src/pages/IncomePage.jsx`  (used by 1)
 - `frontend/src/pages/SalaryPage.jsx`  (used by 1)
@@ -566,7 +568,7 @@ flowchart LR
 - `backend/src/utils/balanceTotals.js` - Pure helpers for the balance totals endpoint. Kept free of database calls so  (used by 1)
 - `backend/src/utils/cooldown.js` - Shared cooldown helpers for anything that locks for N days after a change  (used by 3)
 - `backend/src/utils/csv.js` - CSV helpers. Cells that start with = + - @ (or a tab / carriage return) get a  (used by 1)
-- `backend/src/utils/currencies.js`  (used by 2)
+- `backend/src/utils/currencies.js`  (used by 3)
 - `backend/src/utils/decimalMoney.js`  (used by 0)
 - `backend/src/utils/deviceLabel.js` - Turns a raw User-Agent string into something a person can recognize at a  (used by 3)
 - `backend/src/utils/deviceLimit.js` - How many Vaultrix accounts a single device is allowed to create, counting  (used by 1)
