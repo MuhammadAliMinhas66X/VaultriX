@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Banknote, Plus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Banknote, Calculator, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
@@ -250,6 +250,17 @@ function DashboardPage() {
             {bills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
             {latestCard}
           </div>
+        )}
+
+        {!loading && hasIncome && (
+          <Link to="/salary" className="mt-5 flex items-center gap-4 rounded-2xl border border-border bg-white px-5 py-4 outline-none transition hover:border-ink/30 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-accent/40">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ink to-[#3a3a42] text-white shadow-sm"><Calculator className="h-5 w-5" strokeWidth={1.75} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-bold tracking-tight text-ink">{t('salary.promoTitle')}</span>
+              <span className="block text-sm text-muted">{t('salary.promoBody')}</span>
+            </span>
+            <span className="hidden items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink sm:flex">{t('salary.open')} <ArrowRight className="h-4 w-4" /></span>
+          </Link>
         )}
 
         {!loading && <div className="mt-5"><GroupsHub /></div>}

@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { ShieldCheck, Users } from 'lucide-react';
+import { Calculator, ShieldCheck } from 'lucide-react';
 import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon } from '../icons/NavIcons.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -43,9 +43,11 @@ export default function useAppNav() {
     { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
     { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills' },
     { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
+    { id: 'salary', label: t('nav.salary'), icon: Calculator, to: '/salary' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
-  const activeId = onGroups ? 'dashboard' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
+  const onSalary = location.pathname === '/salary';
+  const activeId = onSalary ? 'salary' : onGroups ? 'dashboard' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
   return { items, activeId };
 }
