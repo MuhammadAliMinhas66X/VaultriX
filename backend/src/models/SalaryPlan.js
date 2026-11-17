@@ -17,6 +17,9 @@ const salaryPlanSchema = new mongoose.Schema(
     month: { type: String, required: true },
     streamId: { type: mongoose.Schema.Types.ObjectId, ref: 'IncomeStream', default: null },
     lines: { type: [lineSchema], default: [] },
+    detached: { type: Boolean, default: false },
+    salaryMinor: { type: Number, default: 0, min: 0 },
+    currency: { type: String, default: null },
   },
   { timestamps: true }
 );

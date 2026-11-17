@@ -34,4 +34,26 @@ describe('salary plan', () => {
     expect((await as(ali).put('/api/salary-plan/2026-11', { lines: [{ label: 'X', amount: 5, categoryId: String(foreign._id) }] })).status).toBe(400);
     expect((await as(ali).put('/api/salary-plan/2026-11', { lines: 'no' })).status).toBe(400);
   });
+
+  it('detaches a salary into the plan, logs it, and refuses a detach without an amount', async () => {
+    const ali = await createAuthedUser({ email: 'spdetach@vaultrix.test', name: 'Ali' });
+    const other = await createAuthedUser({ email: 'spdetachother@vaultrix.test', name: 'Other' });
+
+    const first = await as(ali).put('/api/salary-plan/2026-12', { detached: true, salary: 120000, currency: 'PKR', lines: [{ label: 'Rent', amount: 40000 }] });
+    expect(first.status).toBe(200);
+    expect(first.body.plan).toMatchObject({ detached: true, salary: 120000, currency: 'PKR' });
+    await as(ali).put('/api/salary-plan/2027-01', { detached: false, lines: [{ label: 'Food', amount: 100 }] });
+
+    const logs = await as(ali).get('/api/salary-plan');
+    expect(logs.body.plans.map((plan) => plan.month)).toEqual(['2026-12']);
+    expect(logs.body.plans[0].planned).toBe(40000);
+    expect((await as(other).get('/api/salary-plan')).body.plans).toEqual([]);
+
+    expect((await as(ali).put('/api/salary-plan/2026-12', { detached: true, lines: [] })).status).toBe(400);
+    expect((await as(ali).put('/api/salary-plan/2026-12', { detached: true, salary: 5, currency: 'XXX', lines: [] })).status).toBe(400);
+
+    const back = await as(ali).put('/api/salary-plan/2026-12', { detached: false, lines: [{ label: 'Rent', amount: 40000 }] });
+    expect(back.body.plan).toMatchObject({ detached: false, salary: 0, currency: null });
+    expect((await as(ali).get('/api/salary-plan')).body.plans).toEqual([]);
+  });
 });
