@@ -101,7 +101,7 @@ export const listGroups = async (req, res, next) => {
       const mine = Object.entries(balances)
         .map(([currency, byUser]) => ({ currency, amount: toMajor(byUser[String(req.user.id)] || 0) }))
         .filter((row) => row.amount !== 0);
-      out.push({ id: String(group._id), name: group.name, currency: group.currency, members: group.members.filter((m) => !m.left).length, mine });
+      out.push({ id: String(group._id), name: group.name, currency: group.currency, members: group.members.filter((m) => !m.left).length, memberNames: group.members.filter((m) => !m.left).map((m) => m.name).slice(0, 4), mine });
     }
     res.json({ success: true, groups: out });
   } catch (error) {
@@ -227,7 +227,8 @@ export const createGroupInvite = async (req, res, next) => {
       expiresAt: new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000),
     });
     const inviter = await User.findById(req.user.id).select('name').lean();
-    sendMail({ to: parsed.email, ...groupInviteEmail({ inviterName: inviter ? inviter.name : 'Someone', group: group.name, code, days: INVITE_DAYS }) }).catch((error) =>
+    const known = Boolean(existing);
+    sendMail({ to: parsed.email, ...groupInviteEmail({ inviterName: inviter ? inviter.name : 'Someone', group: group.name, code, days: INVITE_DAYS, hasAccount: known }) }).catch((error) =>
       console.error('Group invite email failed:', error.message)
     );
     res.status(201).json({ success: true, code, invite: { id: String(invite._id), email: invite.email, expiresAt: invite.expiresAt } });
@@ -248,6 +249,33 @@ export const revokeGroupInvite = async (req, res, next) => {
   }
 };
 
+// Puts the signed-in person into the group an invite is for, then removes the invite.
+const acceptInvite = async (req, res, invite, me) => {
+  const group = await Group.findById(invite.groupId);
+  if (!group) {
+    await GroupInvite.deleteOne({ _id: invite._id });
+    return fail(res, 400, INVITE_BAD);
+  }
+  if (isActive(group, req.user.id)) {
+    await GroupInvite.deleteOne({ _id: invite._id });
+    return fail(res, 409, ALREADY_MEMBER);
+  }
+  const mineCount = await Group.countDocuments({ members: { $elemMatch: { userId: req.user.id, left: { $ne: true } } } });
+  if (mineCount >= MAX_GROUPS) return fail(res, 400, GROUP_LIMIT);
+  if (activeIds(group).length >= MAX_MEMBERS) return fail(res, 400, GROUP_FULL);
+
+  const previous = group.members.find((member) => String(member.userId) === String(req.user.id));
+  if (previous) {
+    previous.left = false;
+    previous.name = me.name;
+  } else {
+    group.members.push({ userId: req.user.id, name: me.name });
+  }
+  await group.save();
+  await GroupInvite.deleteOne({ _id: invite._id });
+  return res.json({ success: true, id: String(group._id) });
+};
+
 export const joinGroup = async (req, res, next) => {
   try {
     const code = typeof (req.body || {}).code === 'string' ? req.body.code : '';
@@ -256,28 +284,68 @@ export const joinGroup = async (req, res, next) => {
     if (!me) return fail(res, 404, NOT_FOUND);
     const invite = await GroupInvite.findOne({ codeHash: hashCode(code), email: me.email, expiresAt: { $gt: new Date() } });
     if (!invite) return fail(res, 400, INVITE_BAD);
-    const group = await Group.findById(invite.groupId);
-    if (!group) {
-      await GroupInvite.deleteOne({ _id: invite._id });
-      return fail(res, 400, INVITE_BAD);
-    }
-    if (isActive(group, req.user.id)) return fail(res, 409, ALREADY_MEMBER);
-    const mineCount = await Group.countDocuments({ members: { $elemMatch: { userId: req.user.id, left: { $ne: true } } } });
-    if (mineCount >= MAX_GROUPS) return fail(res, 400, GROUP_LIMIT);
-    if (activeIds(group).length >= MAX_MEMBERS) return fail(res, 400, GROUP_FULL);
+    return await acceptInvite(req, res, invite, me);
+  } catch (error) {
+    return next(error);
+  }
+};
 
-    const previous = group.members.find((member) => String(member.userId) === String(req.user.id));
-    if (previous) {
-      previous.left = false;
-      previous.name = me.name;
-    } else {
-      group.members.push({ userId: req.user.id, name: me.name });
-    }
-    await group.save();
-    await GroupInvite.deleteOne({ _id: invite._id });
-    res.json({ success: true, id: String(group._id) });
+// Invitations waiting for the signed-in person, matched by their account email.
+export const listMyInvites = async (req, res, next) => {
+  try {
+    const me = await User.findById(req.user.id).select('email').lean();
+    if (!me) return fail(res, 404, NOT_FOUND);
+    const invites = await GroupInvite.find({ email: me.email, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(20).lean();
+    const groups = await Group.find({ _id: { $in: invites.map((invite) => invite.groupId) } }).select('name members').lean();
+    const inviters = await User.find({ _id: { $in: invites.map((invite) => invite.invitedBy).filter(Boolean) } }).select('name').lean();
+    const groupById = new Map(groups.map((group) => [String(group._id), group]));
+    const inviterById = new Map(inviters.map((user) => [String(user._id), user.name]));
+    res.json({
+      success: true,
+      invites: invites
+        .filter((invite) => groupById.has(String(invite.groupId)))
+        .map((invite) => {
+          const group = groupById.get(String(invite.groupId));
+          return {
+            id: String(invite._id),
+            groupName: group.name,
+            memberCount: group.members.filter((member) => !member.left).length,
+            inviterName: inviterById.get(String(invite.invitedBy)) || '',
+            expiresAt: invite.expiresAt,
+          };
+        }),
+    });
   } catch (error) {
     next(error);
+  }
+};
+
+const findMyInvite = async (req) => {
+  if (!mongoose.isValidObjectId(req.params.inviteId)) return { invite: null };
+  const me = await User.findById(req.user.id).select('name email').lean();
+  if (!me) return { invite: null };
+  const invite = await GroupInvite.findOne({ _id: req.params.inviteId, email: me.email, expiresAt: { $gt: new Date() } });
+  return { invite, me };
+};
+
+export const acceptMyInvite = async (req, res, next) => {
+  try {
+    const { invite, me } = await findMyInvite(req);
+    if (!invite) return fail(res, 404, NOT_FOUND);
+    return await acceptInvite(req, res, invite, me);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const declineMyInvite = async (req, res, next) => {
+  try {
+    const { invite } = await findMyInvite(req);
+    if (!invite) return fail(res, 404, NOT_FOUND);
+    await GroupInvite.deleteOne({ _id: invite._id });
+    return res.json({ success: true });
+  } catch (error) {
+    return next(error);
   }
 };
 

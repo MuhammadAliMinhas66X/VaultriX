@@ -64,4 +64,34 @@ describe('shared groups', () => {
     expect((await api(sara).post(`/api/groups/${id}/leave`)).status).toBe(200);
     expect((await api(ali).del(`/api/groups/${id}`)).status).toBe(200);
   });
+
+  it('shows invitations by email and lets the invited person accept or decline without a code', async () => {
+    const ali = await createAuthedUser({ email: 'iali@vaultrix.test', name: 'Ali' });
+    const sara = await createAuthedUser({ email: 'isara@vaultrix.test', name: 'Sara' });
+    const spy = await createAuthedUser({ email: 'ispy@vaultrix.test', name: 'Spy' });
+    const id = (await api(ali).post('/api/groups', { name: 'Trip', currency: 'PKR' })).body.id;
+    // invited before Sara has any chance to see it; the invite is stored by email
+    await api(ali).post(`/api/groups/${id}/invites`, { email: 'isara@vaultrix.test' });
+
+    const mine = await api(sara).get('/api/groups/invites/mine');
+    expect(mine.status).toBe(200);
+    expect(mine.body.invites).toHaveLength(1);
+    expect(mine.body.invites[0].groupName).toBe('Trip');
+    expect(mine.body.invites[0].inviterName).toBe('Ali');
+    expect((await api(spy).get('/api/groups/invites/mine')).body.invites).toHaveLength(0);
+
+    const inviteId = mine.body.invites[0].id;
+    expect((await api(spy).post(`/api/groups/invites/${inviteId}/accept`)).status).toBe(404);
+    expect((await api(spy).del(`/api/groups/invites/${inviteId}`)).status).toBe(404);
+    const accepted = await api(sara).post(`/api/groups/invites/${inviteId}/accept`);
+    expect(accepted.status).toBe(200);
+    expect(accepted.body.id).toBe(id);
+    expect((await api(sara).get(`/api/groups/${id}`)).status).toBe(200);
+    expect((await api(sara).get('/api/groups/invites/mine')).body.invites).toHaveLength(0);
+
+    await api(ali).post(`/api/groups/${id}/invites`, { email: 'ispy@vaultrix.test' });
+    const spyInvite = (await api(spy).get('/api/groups/invites/mine')).body.invites[0].id;
+    expect((await api(spy).del(`/api/groups/invites/${spyInvite}`)).status).toBe(200);
+    expect((await api(spy).get('/api/groups/invites/mine')).body.invites).toHaveLength(0);
+  });
 });

@@ -11,6 +11,9 @@ import {
   createGroupInvite,
   revokeGroupInvite,
   joinGroup,
+  listMyInvites,
+  acceptMyInvite,
+  declineMyInvite,
   addGroupExpense,
   updateGroupExpense,
   deleteGroupExpense,
@@ -27,6 +30,9 @@ router.use(authenticate);
 router.get('/', teamLimiter, listGroups);
 router.post('/', teamLimiter, createGroup);
 router.post('/join', joinLimiter, joinGroup);
+router.get('/invites/mine', teamLimiter, listMyInvites);
+router.post('/invites/:inviteId/accept', joinLimiter, acceptMyInvite);
+router.delete('/invites/:inviteId', teamLimiter, declineMyInvite);
 router.get('/:id', teamLimiter, getGroup);
 router.patch('/:id', teamLimiter, renameGroup);
 router.delete('/:id', teamLimiter, deleteGroup);
