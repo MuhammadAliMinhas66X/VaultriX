@@ -50,7 +50,7 @@ let plans = {};
     await page.getByRole('button', { name: 'Detach from income stream' }).waitFor({ timeout: 20000 });
     await page.waitForTimeout(1600);
     await page.screenshot({ path: `${out}salary-attached-${tag}.png`, fullPage: true });
-    if (await page.locator('svg[role="img"] circle[stroke-width="15"]').count() < 2) problems.push(`${tag}: ring arcs missing`);
+    if (await page.locator('svg[role="img"] circle[stroke-width="14"]').count() < 2) problems.push(`${tag}: ring arcs missing`);
 
     await page.getByRole('button', { name: 'Detach from income stream' }).click();
     await page.getByText('Plan your salary').last().waitFor();

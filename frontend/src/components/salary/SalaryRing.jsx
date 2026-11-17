@@ -5,7 +5,7 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 
 const R = 96;
-const STROKE = 15;
+const STROKE = 14;
 const C = 2 * Math.PI * R;
 const GAP = 4;
 const ease = [0.22, 1, 0.36, 1];
@@ -56,7 +56,7 @@ function Arc({ from, length, stroke, delay, calm }) {
   );
 }
 
-function Spark({ angle, size, delay, calm }) {
+function Spark({ angle, size, delay, calm, color }) {
   const radius = 112;
   const x = 120 + radius * Math.cos((angle * Math.PI) / 180);
   const y = 120 + radius * Math.sin((angle * Math.PI) / 180);
@@ -66,7 +66,7 @@ function Spark({ angle, size, delay, calm }) {
     <g transform={`translate(${x} ${y})`}>
       <motion.path
         d={path}
-        fill="#ffffff"
+        fill={color}
         initial={calm ? false : { scale: 0, opacity: 0 }}
         animate={calm ? { scale: 1, opacity: 0.8 } : { scale: [0, 1, 0], opacity: [0, 1, 0], rotate: [0, 45, 90] }}
         transition={calm ? { duration: 0 } : { duration: 2.4, delay, repeat: Infinity, repeatDelay: 0.8, ease: 'easeInOut' }}
@@ -92,7 +92,7 @@ export default function SalaryRing({ total, used, currency, usedLabel, leftLabel
   const tailLen = C * 0.2;
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[280px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[150px]">
       <svg viewBox="0 0 240 240" className="h-full w-full" role="img" aria-label={t('salary.ringLabel')}>
         <defs>
           <linearGradient id={`${uid}-used`} x1="0" y1="0" x2="1" y2="1">
@@ -115,29 +115,29 @@ export default function SalaryRing({ total, used, currency, usedLabel, leftLabel
           </filter>
         </defs>
 
-        <circle cx="120" cy="120" r={R} fill="none" stroke="#ffffff" strokeOpacity="0.09" strokeWidth={STROKE} />
+        <circle cx="120" cy="120" r={R} fill="none" stroke="#ececee" strokeWidth={STROKE} />
 
-        <g filter={`url(#${uid}-glow)`}>
+        <g>
           <Arc from={0} length={usedDraw} stroke={`url(#${uid}-used)`} delay={0.1} calm={calm} />
           <Arc from={leftFrom} length={leftDraw} stroke={`url(#${uid}-left)`} delay={0.5} calm={calm} />
         </g>
 
         {!calm && budget > 0 && (
           <motion.g style={{ originX: '120px', originY: '120px' }} animate={{ rotate: 360 }} transition={{ duration: 5.5, repeat: Infinity, ease: 'linear' }}>
-            <circle cx="120" cy="120" r={R} fill="none" stroke="#ffffff" strokeOpacity="0.22" strokeWidth={STROKE - 6} strokeLinecap="round" strokeDasharray={`${tailLen} ${C}`} transform="rotate(-90 120 120)" />
-            <circle cx="120" cy="120" r={R} fill="none" stroke="#ffffff" strokeWidth={STROKE - 4} strokeLinecap="round" strokeDasharray={`${glintLen} ${C}`} strokeDashoffset={-(tailLen - glintLen)} transform="rotate(-90 120 120)" filter={`url(#${uid}-glow)`} />
+            <circle cx="120" cy="120" r={R} fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth={STROKE - 6} strokeLinecap="round" strokeDasharray={`${tailLen} ${C}`} transform="rotate(-90 120 120)" />
+            <circle cx="120" cy="120" r={R} fill="none" stroke="#ffffff" strokeWidth={STROKE - 4} strokeLinecap="round" strokeDasharray={`${glintLen} ${C}`} strokeDashoffset={-(tailLen - glintLen)} transform="rotate(-90 120 120)" />
           </motion.g>
         )}
 
         {SPARKS.map((spark) => (
-          <Spark key={spark.angle} {...spark} calm={calm} />
+          <Spark key={spark.angle} {...spark} calm={calm} color={spark.angle % 120 < 60 ? '#ff7a18' : '#14b8ff'} />
         ))}
       </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-12 text-center">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">{over ? t('salary.overShort') : leftLabel}</span>
-        <CountUp value={Math.abs(left)} currency={currency} className="mt-1.5 text-[1.75rem] font-bold leading-none tracking-tight text-white" />
-        <span className="mt-2 text-xs text-white/50">{t('salary.centerOf')}</span>
-        <CountUp value={budget} currency={currency} className="text-xs font-medium text-white/70" />
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-9 text-center">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">{over ? t('salary.overShort') : leftLabel}</span>
+        <CountUp value={Math.abs(left)} currency={currency} className="mt-1 text-sm font-bold leading-none tracking-tight text-ink" />
+        <span className="mt-1 text-[10px] text-muted">{t('salary.centerOf')}</span>
+        <CountUp value={budget} currency={currency} className="text-[10px] font-medium text-muted" />
       </div>
       <span className="sr-only">{usedLabel}</span>
     </div>

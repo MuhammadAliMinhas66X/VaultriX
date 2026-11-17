@@ -131,14 +131,14 @@ export default function SalaryPage() {
   const money = (value) => formatMoney(value, { decimals: 0, currency });
 
   const legend = [
-    { key: 'used', dot: 'bg-gradient-to-br from-[#ff2d55] to-[#ffd60a]', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
-    { key: 'left', dot: 'bg-gradient-to-br from-[#00e0a4] to-[#14b8ff]', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
-    { key: 'salary', dot: 'bg-white/30', label: t('salary.income'), value: salary },
+    { key: 'used', dot: 'linear-gradient(135deg,#ff2d55,#ffd60a)', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
+    { key: 'left', dot: 'linear-gradient(135deg,#00e0a4,#14b8ff)', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
+    { key: 'salary', dot: '#d4d4d8', label: t('salary.income'), value: salary },
   ];
 
   return (
     <AppShell showLogo pageTitle={t('salary.title')} items={items} activeId={activeId}>
-      <div className="mx-auto w-full max-w-[1000px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('salary.title')}</h1>
@@ -171,25 +171,25 @@ export default function SalaryPage() {
               </div>
             )}
 
-            <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-3xl bg-ink p-5 text-white sm:p-8">
-              <div className="grid items-center gap-7 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:gap-12">
-                <SalaryRing total={salary} used={used} currency={currency} usedLabel={legend[0].label} leftLabel={legend[1].label} />
-                <div className="flex min-w-0 flex-col gap-5">
+            <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+              <div className="grid items-center gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-8">
+                <SalaryRing total={salary} used={used} currency={currency} usedLabel={legend[0].label} leftLabel={t('salary.ringLeft')} />
+                <div className="flex min-w-0 flex-col gap-3.5">
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${detached ? 'bg-white text-ink' : 'bg-white/10 text-white/70'}`}>{detached ? t('salary.detachedBadge') : stream ? stream.name : t('salary.attachedBadge')}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${detached ? 'bg-ink text-white' : 'bg-surface text-muted'}`}>{detached ? t('salary.detachedBadge') : stream ? stream.name : t('salary.attachedBadge')}</span>
                   </div>
-                  <ul className="flex flex-col gap-3 text-sm">
+                  <ul className="flex flex-col gap-2 text-sm">
                     {legend.map((row) => (
                       <li key={row.key} className="flex items-center gap-3">
-                        <span className={`h-3 w-3 shrink-0 rounded-full ${row.dot}`} />
-                        <span className="flex-1 text-white/60">{row.label}</span>
-                        <span className="whitespace-nowrap font-semibold tabular-nums text-white">{money(row.value)}</span>
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: row.dot }} />
+                        <span className="flex-1 text-muted">{row.label}</span>
+                        <span className="whitespace-nowrap font-semibold tabular-nums text-ink">{money(row.value)}</span>
                       </li>
                     ))}
                   </ul>
-                  <p className="text-sm leading-relaxed text-white/50">{detached ? t('salary.detachedHint') : t('salary.attachedHint')}</p>
+                  <p className="text-xs leading-relaxed text-muted">{detached ? t('salary.detachedHint') : t('salary.attachedHint')}</p>
                   {canWrite && (
-                    <button type="button" disabled={busy} onClick={detached ? attach : detach} className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-60 sm:w-auto sm:self-start ${detached ? 'border border-white/25 text-white hover:bg-white/10' : 'bg-white text-ink hover:opacity-90'}`}>
+                    <button type="button" disabled={busy} onClick={detached ? attach : detach} className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition disabled:opacity-60 sm:w-auto sm:self-start ${detached ? 'border border-border text-ink hover:bg-surface' : 'bg-ink text-white hover:opacity-90'}`}>
                       {detached ? <Link2 className="h-4 w-4" /> : <Unlink className="h-4 w-4" />}
                       {detached ? t('salary.attach') : t('salary.detach')}
                     </button>
