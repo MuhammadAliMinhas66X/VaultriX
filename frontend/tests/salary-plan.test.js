@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { comparePlan, monthlyNet, spentInMonth } from '../src/utils/salaryPlanMath.js';
+import { comparePlan, isSavingsLine, monthlyNet, spentInMonth, summarizeAllocations } from '../src/utils/salaryPlanMath.js';
 
 describe('salary plan maths', () => {
   it('turns a weekly or monthly amount into a monthly figure', () => {
@@ -52,5 +52,46 @@ describe('salary plan maths', () => {
     ];
     expect(spentInMonth(totals, '2026-10', { PKR: 1, USD: 0.01 }, 'PKR')).toBe(31000);
     expect(spentInMonth(totals, '2026-08', { PKR: 1 }, 'PKR')).toBe(0);
+  });
+
+  it('splits a salary into allocated, savings and unallocated money', () => {
+    const lines = [
+      { id: '1', label: 'PTCL Home Internet', amount: 3160 },
+      { id: '2', label: 'Shama', amount: 5000 },
+      { id: '3', label: 'Savings', amount: 30000, kind: 'savings' },
+      { id: '4', label: 'Home', amount: 10000 },
+    ];
+    expect(summarizeAllocations(58187, lines)).toEqual({
+      salary: 58187,
+      allocated: 48160,
+      savings: 30000,
+      other: 18160,
+      unallocated: 10027,
+      over: false,
+      allocatedPercent: 82.77,
+      unallocatedPercent: 17.23,
+      savingsPercent: 51.56,
+    });
+  });
+
+  it('never reports the full salary as unallocated once allocations exist', () => {
+    const summary = summarizeAllocations(58187, [{ id: '1', label: 'Home', amount: 10000 }]);
+    expect(summary.unallocated).toBe(48187);
+    expect(summary.unallocated).not.toBe(summary.salary);
+  });
+
+  it('flags over-allocation and handles an empty or zero salary', () => {
+    const over = summarizeAllocations(1000, [{ id: '1', label: 'Rent', amount: 1500 }]);
+    expect(over.over).toBe(true);
+    expect(over.unallocated).toBe(-500);
+    expect(over.allocatedPercent).toBe(150);
+    expect(summarizeAllocations(0, [])).toMatchObject({ allocated: 0, unallocated: 0, allocatedPercent: 0, unallocatedPercent: 0, over: false });
+  });
+
+  it('treats savings as its own kind, with a name fallback for older lines', () => {
+    expect(isSavingsLine({ label: 'Emergency fund', kind: 'savings' })).toBe(true);
+    expect(isSavingsLine({ label: 'Savings', kind: 'spend' })).toBe(false);
+    expect(isSavingsLine({ label: ' Savings ' })).toBe(true);
+    expect(isSavingsLine({ label: 'Rent' })).toBe(false);
   });
 });

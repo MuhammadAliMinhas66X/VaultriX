@@ -58,3 +58,37 @@ export const spentInMonth = (totals, month, rates, currency) => {
   });
   return round2(sum);
 };
+
+// Savings is its own allocation kind. Lines saved with `kind: 'savings'` are savings. Lines saved
+// before the kind existed have no kind, so they count as savings only when named like it.
+const SAVINGS_NAMES = new Set(['savings', 'saving', 'my savings']);
+export const isSavingsLine = (line) => {
+  if (!line) return false;
+  if (line.kind === 'savings') return true;
+  if (line.kind === 'spend') return false;
+  return SAVINGS_NAMES.has(String(line.label || '').trim().toLowerCase());
+};
+
+const pct = (part, whole) => (whole > 0 ? round2((part / whole) * 100) : 0);
+
+// Planned money only: salary, what is allocated (and how much of that is savings), what is unallocated.
+// Real spending is deliberately not part of this; `comparePlan` covers that.
+export const summarizeAllocations = (salary, lines) => {
+  const total = round2(Number(salary) > 0 ? Number(salary) : 0);
+  const list = lines || [];
+  const allocated = round2(list.reduce((sum, line) => sum + line.amount, 0));
+  const savings = round2(list.filter(isSavingsLine).reduce((sum, line) => sum + line.amount, 0));
+  const unallocated = round2(total - allocated);
+  const allocatedPercent = pct(allocated, total);
+  return {
+    salary: total,
+    allocated,
+    savings,
+    other: round2(allocated - savings),
+    unallocated,
+    over: unallocated < 0,
+    allocatedPercent,
+    unallocatedPercent: total > 0 ? round2(100 - allocatedPercent) : 0,
+    savingsPercent: pct(savings, total),
+  };
+};
