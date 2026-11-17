@@ -677,7 +677,7 @@ flowchart LR
 - `frontend/src/portfolio/components/Faq.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Flow.jsx`  (used by 1)
 - `frontend/src/portfolio/components/Footer.jsx`  (used by 2)
-- `frontend/src/portfolio/components/Hero.jsx`  (used by 1)
+- `frontend/src/portfolio/components/Hero.jsx` - Position, entrance and idle float of one device. Only translate and opacity animate (no blur  (used by 1)
 - `frontend/src/portfolio/components/Logos.jsx`  (used by 2)
 - `frontend/src/portfolio/components/Nav.jsx`  (used by 4)
 - `frontend/src/portfolio/components/ProductStory.jsx` - One device per feature, shown alone and centered so it can be read. The  (used by 1)
