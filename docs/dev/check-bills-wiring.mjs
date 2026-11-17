@@ -28,6 +28,8 @@ const checks = [
   ['backend/src/app.js', "app.use('/api/team'", 'the /api/team route is not mounted (People)'],
   ['backend/src/app.js', "app.use('/api/groups'", 'the /api/groups route is not mounted (Groups)'],
   ['frontend/src/App.jsx', 'path="/groups"', 'the Groups route is missing from App.jsx'],
+  ['backend/src/app.js', "app.use('/api/salary-plan'", 'the /api/salary-plan route is not mounted (Salary planner)'],
+  ['frontend/src/App.jsx', 'path="/salary"', 'the Salary planner route is missing from App.jsx'],
   ['frontend/src/App.jsx', 'path="/join-group"', 'the join-group page route is missing from App.jsx (invitation emails link to it)'],
   ['backend/src/routes/groupRoutes.js', '/invites/mine', 'group invitations (invites/mine) are missing'],
   ['frontend/src/pages/DashboardPage.jsx', 'GroupsHub', 'the Dashboard lost the Groups card'],
