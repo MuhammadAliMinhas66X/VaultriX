@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAppReducedMotion } from '../../hooks/useMotionPreference.js';
 import { links } from '../content.js';
@@ -10,18 +10,22 @@ import { LogoStrip } from './Logos.jsx';
 import { scrollToId } from './Nav.jsx';
 import { AndroidFrame, CountUp, LaptopFrame, PhoneFrame, SplitText, TabletFrame } from './ui.jsx';
 
-function Layer({ children, className, depth, mx, my, float, delay }) {
+function Layer({ children, className, depth, mx, my, float, sway, delay, scroll, tilt = 0 }) {
   const reduced = useAppReducedMotion();
   const x = useTransform(mx, (value) => value * depth);
-  const y = useTransform(my, (value) => value * depth);
+  const y = useTransform([my, scroll], ([pointer, lift]) => pointer * depth + lift * depth * 4);
   return (
     <motion.div style={{ x: reduced ? 0 : x, y: reduced ? 0 : y }} className={`absolute ${className}`}>
       <motion.div
-        initial={reduced ? false : { opacity: 0, y: 60, scale: 0.94 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 1.1, delay, ease: [0.22, 1, 0.36, 1] }}
+        initial={reduced ? false : { opacity: 0, y: 110, scale: 0.9, rotate: tilt + sway * 2.5, filter: 'blur(10px)' }}
+        animate={{ opacity: 1, y: 0, scale: 1, rotate: tilt, filter: 'blur(0px)' }}
+        transition={{ type: 'spring', stiffness: 70, damping: 15, mass: 1.1, delay, filter: { duration: 0.9, delay } }}
       >
-        <motion.div animate={reduced ? undefined : { y: [0, float, 0] }} transition={{ duration: 7 + Math.abs(float) / 2, repeat: Infinity, ease: 'easeInOut' }}>
+        <motion.div
+          animate={reduced ? undefined : { y: [0, float, 0], rotate: [0, sway, 0] }}
+          transition={{ duration: 6.5 + Math.abs(float) / 2, repeat: Infinity, ease: 'easeInOut' }}
+          whileHover={reduced ? undefined : { scale: 1.05, y: -10 }}
+        >
           {children}
         </motion.div>
       </motion.div>
@@ -35,6 +39,8 @@ function Hero() {
   const stage = useRef(null);
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
+  const { scrollYProgress } = useScroll({ target: stage, offset: ['start start', 'end start'] });
+  const lift = useTransform(scrollYProgress, [0, 1], [0, -1]);
   const mx = useSpring(rawX, { stiffness: 50, damping: 18, mass: 1.2 });
   const my = useSpring(rawY, { stiffness: 50, damping: 18, mass: 1.2 });
   const [on, setOn] = useState(false);
@@ -99,17 +105,17 @@ function Hero() {
         </div>
 
         <div ref={stage} className="relative mx-auto mt-4 aspect-[1/0.9] w-full max-w-[640px] lg:col-span-6 lg:mt-0 lg:max-w-none">
-          <Layer mx={mx} my={my} depth={-10} float={-7} delay={0.45} className="left-[2%] top-[4%] w-[84%]">
-            <LaptopFrame src={screens.incomeDesktop} alt="Vaultrix income streams on a laptop" priority />
+          <Layer mx={mx} my={my} scroll={lift} depth={-10} float={-6} sway={0.4} delay={0.35} className="left-[2%] top-[4%] w-[84%]">
+            <LaptopFrame src={screens.incomeDesktop} alt="Vaultrix income streams on a laptop" priority fx={{ text: 'Salary received · Rs 163,250', place: 'right-[4cqw] top-[5cqw]', delay: 1.5 }} />
           </Layer>
-          <Layer mx={mx} my={my} depth={20} float={9} delay={0.65} className="bottom-[1%] left-0 z-20 w-[39%] -rotate-[5deg]">
-            <TabletFrame src={screens.loansTablet} alt="Vaultrix loans on a tablet" priority />
+          <Layer mx={mx} my={my} scroll={lift} depth={20} float={9} sway={-1.6} tilt={-3} delay={0.6} className="bottom-[1%] left-[1%] z-20 w-[33%]">
+            <TabletFrame src={screens.loansTablet} alt="Vaultrix loans on a tablet" priority fx={{ text: 'Part payment · Rs 18,000', place: 'bottom-[7cqw] left-[6cqw]', delay: 3.2 }} />
           </Layer>
-          <Layer mx={mx} my={my} depth={12} float={-11} delay={0.85} className="bottom-[0%] left-[40%] z-30 w-[22%]">
-            <PhoneFrame src={screens.dashboardPhone} alt="Vaultrix dashboard on an iPhone" priority />
+          <Layer mx={mx} my={my} scroll={lift} depth={12} float={-11} sway={1.2} delay={0.85} className="bottom-[0%] left-[46%] z-30 w-[20%]">
+            <PhoneFrame src={screens.dashboardPhone} alt="Vaultrix dashboard on an iPhone" priority fx={{ text: 'Balance updated', place: 'bottom-[22cqw] left-0 right-0 mx-auto', delay: 2.4 }} />
           </Layer>
-          <Layer mx={mx} my={my} depth={26} float={8} delay={1.05} className="bottom-[6%] right-0 z-20 w-[21%] rotate-[4deg]">
-            <AndroidFrame src={screens.expensesPhone} alt="Vaultrix daily expenses on an Android phone" priority />
+          <Layer mx={mx} my={my} scroll={lift} depth={26} float={8} sway={-1.4} tilt={3} delay={1.1} className="bottom-[5%] right-[1%] z-20 w-[19%]">
+            <AndroidFrame src={screens.expensesPhone} alt="Vaultrix daily expenses on an Android phone" priority fx={{ text: 'Expense added', place: 'bottom-[24cqw] left-0 right-0 mx-auto', delay: 4 }} />
           </Layer>
         </div>
       </div>

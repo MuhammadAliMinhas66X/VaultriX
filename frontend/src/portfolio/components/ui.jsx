@@ -132,7 +132,52 @@ export function Tilt({ children, className = '', max = 7 }) {
 // phone looks the same at 70px wide in the hero as at 400px wide in focus.
 const Img = ({ src, alt, priority }) => <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />;
 
-export function PhoneFrame({ src, alt, className = '', priority = false }) {
+// Life inside a screen: the picture drifts slowly, a soft glare sweeps across
+// the glass now and then, and a small chip pops in as if something just
+// arrived. Only used when a frame is given `fx`. Reduced motion shows the plain picture.
+function ScreenFx({ fx }) {
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.span
+        className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-[20deg] bg-gradient-to-r from-transparent via-white/40 to-transparent"
+        initial={{ x: '0%' }}
+        animate={{ x: ['0%', '460%'] }}
+        transition={{ duration: 1.9, delay: fx.delay, repeat: Infinity, repeatDelay: 6.5, ease: [0.4, 0, 0.2, 1] }}
+      />
+      <motion.span
+        className={`absolute flex w-max items-center gap-[max(1.2cqw,2px)] rounded-full bg-white px-[max(2.4cqw,5px)] py-[max(1.3cqw,3px)] text-[max(2.6cqw,6px)] font-semibold leading-none text-ink shadow-[0_2cqw_5cqw_-1.5cqw_rgba(17,17,20,0.5)] ring-1 ring-black/5 ${fx.place}`}
+        initial={{ opacity: 0, y: '45%', scale: 0.9 }}
+        animate={{ opacity: [0, 1, 1, 0], y: ['45%', '0%', '0%', '-35%'], scale: [0.9, 1, 1, 0.96] }}
+        transition={{ duration: 6.5, delay: fx.delay + 1, repeat: Infinity, times: [0, 0.12, 0.8, 1], ease: 'easeOut' }}
+      >
+        <span className="aspect-square w-[max(1.6cqw,3px)] rounded-full bg-ink" />
+        {fx.text}
+      </motion.span>
+    </span>
+  );
+}
+
+function Screen({ src, alt, priority, fx }) {
+  const reduced = useAppReducedMotion();
+  if (!fx || reduced) return <Img src={src} alt={alt} priority={priority} />;
+  return (
+    <>
+      <motion.img
+        src={src}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        className="block h-auto w-full"
+        initial={{ scale: 1.02 }}
+        animate={{ scale: [1.02, 1.06, 1.02], x: ['0%', '-0.8%', '0%'], y: ['0%', '-1.2%', '0%'] }}
+        transition={{ duration: 12 + fx.delay, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <ScreenFx fx={fx} />
+    </>
+  );
+}
+
+export function PhoneFrame({ src, alt, className = '', priority = false, fx }) {
   return (
     <div className={`[container-type:inline-size] ${className}`}>
       <div className="relative rounded-[17cqw] bg-ink p-[3.4cqw] shadow-[0_8cqw_16cqw_-6cqw_rgba(17,17,20,0.55)]">
@@ -140,7 +185,7 @@ export function PhoneFrame({ src, alt, className = '', priority = false }) {
         <span aria-hidden="true" className="absolute -left-[1.1cqw] top-[34cqw] h-[14cqw] w-[1.1cqw] rounded-l-[0.5cqw] bg-ink" />
         <span aria-hidden="true" className="absolute -right-[1.1cqw] top-[30cqw] h-[18cqw] w-[1.1cqw] rounded-r-[0.5cqw] bg-ink" />
         <div className="relative overflow-hidden rounded-[13.6cqw] bg-white">
-          <Img src={src} alt={alt} priority={priority} />
+          <Screen src={src} alt={alt} priority={priority} fx={fx} />
           <span aria-hidden="true" className="absolute left-1/2 top-[2.6cqw] h-[7.2cqw] w-[28cqw] -translate-x-1/2 rounded-full bg-ink" />
         </div>
       </div>
@@ -148,14 +193,14 @@ export function PhoneFrame({ src, alt, className = '', priority = false }) {
   );
 }
 
-export function AndroidFrame({ src, alt, className = '', priority = false }) {
+export function AndroidFrame({ src, alt, className = '', priority = false, fx }) {
   return (
     <div className={`[container-type:inline-size] ${className}`}>
       <div className="relative rounded-[8cqw] bg-[#202024] p-[2.6cqw] shadow-[0_8cqw_16cqw_-6cqw_rgba(17,17,20,0.55)] ring-1 ring-white/10">
         <span aria-hidden="true" className="absolute -right-[1cqw] top-[24cqw] h-[11cqw] w-[1cqw] rounded-r-[0.4cqw] bg-[#2c2c32]" />
         <span aria-hidden="true" className="absolute -right-[1cqw] top-[40cqw] h-[7cqw] w-[1cqw] rounded-r-[0.4cqw] bg-[#2c2c32]" />
         <div className="relative overflow-hidden rounded-[5.6cqw] bg-white">
-          <Img src={src} alt={alt} priority={priority} />
+          <Screen src={src} alt={alt} priority={priority} fx={fx} />
           <span aria-hidden="true" className="absolute left-1/2 top-[2.8cqw] aspect-square w-[3.6cqw] -translate-x-1/2 rounded-full bg-[#0c0c0f] ring-[0.5cqw] ring-black/30" />
         </div>
       </div>
@@ -163,7 +208,7 @@ export function AndroidFrame({ src, alt, className = '', priority = false }) {
   );
 }
 
-export function TabletFrame({ src, alt, className = '', priority = false }) {
+export function TabletFrame({ src, alt, className = '', priority = false, fx }) {
   return (
     <div className={`[container-type:inline-size] ${className}`}>
       <div className="relative rounded-[5cqw] bg-[#1c1c20] p-[3.4cqw] shadow-[0_6cqw_12cqw_-5cqw_rgba(17,17,20,0.55)] ring-1 ring-white/10">
@@ -171,7 +216,7 @@ export function TabletFrame({ src, alt, className = '', priority = false }) {
         <span aria-hidden="true" className="absolute -right-[0.7cqw] top-[12cqw] h-[6cqw] w-[0.7cqw] rounded-r-[0.3cqw] bg-[#2c2c32]" />
         <span aria-hidden="true" className="absolute -right-[0.7cqw] top-[20cqw] h-[6cqw] w-[0.7cqw] rounded-r-[0.3cqw] bg-[#2c2c32]" />
         <div className="relative overflow-hidden rounded-[2.2cqw] bg-white">
-          <Img src={src} alt={alt} priority={priority} />
+          <Screen src={src} alt={alt} priority={priority} fx={fx} />
         </div>
         <span aria-hidden="true" className="absolute left-1/2 top-[1.2cqw] aspect-square w-[1cqw] min-w-[2px] -translate-x-1/2 rounded-full bg-[#0b0b0d] ring-1 ring-white/10" />
       </div>
@@ -179,12 +224,12 @@ export function TabletFrame({ src, alt, className = '', priority = false }) {
   );
 }
 
-export function LaptopFrame({ src, alt, className = '', priority = false }) {
+export function LaptopFrame({ src, alt, className = '', priority = false, fx }) {
   return (
     <div className={`[container-type:inline-size] ${className}`}>
       <div className="relative rounded-t-[2cqw] bg-ink p-[1.5cqw] shadow-[0_5cqw_10cqw_-4cqw_rgba(17,17,20,0.5)]">
         <div className="relative overflow-hidden rounded-[0.8cqw] bg-white">
-          <Img src={src} alt={alt} priority={priority} />
+          <Screen src={src} alt={alt} priority={priority} fx={fx} />
         </div>
         <span aria-hidden="true" className="absolute left-1/2 top-[0.5cqw] aspect-square w-[0.5cqw] min-w-[2px] -translate-x-1/2 rounded-full bg-white/40" />
       </div>
