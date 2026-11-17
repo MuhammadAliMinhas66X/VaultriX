@@ -52,6 +52,22 @@ const respond = (url, method, body) => {
       if (body.description !== 'Groceries' || body.amount !== 1001 || body.splitType !== 'equal' || body.participants.length !== 2 || body.paidBy !== 'u1') problems.push(`${tag}: bad payload ${sent}`);
     }
 
+    calls.length = 0;
+    await page.getByRole('button', { name: 'Add shared cost' }).first().click();
+    await page.getByPlaceholder('Rent, groceries, electricity...').fill('Trip');
+    await page.getByPlaceholder('0').first().fill('1000');
+    await page.getByRole('radio', { name: 'Percent' }).click();
+    await page.getByLabel('Ali').last().fill('60');
+    await page.getByLabel('Sara').last().fill('30');
+    await page.getByText('10% left to assign').waitFor();
+    await page.getByLabel('Sara').last().fill('40');
+    await page.getByText('All assigned').waitFor();
+    await page.screenshot({ path: `${out}group-percent-${tag}.png` });
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.waitForTimeout(500);
+    const pc = calls.find((c) => c.startsWith('expense:'));
+    if (!pc || JSON.parse(pc.slice(8)).splitType !== 'percent' || JSON.parse(pc.slice(8)).percents.length !== 2) problems.push(`${tag}: percent payload wrong ${pc}`);
+
     await page.getByRole('button', { name: 'Settle up' }).first().click();
     await page.getByText('Record a payment').first().waitFor();
     await page.getByRole('button', { name: 'Save payment' }).click();
