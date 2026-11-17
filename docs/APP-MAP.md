@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (290 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (296 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -27,7 +27,7 @@ flowchart LR
   K_auth --> M_PendingSignup[("PendingSignup")]
   K_auth --> M_PendingDeviceLogin[("PendingDeviceLogin")]
   K_auth --> M_Session[("Session")]
-  P_shared["/onboarding  /groups  /groups/:id"] --> A_shared["/api/groups"]
+  P_shared["/onboarding  /join-group  /groups  /groups/:id"] --> A_shared["/api/groups"]
   A_shared --> K_shared["groupController"]
   K_shared --> M_Group[("Group")]
   K_shared --> M_GroupExpense[("GroupExpense")]
@@ -94,10 +94,11 @@ flowchart LR
 - `/login` -> `frontend/src/pages/LoginPage.jsx`
   - components: AuthLayout, FormField, EmailField, Button, Captcha, GoogleAuthButton, PageLoader, LockScreen, LockTimerBadge, OtpInput, ErrorSlot
   - services: authService
+  - utils: returnPath
 - `/signup` -> `frontend/src/pages/SignupPage.jsx`
   - components: AuthLayout, FormField, EmailField, OtpInput, Button, Captcha, PasswordStrength, GoogleAuthButton, PageLoader, ErrorSlot
   - services: authService
-  - utils: emailRules, nameRules
+  - utils: returnPath, emailRules, nameRules
 - `/forgot-password` -> `frontend/src/pages/ForgotPasswordPage.jsx`
   - components: AuthLayout, EmailField, FormField, OtpInput, PasswordStrength, Button, Captcha, ErrorSlot
   - services: authService
@@ -105,9 +106,9 @@ flowchart LR
 - `/onboarding` -> `frontend/src/pages/OnboardingPage.jsx`
   - components: Button, Combobox, Logo, OptionTile, PhotoPicker, ProfilePreview, WelcomeScreen, StepIcons, ErrorSlot
   - services: userService
-  - utils: avatar
+  - utils: returnPath, avatar
 - `/dashboard` -> `frontend/src/pages/DashboardPage.jsx`
-  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, Skeletons, incomeOptions
+  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, GroupsHub, Skeletons, incomeOptions
   - hooks/data: useBalance, useResource
   - utils: incomeMath, balanceMath, dates, billMath, expenseMath
 - `/income` -> `frontend/src/pages/IncomePage.jsx`
@@ -128,9 +129,11 @@ flowchart LR
   - services: billService
   - hooks/data: useMotionPreference, useExpenseCategories, useResource
   - utils: billers, billMath, billDates, dates, billPrefs
+- `/join-group` -> `frontend/src/pages/JoinGroupPage.jsx`
+  - components: AppShell, useAppNav, GroupsIcon, GroupsHub
+  - hooks/data: useGroupInvites
 - `/groups` -> `frontend/src/pages/GroupsPage.jsx`
-  - components: AppShell, useAppNav, Drawer, Combobox, FormField, Button
-  - services: groupService
+  - components: AppShell, useAppNav, GroupsHub, BalanceChips
 - `/groups/:id` -> `frontend/src/pages/GroupPage.jsx`
   - components: AppShell, useAppNav, Drawer, GroupExpenseSheet, SettleSheet
   - services: groupService
@@ -154,7 +157,7 @@ flowchart LR
 - `frontend/src/services/dataService.js`: GET /data/export/:id | POST /data/import/expenses | POST /data/import
 - `frontend/src/services/expenseService.js`: GET /expenses | POST /expenses | PATCH /expenses/:id | DELETE /expenses/:id | GET /categories | POST /categories | PATCH /categories/:id | DELETE /categories/:id
 - `frontend/src/services/fxService.js`: GET /fx/rates
-- `frontend/src/services/groupService.js`: GET /groups | POST /groups | GET /groups/:id | DELETE /groups/:id | POST /groups/:id/leave | POST /groups/join | POST /groups/:id/invites | DELETE /groups/:id/invites/:id | POST /groups/:id/expenses | PATCH /groups/:id/expenses/:id | DELETE /groups/:id/expenses/:id | POST /groups/:id/expenses/:id/my-expenses | POST /groups/:id/settlements | DELETE /groups/:id/settlements/:id
+- `frontend/src/services/groupService.js`: GET /groups | POST /groups | GET /groups/:id | DELETE /groups/:id | POST /groups/:id/leave | POST /groups/join | POST /groups/:id/invites | DELETE /groups/:id/invites/:id | POST /groups/:id/expenses | PATCH /groups/:id/expenses/:id | DELETE /groups/:id/expenses/:id | POST /groups/:id/expenses/:id/my-expenses | POST /groups/:id/settlements | DELETE /groups/:id/settlements/:id | GET /groups/invites/mine | POST /groups/invites/:id/accept | DELETE /groups/invites/:id
 - `frontend/src/services/incomeStreamService.js`: GET /income-streams | POST /income-streams | PATCH /income-streams/:id | DELETE /income-streams/:id
 - `frontend/src/services/loanService.js`: GET /loans | POST /loans | PATCH /loans/:id | DELETE /loans/:id | POST /loans/:id/payments | DELETE /loans/:id/payments/:id | DELETE /loans/:id/received-proof | DELETE /loans/:id/payments/:id/proof
 - `frontend/src/services/receiptService.js`: GET /receipts | POST /receipts | PATCH /receipts/:id | DELETE /receipts/:id | GET /receipts/opening | PUT /receipts/opening | GET /expenses/totals
@@ -294,6 +297,9 @@ flowchart LR
 - GET /api/groups
 - POST /api/groups
 - POST /api/groups/join
+- GET /api/groups/invites/mine
+- POST /api/groups/invites/:inviteId/accept
+- DELETE /api/groups/invites/:inviteId
 - GET /api/groups/:id
 - PATCH /api/groups/:id
 - DELETE /api/groups/:id
@@ -350,9 +356,9 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 82 files
+- `frontend/src/i18n/useTranslation.js` is imported by 85 files
 - `frontend/src/i18n/useFormat.js` is imported by 33 files
-- `frontend/src/context/AuthContext.jsx` is imported by 30 files
+- `frontend/src/context/AuthContext.jsx` is imported by 31 files
 - `frontend/src/i18n/notifications.js` is imported by 26 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 25 files
 - `frontend/src/utils/dates.js` is imported by 24 files
@@ -400,7 +406,7 @@ flowchart LR
 - `frontend/src/components/OtpInput.jsx`  (used by 4)
 - `frontend/src/components/PasswordStrength.jsx`  (used by 2)
 - `frontend/src/components/admin/AdminPasswordPrompt.jsx`  (used by 1)
-- `frontend/src/context/AuthContext.jsx`  (used by 30)
+- `frontend/src/context/AuthContext.jsx`  (used by 31)
 - `frontend/src/pages/ForgotPasswordPage.jsx`  (used by 1)
 - `frontend/src/pages/LoginPage.jsx`  (used by 1)
 - `frontend/src/pages/SignupPage.jsx`  (used by 1)
@@ -507,7 +513,7 @@ flowchart LR
 - `frontend/src/hooks/useReminders.js` - Bills and loans that are overdue or due within a week. Shared by the bell in  (used by 1)
 - `frontend/src/pages/SettingsPage.jsx`  (used by 1)
 - `frontend/src/services/userService.js`  (used by 2)
-- `frontend/src/utils/avatar.js`  (used by 7)
+- `frontend/src/utils/avatar.js`  (used by 8)
 ### shared
 - `backend/src/app.js`  (used by 1)
 - `backend/src/config/cloudinary.js`  (used by 6)
@@ -583,19 +589,22 @@ flowchart LR
 - `frontend/src/components/dashboard/BalanceCard.jsx`  (used by 1)
 - `frontend/src/components/expenses/DailyChart.jsx`  (used by 1)
 - `frontend/src/components/expenses/MonthOverview.jsx`  (used by 1)
+- `frontend/src/components/groups/BalanceChips.jsx`  (used by 2)
+- `frontend/src/components/groups/GroupsHub.jsx`  (used by 3)
+- `frontend/src/components/groups/GroupsIcon.jsx` - Three people around a shared coin. Soft float and a slow coin spin; still when  (used by 2)
 - `frontend/src/components/groups/SettleSheet.jsx` - Records "X paid Y": a real payment between two people that clears part of what is owed.  (used by 1)
 - `frontend/src/components/icons/NavIcons.jsx`  (used by 1)
 - `frontend/src/components/icons/StepIcons.jsx`  (used by 2)
 - `frontend/src/components/income/BalanceOverview.jsx`  (used by 1)
 - `frontend/src/components/income/OpeningBalanceSheet.jsx`  (used by 1)
 - `frontend/src/components/income/ReceiptsPanel.jsx`  (used by 1)
-- `frontend/src/components/layout/AppShell.jsx`  (used by 10)
+- `frontend/src/components/layout/AppShell.jsx`  (used by 11)
 - `frontend/src/components/layout/BottomNav.jsx`  (used by 1)
 - `frontend/src/components/layout/MainShell.jsx` - One shell for every main page, so moving between them only swaps the page.  (used by 1)
 - `frontend/src/components/layout/NotificationsBell.jsx` - The bell in the top bar: a badge with how many bills and loans need attention  (used by 1)
 - `frontend/src/components/layout/Sidebar.jsx`  (used by 1)
 - `frontend/src/components/layout/shellSlot.js`  (used by 2)
-- `frontend/src/components/layout/useAppNav.jsx`  (used by 8)
+- `frontend/src/components/layout/useAppNav.jsx`  (used by 9)
 - `frontend/src/components/loans/PaymentBar.jsx`  (used by 1)
 - `frontend/src/components/loans/PaymentForm.jsx`  (used by 1)
 - `frontend/src/components/loans/PaymentsChart.jsx`  (used by 1)
@@ -614,6 +623,7 @@ flowchart LR
 - `frontend/src/data/resources.js`  (used by 1)
 - `frontend/src/hooks/useBalance.js` - The one source of balance numbers. status: 'wait' | 'error' | 'ready'.  (used by 2)
 - `frontend/src/hooks/useEmailCheck.js`  (used by 1)
+- `frontend/src/hooks/useGroupInvites.js` - Group invitations waiting for the signed-in person. Feeds the bell, the Groups  (used by 3)
 - `frontend/src/hooks/useMotionPreference.js`  (used by 25)
 - `frontend/src/i18n/languageStorage.js` - Only the *signed-out* language (login / signup screens) lives in localStorage.  (used by 1)
 - `frontend/src/i18n/locales/ar.js`  (used by 2)
@@ -627,10 +637,11 @@ flowchart LR
 - `frontend/src/i18n/translations.js`  (used by 1)
 - `frontend/src/i18n/useFormat.js`  (used by 33)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 9)
-- `frontend/src/i18n/useTranslation.js`  (used by 82)
+- `frontend/src/i18n/useTranslation.js`  (used by 85)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/GroupPage.jsx`  (used by 1)
 - `frontend/src/pages/GroupsPage.jsx`  (used by 1)
+- `frontend/src/pages/JoinGroupPage.jsx` - Where the "Join group" button in the invitation email lands. Signed-out people  (used by 1)
 - `frontend/src/pages/OnboardingPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PortfolioPage.jsx`  (used by 1)
 - `frontend/src/portfolio/PrivacyPolicyPage.jsx`  (used by 1)
@@ -651,7 +662,7 @@ flowchart LR
 - `frontend/src/services/api.js` - Backs up the server's own httpOnly device cookie for the per-device  (used by 15)
 - `frontend/src/services/apiError.js`  (used by 13)
 - `frontend/src/services/dataService.js` - Downloads one CSV file (expenses, income, bills or loans) through the signed-in session.  (used by 1)
-- `frontend/src/services/groupService.js`  (used by 2)
+- `frontend/src/services/groupService.js`  (used by 3)
 - `frontend/src/services/receiptService.js`  (used by 3)
 - `frontend/src/services/requestCache.js`  (used by 2)
 - `frontend/src/services/teamService.js`  (used by 1)
@@ -669,5 +680,6 @@ flowchart LR
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
 - `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
+- `frontend/src/utils/returnPath.js` - Remembers where a person was heading before they had to sign in or create an  (used by 3)
 - `frontend/src/utils/smartImport.js` - Reads a table (from parseCsv) and works out, on its own:  (used by 1)
 - `frontend/src/utils/useMediaQuery.js`  (used by 2)
