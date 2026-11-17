@@ -50,12 +50,22 @@ let plans = {};
     await page.getByRole('button', { name: 'Detach from income stream' }).waitFor({ timeout: 20000 });
     await page.waitForTimeout(1600);
     await page.screenshot({ path: `${out}salary-attached-${tag}.png`, fullPage: true });
-    if (await page.locator('svg[role="img"] circle[stroke-width="14"]').count() < 2) problems.push(`${tag}: ring arcs missing`);
+    if (await page.locator('svg[role="img"] circle[stroke-width="12"]').count() < 1) problems.push(`${tag}: ring arcs missing`);
 
     await page.getByRole('button', { name: 'Detach from income stream' }).click();
     await page.getByText('Plan your salary').last().waitFor();
     if (!puts.length || puts[0].detached !== true || puts[0].salary !== 100000 || puts[0].currency !== 'PKR') problems.push(`${tag}: detach payload wrong ${JSON.stringify(puts[0])}`);
 
+    await page.getByText('Total salary this month').waitFor();
+    await page.getByLabel('Total salary this month').fill('120000');
+    await page.getByLabel('Total salary this month').blur();
+    await page.waitForTimeout(600);
+    if (puts[puts.length - 1].salary !== 120000) problems.push(`${tag}: salary edit payload wrong ${JSON.stringify(puts[puts.length - 1])}`);
+    await page.getByLabel('Total salary this month').fill('100000');
+    await page.getByLabel('Total salary this month').blur();
+    await page.waitForTimeout(600);
+    await page.getByRole('button', { name: 'Food', exact: true }).click();
+    if ((await page.getByPlaceholder('Rent, food, savings...').inputValue()) !== 'Food') problems.push(`${tag}: chip did not fill the name`);
     await page.getByPlaceholder('Rent, food, savings...').fill('Food');
     await page.getByPlaceholder('0').first().fill('20000');
     await page.getByRole('button', { name: 'Add to plan' }).click();

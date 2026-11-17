@@ -21,6 +21,7 @@ import { saveSalaryPlan } from '../services/salaryPlanService.js';
 
 const field = 'w-full rounded-lg border border-border px-3.5 py-2.5 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm';
 const NONE = [];
+const CHIPS = ['salary.chipRent', 'salary.chipFood', 'salary.chipBills', 'salary.chipTransport', 'salary.chipFamily', 'salary.chipSavings'];
 const round2 = (value) => Math.round(value * 100) / 100;
 
 export default function SalaryPage() {
@@ -62,6 +63,11 @@ export default function SalaryPage() {
     if (plan && plan.streamId) setStreamId(plan.streamId);
   }, [plan]);
 
+  const [salaryDraft, setSalaryDraft] = useState('');
+  useEffect(() => {
+    setSalaryDraft(detached ? String(plan.salary) : '');
+  }, [detached, plan]);
+
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [editing, setEditing] = useState(null);
@@ -94,6 +100,13 @@ export default function SalaryPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const commitSalary = () => {
+    const value = Number(salaryDraft);
+    if (!(value > 0)) return setSalaryDraft(String(plan.salary));
+    if (value === plan.salary) return undefined;
+    return persist(lines, { isDetached: true, amountNow: value, currencyNow: currency, message: t('salary.saved') });
   };
 
   const detach = () => persist(lines, { isDetached: true, amountNow: streamNet, currencyNow: stream.currency, message: t('salary.detached') });
@@ -131,9 +144,9 @@ export default function SalaryPage() {
   const money = (value) => formatMoney(value, { decimals: 0, currency });
 
   const legend = [
-    { key: 'used', dot: 'linear-gradient(135deg,#ff2d95,#7c3aed)', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
-    { key: 'left', dot: 'linear-gradient(135deg,#c6f432,#00d68f)', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
-    { key: 'salary', dot: '#d4d4d8', label: t('salary.income'), value: salary },
+    { key: 'used', dot: '#a1a1aa', label: detached ? t('salary.ringUsedPlan') : t('salary.ringSpent'), value: used },
+    { key: 'left', dot: '#f5a83a', label: detached ? t('salary.saving') : t('salary.ringLeft'), value: left },
+    { key: 'salary', dot: '#e4e4e7', label: t('salary.income'), value: salary },
   ];
 
   return (
@@ -173,7 +186,7 @@ export default function SalaryPage() {
 
             <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-white p-5 sm:p-6">
               <div className="grid items-center gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-8">
-                <SalaryRing total={salary} used={used} currency={currency} usedLabel={legend[0].label} leftLabel={t('salary.ringLeft')} />
+                <SalaryRing total={salary} used={used} currency={currency} leftLabel={t('salary.ringLeft')} />
                 <div className="flex min-w-0 flex-col gap-3.5">
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${detached ? 'bg-ink text-white' : 'bg-surface text-muted'}`}>{detached ? t('salary.detachedBadge') : stream ? stream.name : t('salary.attachedBadge')}</span>
@@ -200,10 +213,21 @@ export default function SalaryPage() {
 
             {detached && (
               <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-                <h2 className="text-base font-bold tracking-tight text-ink">{t('salary.planTitle')}</h2>
+                <p className="text-sm text-muted">{t('salary.totalLabel')}</p>
+                <div className="mt-2 flex items-baseline gap-2.5 border-b border-border pb-2 focus-within:border-ink">
+                  <span className="text-lg font-medium text-muted">{currency}</span>
+                  <MoneyInput value={salaryDraft} onChange={setSalaryDraft} disabled={!canWrite} onBlur={commitSalary} onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()} aria-label={t('salary.totalLabel')} className="w-full min-w-0 bg-transparent text-3xl font-semibold tabular-nums tracking-tight text-ink outline-none" />
+                </div>
+                {canWrite && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {CHIPS.map((key) => (
+                      <button key={key} type="button" onClick={() => setLabel(t(key))} className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition hover:border-ink/40 hover:text-ink">{t(key)}</button>
+                    ))}
+                  </div>
+                )}
 
                 {canWrite && (
-                  <form onSubmit={submit} noValidate className="mt-4 flex flex-col gap-3">
+                  <form onSubmit={submit} noValidate className="mt-3 flex flex-col gap-3">
                     <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] sm:items-end">
                       <label className="flex flex-col gap-1.5">
                         <span className="text-sm font-medium text-ink">{t('salary.lineLabel')}</span>
