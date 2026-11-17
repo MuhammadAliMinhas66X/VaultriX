@@ -1097,6 +1097,8 @@ export default {
   'salary.logPlannedSaving': "योजना की बचत",
   'salary.logActualLeft': "खर्च के बाद बचा",
   'salary.logNotYet': "अभी नहीं",
+  'salary.totalLabel': "इस महीने का कुल वेतन",
+  'salary.percentLeft': "वेतन का {percent}% बचा",
   'groups.splitPercent': "प्रतिशत",
   'groups.percentLeft': "{percent}% बाँटना बाकी",
   'groups.percentOver': "{percent}% ज़्यादा",

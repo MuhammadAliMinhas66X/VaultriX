@@ -1097,6 +1097,8 @@ export default {
   'salary.logPlannedSaving': "المدخرات المخططة",
   'salary.logActualLeft': "المتبقي بعد الإنفاق",
   'salary.logNotYet': "ليس بعد",
+  'salary.totalLabel': "إجمالي الراتب هذا الشهر",
+  'salary.percentLeft': "تبقّى {percent}% من الراتب",
   'groups.splitPercent': "نسبة مئوية",
   'groups.percentLeft': "متبقي {percent}% للتوزيع",
   'groups.percentOver': "زيادة {percent}%",

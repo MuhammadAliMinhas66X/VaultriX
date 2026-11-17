@@ -1097,6 +1097,8 @@ export default {
   'salary.logPlannedSaving': "Ahorro planeado",
   'salary.logActualLeft': "Queda tras gastar",
   'salary.logNotYet': "Aún no",
+  'salary.totalLabel': "Sueldo total este mes",
+  'salary.percentLeft': "{percent}% del sueldo restante",
   'groups.splitPercent': "Porcentaje",
   'groups.percentLeft': "Faltan {percent}% por asignar",
   'groups.percentOver': "Sobran {percent}%",
