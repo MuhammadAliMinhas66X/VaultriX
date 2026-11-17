@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Link2, Pencil, Plus, Unlink, Wallet, X } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
-import AllocationForm from '../components/salary/AllocationForm.jsx';
-import AllocationList from '../components/salary/AllocationList.jsx';
-import SalaryHistory from '../components/salary/SalaryHistory.jsx';
-import SalaryOverview from '../components/salary/SalaryOverview.jsx';
-import { btn, card } from '../components/salary/ui.js';
+import Combobox from '../components/Combobox.jsx';
+import MoneyInput from '../components/MoneyInput.jsx';
+import SalaryRing from '../components/salary/SalaryRing.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
@@ -17,10 +16,12 @@ import { useResource } from '../data/useResource.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
 import { useAppReducedMotion } from '../hooks/useMotionPreference.js';
 import { monthKey, shiftMonth } from '../utils/expenseMath.js';
-import { comparePlan, isSavingsLine, monthlyNet, summarizeAllocations } from '../utils/salaryPlanMath.js';
+import { comparePlan, monthlyNet, spentInMonth } from '../utils/salaryPlanMath.js';
 import { saveSalaryPlan } from '../services/salaryPlanService.js';
 
+const field = 'w-full rounded-lg border border-border px-3.5 py-2.5 text-base text-ink outline-none transition hover:border-ink/30 focus:border-accent focus:ring-2 focus:ring-accent/20 sm:text-sm';
 const NONE = [];
+const CHIPS = ['salary.chipRent', 'salary.chipFood', 'salary.chipBills', 'salary.chipTransport', 'salary.chipFamily', 'salary.chipSavings'];
 const round2 = (value) => Math.round(value * 100) / 100;
 
 export default function SalaryPage() {
@@ -67,17 +68,16 @@ export default function SalaryPage() {
     setSalaryDraft(detached ? String(plan.salary) : '');
   }, [detached, plan]);
 
+  const [label, setLabel] = useState('');
+  const [amount, setAmount] = useState('');
   const [editing, setEditing] = useState(null);
+  const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const formRef = useRef(null);
-  useEffect(() => {
-    setEditing(null);
-  }, [month]);
 
-  const summary = useMemo(() => summarizeAllocations(salary, lines), [salary, lines]);
   const result = useMemo(() => comparePlan({ income: salary, lines, expenses, rates, currency }), [salary, lines, expenses, rates, currency]);
   const names = useMemo(() => new Map(categories.map((category) => [category.id, category.name])), [categories]);
-  const expenseCategories = useMemo(() => categories.filter((category) => (category.type ? category.type === 'expense' : true) && !category.isArchived), [categories]);
+  const used = detached ? result.committed : result.spent;
+  const left = round2(salary - used);
 
   const persist = async (next, { isDetached = detached, message, amountNow = salary, currencyNow = currency } = {}) => {
     const previous = lines;
@@ -86,10 +86,7 @@ export default function SalaryPage() {
     try {
       await saveSalaryPlan(month, {
         streamId: stream ? stream.id : plan ? plan.streamId : null,
-        lines: next.map((line) => {
-          const savings = isSavingsLine(line);
-          return { label: line.label, amount: line.amount, categoryId: savings ? null : line.categoryId || null, kind: savings ? 'savings' : 'spend' };
-        }),
+        lines: next.map((line) => ({ label: line.label, amount: line.amount, categoryId: line.categoryId || null })),
         detached: isDetached,
         salary: isDetached ? amountNow : 0,
         currency: isDetached ? currencyNow : null,
@@ -115,132 +112,203 @@ export default function SalaryPage() {
   const detach = () => persist(lines, { isDetached: true, amountNow: streamNet, currencyNow: stream.currency, message: t('salary.detached') });
   const attach = () => persist(lines, { isDetached: false, message: t('salary.attached') });
 
-  const submit = ({ label, amount, category }) => {
-    let kind = 'spend';
-    let categoryId = null;
-    if (category === 'savings') kind = 'savings';
-    else if (category) categoryId = category;
-    else {
-      // no category picked: a name that matches an expense category still tracks its spending
-      const match = categories.find((item) => item.name.trim().toLowerCase() === label.toLowerCase());
-      if (match) categoryId = match.id;
-      else if (isSavingsLine({ label })) kind = 'savings';
-    }
-    const entry = { id: editing || `new-${Date.now()}`, label, amount, categoryId, kind };
-    const next = editing ? lines.map((line) => (line.id === editing ? entry : line)) : [...lines, entry];
+  const reset = () => {
+    setLabel('');
+    setAmount('');
     setEditing(null);
-    return persist(next, { message: t('salary.saved') });
+    setError('');
+  };
+
+  const submit = (event) => {
+    event.preventDefault();
+    const value = Number(amount);
+    const name = label.trim();
+    if (!name || !(value > 0)) return setError(t('salary.errCheck'));
+    const match = categories.find((category) => category.name.trim().toLowerCase() === name.toLowerCase());
+    const entry = { id: editing || `new-${Date.now()}`, label: name, amount: value, categoryId: match ? match.id : null };
+    const next = editing ? lines.map((line) => (line.id === editing ? { ...entry, categoryId: entry.categoryId || line.categoryId || null } : line)) : [...lines, entry];
+    reset();
+    return persist(next);
   };
 
   const startEdit = (line) => {
     setEditing(line.id);
-    if (formRef.current) formRef.current.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'nearest' });
+    setLabel(line.label);
+    setAmount(String(line.amount));
+    setError('');
   };
 
-  const editingLine = editing ? lines.find((line) => line.id === editing) : null;
   const monthLabel = (key) => formatDate(new Date(`${key}-01T00:00:00Z`), { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const money = (value) => formatMoney(value, { decimals: 0, maxDecimals: 2, currency });
-  const hasPlan = lines.length > 0;
+  const over = left < 0;
+  const streamItems = sources.map((item) => ({ value: item.id, label: item.name, sub: item.currency }));
+  const money = (value) => formatMoney(value, { decimals: 0, currency });
 
   return (
     <AppShell showLogo pageTitle={t('salary.title')} items={items} activeId={activeId}>
-      <div className="mx-auto w-full max-w-[1080px] px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-        <header className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
+      <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('salary.title')}</h1>
             <p className="mt-1 max-w-xl text-sm text-muted">{t('salary.tagline')}</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 min-w-0 flex-1 items-center rounded-lg border border-border bg-white sm:flex-none">
-              <button type="button" aria-label={t('expenses.prevMonth')} onClick={() => setMonth((value) => shiftMonth(value, -1))} className="flex h-full w-9 items-center justify-center rounded-s-lg text-muted outline-none transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/30"><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
-              <span aria-live="polite" className="min-w-0 flex-1 whitespace-nowrap px-2 text-center text-sm font-medium text-ink sm:min-w-[8.5rem] sm:flex-none">{monthLabel(month)}</span>
-              <button type="button" aria-label={t('expenses.nextMonth')} onClick={() => setMonth((value) => shiftMonth(value, 1))} className="flex h-full w-9 items-center justify-center rounded-e-lg text-muted outline-none transition hover:bg-surface hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/30"><ChevronRight className="h-4 w-4 rtl:rotate-180" /></button>
-            </div>
-            <button type="button" onClick={() => setMonth(month === nowMonth ? shiftMonth(nowMonth, 1) : nowMonth)} className={btn.secondary}>
+            <button type="button" onClick={() => setMonth(month === nowMonth ? shiftMonth(nowMonth, 1) : nowMonth)} className="whitespace-nowrap rounded-xl border border-border bg-white px-3.5 py-2.5 text-sm font-medium text-ink transition hover:bg-surface">
               {month === nowMonth ? t('salary.planNext') : t('salary.thisMonth')}
             </button>
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-1">
+              <button type="button" aria-label={t('expenses.prevMonth')} onClick={() => setMonth((value) => shiftMonth(value, -1))} className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
+              <span className="min-w-[8.5rem] text-center text-sm font-semibold text-ink">{monthLabel(month)}</span>
+              <button type="button" aria-label={t('expenses.nextMonth')} onClick={() => setMonth((value) => shiftMonth(value, 1))} className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"><ChevronRight className="h-4 w-4 rtl:rotate-180" /></button>
+            </div>
           </div>
-        </header>
+        </div>
 
         {!stream && !detached ? (
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-white px-6 py-12 text-center">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface text-muted"><Wallet className="h-5 w-5" strokeWidth={1.5} /></span>
-            <p className="mt-4 max-w-sm text-sm font-medium text-ink">{t('salary.noStream')}</p>
-            <Link to="/income" className={`${btn.primary} mt-5`}>{t('salary.goIncome')}</Link>
+          <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-14 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted"><Wallet className="h-6 w-6" strokeWidth={1.5} /></span>
+            <p className="mt-4 max-w-sm text-base font-medium text-ink">{t('salary.noStream')}</p>
+            <Link to="/income" className="mt-5 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90">{t('salary.goIncome')}</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
-            <div className="lg:col-start-2 lg:row-start-1 lg:self-start">
-              <div className="lg:sticky lg:top-6">
-                <SalaryOverview
-                  summary={summary}
-                  currency={currency}
-                  spent={result.spent}
-                  afterSpending={hasPlan || result.spent > 0 ? result.saving : null}
-                  stream={stream}
-                  detached={detached}
-                  canWrite={canWrite}
-                  busy={busy}
-                  onDisconnect={detach}
-                  onReconnect={attach}
-                  sources={sources}
-                  onPickSource={setStreamId}
-                  salaryDraft={salaryDraft}
-                  onSalaryDraft={setSalaryDraft}
-                  onSalaryCommit={commitSalary}
-                  money={money}
-                />
+          <div className="flex flex-col gap-5">
+            {!detached && sources.length > 1 && (
+              <div className="flex max-w-sm flex-col gap-1.5">
+                <span className="text-sm font-medium text-ink">{t('salary.source')}</span>
+                <Combobox items={streamItems} searchable={sources.length > 6} ariaLabel={t('salary.source')} value={stream.id} onChange={setStreamId} />
               </div>
-            </div>
+            )}
 
-            <section className={`${card} p-4 sm:p-5 lg:col-start-1 lg:row-start-1`} aria-labelledby="alloc-title">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 id="alloc-title" className="text-base font-semibold tracking-tight text-ink">{t('salary.allocationsTitle')}</h2>
-                <span className="whitespace-nowrap text-sm tabular-nums text-muted">{money(summary.allocated)}</span>
-              </div>
-
-              {canWrite && (
-                <div ref={formRef} className="mt-4 scroll-mt-4 rounded-lg bg-surface/70 p-3 sm:p-4">
-                  {editingLine && <p className="mb-3 text-sm font-medium text-ink">{t('salary.editing')}</p>}
-                  <AllocationForm
-                    key={editing || 'new'}
-                    initial={editingLine ? { label: editingLine.label, amount: editingLine.amount, category: isSavingsLine(editingLine) ? 'savings' : editingLine.categoryId || '' } : null}
-                    categories={expenseCategories}
-                    busy={busy}
-                    onSubmit={submit}
-                    onCancel={() => setEditing(null)}
-                  />
+            <motion.section initial={calm ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="sticky top-2 z-20 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-[118px] shrink-0 sm:w-[150px]">
+                  <SalaryRing total={salary} used={used} currency={currency} leftLabel={t('salary.ringLeft')} detached={detached} />
                 </div>
-              )}
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-3">
+                  <div className="min-w-0">
+                    {detached && <span className="mb-1.5 inline-block rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">{t('salary.detachedBadge')}</span>}
+                    <p className="truncate text-lg font-semibold tracking-tight text-ink">{stream ? stream.name : t('salary.attachedBadge')}</p>
+                  </div>
+                  {canWrite && (
+                    <button type="button" disabled={busy} onClick={detached ? attach : detach} className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition disabled:opacity-60 ${detached ? 'border border-border text-ink hover:bg-surface' : 'bg-ink text-white hover:opacity-90'}`}>
+                      {detached ? <Link2 className="h-4 w-4" /> : <Unlink className="h-4 w-4" />}
+                      {detached ? t('salary.attach') : t('salary.detach')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.section>
 
-              {lines.length === 0 ? (
-                <p className="mt-4 rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted">{t('salary.emptyLines')}</p>
+            {detached && (
+              <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+                <p className="text-sm text-muted">{t('salary.totalLabel')}</p>
+                <div className="mt-2 flex items-baseline gap-2.5 border-b border-border pb-2 focus-within:border-ink">
+                  <span className="text-lg font-medium text-muted">{currency}</span>
+                  <MoneyInput value={salaryDraft} onChange={setSalaryDraft} disabled={!canWrite} onBlur={commitSalary} onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()} aria-label={t('salary.totalLabel')} className="w-full min-w-0 bg-transparent text-3xl font-semibold tabular-nums tracking-tight text-ink outline-none" />
+                </div>
+                {canWrite && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {CHIPS.map((key) => (
+                      <button key={key} type="button" onClick={() => setLabel(t(key))} className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition hover:border-ink/40 hover:text-ink">{t(key)}</button>
+                    ))}
+                  </div>
+                )}
+
+                {canWrite && (
+                  <form onSubmit={submit} noValidate className="mt-3 flex flex-col gap-3">
+                    <div className="grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] sm:items-end">
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-sm font-medium text-ink">{t('salary.lineLabel')}</span>
+                        <input value={label} maxLength={40} onChange={(event) => setLabel(event.target.value)} placeholder={t('salary.lineLabelPlaceholder')} className={field} />
+                      </label>
+                      <label className="flex flex-col gap-1.5">
+                        <span className="text-sm font-medium text-ink">{t('salary.lineAmount')}</span>
+                        <MoneyInput value={amount} onChange={setAmount} placeholder="0" className={`${field} tabular-nums`} />
+                      </label>
+                      <div className="flex gap-2">
+                        <button type="submit" disabled={busy} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ink px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60 sm:flex-none">
+                          {!editing && <Plus className="h-4 w-4" />}
+                          {editing ? t('salary.saveLine') : t('salary.addLine')}
+                        </button>
+                        {editing && <button type="button" onClick={reset} className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted transition hover:bg-surface hover:text-ink">{t('common.cancel')}</button>}
+                      </div>
+                    </div>
+                    {error && <p role="alert" className="text-sm font-medium text-ink">{error}</p>}
+                  </form>
+                )}
+
+                {lines.length === 0 ? (
+                  <p className="mt-5 rounded-xl bg-surface px-4 py-6 text-center text-sm text-muted">{t('salary.emptyLines')}</p>
+                ) : (
+                  <ul className="mt-5 flex flex-col gap-2.5">
+                    <AnimatePresence initial={false}>
+                      {result.rows.map((line) => {
+                        const tracked = line.spent !== null;
+                        const ratio = tracked && line.amount > 0 ? Math.min(1, line.spent / line.amount) : 0;
+                        const burst = tracked && line.spent > line.amount;
+                        return (
+                          <motion.li key={line.id} layout={!calm} initial={calm ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-xl border border-border px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold text-ink">{line.label}</span>
+                                {tracked && <span className="block text-xs leading-snug text-muted">{t('salary.spentOf', { spent: money(line.spent), planned: money(line.amount) })}{line.categoryId && names.get(line.categoryId) ? ` · ${names.get(line.categoryId)}` : ''}</span>}
+                              </span>
+                              <span className="whitespace-nowrap text-sm font-bold tabular-nums text-ink">{money(line.amount)}</span>
+                              {canWrite && (
+                                <span className="flex shrink-0">
+                                  <button type="button" aria-label={t('salary.edit')} onClick={() => startEdit(line)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"><Pencil className="h-4 w-4" /></button>
+                                  <button type="button" aria-label={t('salary.remove')} disabled={busy} onClick={() => persist(lines.filter((item) => item.id !== line.id))} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink disabled:opacity-50"><X className="h-4 w-4" /></button>
+                                </span>
+                              )}
+                            </div>
+                            {tracked && (
+                              <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-border/70">
+                                <motion.div initial={calm ? false : { width: 0 }} animate={{ width: `${Math.max(ratio * 100, line.spent > 0 ? 3 : 0)}%` }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }} className={`h-full rounded-full ${burst ? 'bg-ink' : 'bg-[#8b8b92]'}`} />
+                              </div>
+                            )}
+                          </motion.li>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </ul>
+                )}
+
+                {result.outside > 0 && (
+                  <p className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-2.5 text-sm"><span className="text-muted">{t('salary.unplanned')}</span><span className="whitespace-nowrap font-semibold tabular-nums text-ink">{money(result.outside)}</span></p>
+                )}
+                {over && <p className="mt-3 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white">{t('salary.over', { amount: money(-left) })}</p>}
+              </section>
+            )}
+
+            <section className="rounded-2xl border border-border bg-white p-5 sm:p-6">
+              <h2 className="text-base font-bold tracking-tight text-ink">{t('salary.logsTitle')}</h2>
+              {logs.length === 0 ? (
+                <p className="mt-4 rounded-xl bg-surface px-4 py-6 text-center text-sm text-muted">{t('salary.logsEmpty')}</p>
               ) : (
-                <div className="mt-4">
-                  <AllocationList
-                    rows={result.rows}
-                    names={names}
-                    money={money}
-                    canWrite={canWrite}
-                    busy={busy}
-                    editingId={editing}
-                    onEdit={startEdit}
-                    onDelete={(line) => {
-                      if (editing === line.id) setEditing(null);
-                      persist(lines.filter((item) => item.id !== line.id), { message: t('salary.deleted') });
-                    }}
-                  />
-                </div>
-              )}
-
-              {result.outside > 0 && (
-                <p className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-surface px-4 py-2.5 text-sm"><span className="text-muted">{t('salary.unplanned')}</span><span className="whitespace-nowrap font-semibold tabular-nums text-ink">{money(result.outside)}</span></p>
+                <ul className="mt-4 flex flex-col gap-2.5">
+                  {logs.map((log) => {
+                    const logCurrency = log.currency || currency;
+                    const plannedSaving = round2(log.salary - log.planned);
+                    const actualLeft = log.month <= nowMonth && rates ? round2(log.salary - spentInMonth(totals, log.month, rates, logCurrency)) : null;
+                    const fmt = (value) => formatMoney(value, { decimals: 0, currency: logCurrency });
+                    return (
+                      <li key={log.month}>
+                        <button type="button" onClick={() => setMonth(log.month)} className={`w-full rounded-xl border px-4 py-3 text-start transition hover:bg-surface ${log.month === month ? 'border-ink' : 'border-border'}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold text-ink">{monthLabel(log.month)}</span>
+                            <span className="whitespace-nowrap text-sm font-bold tabular-nums text-ink">{fmt(log.salary)}</span>
+                          </div>
+                          <dl className="mt-2 grid grid-cols-3 gap-3 text-xs">
+                            <div><dt className="text-muted">{t('salary.logPlanned')}</dt><dd className="mt-0.5 whitespace-nowrap font-semibold tabular-nums text-ink">{fmt(log.planned)}</dd></div>
+                            <div><dt className="text-muted">{t('salary.logPlannedSaving')}</dt><dd className="mt-0.5 whitespace-nowrap font-semibold tabular-nums text-ink">{fmt(plannedSaving)}</dd></div>
+                            <div><dt className="text-muted">{t('salary.logActualLeft')}</dt><dd className="mt-0.5 whitespace-nowrap font-semibold tabular-nums text-ink">{actualLeft === null ? t('salary.logNotYet') : fmt(actualLeft)}</dd></div>
+                          </dl>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </section>
-
-            <div className="lg:col-span-2">
-              <SalaryHistory logs={logs} month={month} nowMonth={nowMonth} totals={totals} rates={rates} fallbackCurrency={currency} monthLabel={monthLabel} onOpen={setMonth} />
-            </div>
           </div>
         )}
       </div>
