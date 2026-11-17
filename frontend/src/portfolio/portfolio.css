@@ -113,6 +113,47 @@
   animation: pf-spin 26s linear infinite;
 }
 
+@keyframes pf-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pf-spin-slow {
+  animation: pf-spin-slow 70s linear infinite;
+}
+
+@keyframes pf-pulse {
+  0% {
+    transform: scale(0.45);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.pf-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pf-pulse 7.2s ease-out infinite;
+}
+
+@keyframes pf-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.pf-bob {
+  animation: pf-bob 5.5s ease-in-out infinite;
+}
+
 @keyframes pf-dash {
   to {
     stroke-dashoffset: -24;
@@ -140,6 +181,9 @@
 @media (prefers-reduced-motion: reduce) {
   .pf-marquee,
   .pf-spin,
+  .pf-spin-slow,
+  .pf-pulse,
+  .pf-bob,
   .pf-dash,
   .pf-blink {
     animation: none;
@@ -148,6 +192,9 @@
 
 html[data-reduce-motion='true'] .pf-marquee,
 html[data-reduce-motion='true'] .pf-spin,
+html[data-reduce-motion='true'] .pf-spin-slow,
+html[data-reduce-motion='true'] .pf-pulse,
+html[data-reduce-motion='true'] .pf-bob,
 html[data-reduce-motion='true'] .pf-dash,
 html[data-reduce-motion='true'] .pf-blink {
   animation: none;

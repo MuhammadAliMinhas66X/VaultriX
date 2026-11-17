@@ -132,23 +132,30 @@ export function Tilt({ children, className = '', max = 7 }) {
 // phone looks the same at 70px wide in the hero as at 400px wide in focus.
 const Img = ({ src, alt, priority }) => <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />;
 
-// Life inside a screen: the picture drifts slowly, a soft glare sweeps across
-// the glass now and then, and a small chip pops in as if something just
-// arrived. Only used when a frame is given `fx`. Reduced motion shows the plain picture.
+// Life inside a screen: it wakes up with a wipe, a soft scan band sweeps down the glass
+// now and then, and a small notification drops in from the top as if something just
+// arrived. The picture itself never scales or moves, so it stays sharp. Only used when a
+// frame is given `fx`. Reduced motion shows the plain picture.
 function ScreenFx({ fx }) {
   return (
     <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.span
-        className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-[20deg] bg-gradient-to-r from-transparent via-white/40 to-transparent"
-        initial={{ x: '0%' }}
-        animate={{ x: ['0%', '460%'] }}
-        transition={{ duration: 1.9, delay: fx.delay, repeat: Infinity, repeatDelay: 6.5, ease: [0.4, 0, 0.2, 1] }}
+        className="absolute inset-0 origin-bottom bg-white"
+        initial={{ scaleY: 1 }}
+        animate={{ scaleY: 0 }}
+        transition={{ duration: 0.85, delay: Math.max(0, fx.delay - 0.35), ease: [0.76, 0, 0.24, 1] }}
+      />
+      <motion.span
+        className="absolute inset-x-0 top-0 h-[26%] border-b border-ink/25 bg-gradient-to-b from-transparent to-ink/[0.08]"
+        initial={{ y: '-110%', opacity: 0 }}
+        animate={{ y: ['-110%', '400%'], opacity: [0, 1, 1, 0] }}
+        transition={{ duration: 2.6, delay: fx.delay + 0.6, repeat: Infinity, repeatDelay: 5.4, ease: 'easeInOut', times: [0, 0.1, 0.85, 1] }}
       />
       <motion.span
         className={`absolute flex w-max items-center gap-[max(1.2cqw,2px)] rounded-full bg-white px-[max(2.4cqw,5px)] py-[max(1.3cqw,3px)] text-[max(2.6cqw,6px)] font-semibold leading-none text-ink shadow-[0_2cqw_5cqw_-1.5cqw_rgba(17,17,20,0.5)] ring-1 ring-black/5 ${fx.place}`}
-        initial={{ opacity: 0, y: '45%', scale: 0.9 }}
-        animate={{ opacity: [0, 1, 1, 0], y: ['45%', '0%', '0%', '-35%'], scale: [0.9, 1, 1, 0.96] }}
-        transition={{ duration: 6.5, delay: fx.delay + 1, repeat: Infinity, times: [0, 0.12, 0.8, 1], ease: 'easeOut' }}
+        initial={{ opacity: 0, y: '-160%', scale: 0.92 }}
+        animate={{ opacity: [0, 1, 1, 0], y: ['-160%', '0%', '0%', '-160%'], scale: [0.92, 1, 1, 0.96] }}
+        transition={{ duration: 5.5, delay: fx.delay + 1.2, repeat: Infinity, repeatDelay: 2, times: [0, 0.14, 0.8, 1], ease: 'easeOut' }}
       >
         <span className="aspect-square w-[max(1.6cqw,3px)] rounded-full bg-ink" />
         {fx.text}
@@ -162,16 +169,7 @@ function Screen({ src, alt, priority, fx }) {
   if (!fx || reduced) return <Img src={src} alt={alt} priority={priority} />;
   return (
     <>
-      <motion.img
-        src={src}
-        alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        className="block h-auto w-full"
-        initial={{ scale: 1.02 }}
-        animate={{ scale: [1.02, 1.06, 1.02], x: ['0%', '-0.8%', '0%'], y: ['0%', '-1.2%', '0%'] }}
-        transition={{ duration: 12 + fx.delay, repeat: Infinity, ease: 'easeInOut' }}
-      />
+      <Img src={src} alt={alt} priority={priority} />
       <ScreenFx fx={fx} />
     </>
   );

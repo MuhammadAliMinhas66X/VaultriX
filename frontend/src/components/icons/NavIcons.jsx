@@ -139,9 +139,10 @@ export function BillsIcon({ className = '', strokeWidth = 1.75 }) {
 export function SalaryIcon({ className = '', strokeWidth = 1.75 }) {
   return (
     <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
-      <circle cx="12" cy="12" r="9" strokeOpacity="0.22" />
-      <g transform="rotate(-90 12 12)"><circle className="ni-ring" cx="12" cy="12" r="9" strokeDasharray="38 18.5" /></g>
-      <path className="ni-spark" d="M12 7.6l1.25 3.15L16.4 12l-3.15 1.25L12 16.4l-1.25-3.15L7.6 12l3.15-1.25z" fill="currentColor" fillOpacity="0.15" />
+      <path className="ni-note" d="M5.5 7.5L15.8 3.6a1 1 0 0 1 1.35.94V7.5" />
+      <rect x="3" y="7.5" width="18" height="13" rx="3" fill="currentColor" fillOpacity="0.08" />
+      <path d="M21 12.2h-4.2a2.1 2.1 0 0 0 0 4.2H21" />
+      <circle className="ni-coin" cx="16.9" cy="14.3" r="0.9" fill="currentColor" stroke="none" />
     </svg>
   );
 }
