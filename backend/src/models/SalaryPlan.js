@@ -6,6 +6,8 @@ const lineSchema = new mongoose.Schema(
     amountMinor: { type: Number, required: true, min: 1 },
     // Optional: real expenses in this category count as "spent" on this line.
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
+    // 'savings' is planned saving, 'spend' is money meant to be spent. null = saved before this field existed.
+    kind: { type: String, enum: ['spend', 'savings'], default: null },
   },
   { _id: true }
 );

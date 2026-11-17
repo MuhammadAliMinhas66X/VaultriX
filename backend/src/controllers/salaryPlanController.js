@@ -17,7 +17,7 @@ const dto = (plan, month) => ({
   detached: Boolean(plan && plan.detached),
   salary: plan && plan.detached ? toMajor(plan.salaryMinor) : 0,
   currency: plan && plan.detached ? plan.currency : null,
-  lines: plan ? plan.lines.map((line) => ({ id: String(line._id), label: line.label, amount: toMajor(line.amountMinor), categoryId: line.categoryId ? String(line.categoryId) : null })) : [],
+  lines: plan ? plan.lines.map((line) => ({ id: String(line._id), label: line.label, amount: toMajor(line.amountMinor), categoryId: line.categoryId ? String(line.categoryId) : null, kind: line.kind || null })) : [],
 });
 
 export const getSalaryPlan = async (req, res, next) => {
@@ -64,7 +64,10 @@ export const saveSalaryPlan = async (req, res, next) => {
         if (!category) return fail(res, 400, GENERIC_INVALID);
         categoryId = raw.categoryId;
       }
-      lines.push({ label, amountMinor, categoryId });
+      const kind = raw.kind === 'savings' || raw.kind === 'spend' ? raw.kind : null;
+      if (raw.kind !== undefined && raw.kind !== null && kind === null) return fail(res, 400, GENERIC_INVALID);
+      // savings is money set aside, so it is never matched against spending
+      lines.push({ label, amountMinor, categoryId: kind === 'savings' ? null : categoryId, kind });
     }
 
     let streamId = null;

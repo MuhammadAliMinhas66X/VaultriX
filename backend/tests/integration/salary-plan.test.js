@@ -56,4 +56,19 @@ describe('salary plan', () => {
     expect(back.body.plan).toMatchObject({ detached: false, salary: 0, currency: null });
     expect((await as(ali).get('/api/salary-plan')).body.plans).toEqual([]);
   });
+
+  it('keeps savings as its own kind and never ties it to an expense category', async () => {
+    const ali = await createAuthedUser({ email: 'spkind@vaultrix.test', name: 'Ali' });
+    const food = await Category.create({ orgId: ali.user.orgId, name: 'Food', type: 'expense' });
+    const saved = await as(ali).put('/api/salary-plan/2027-01', {
+      lines: [
+        { label: 'Savings', amount: 30000, kind: 'savings', categoryId: String(food._id) },
+        { label: 'Food', amount: 9000, kind: 'spend', categoryId: String(food._id) },
+        { label: 'Old line', amount: 100 },
+      ],
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.plan.lines.map((line) => [line.kind, line.categoryId])).toEqual([['savings', null], ['spend', String(food._id)], [null, null]]);
+    expect((await as(ali).put('/api/salary-plan/2027-01', { lines: [{ label: 'X', amount: 5, kind: 'other' }] })).status).toBe(400);
+  });
 });
