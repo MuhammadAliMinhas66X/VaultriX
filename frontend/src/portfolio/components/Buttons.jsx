@@ -13,7 +13,7 @@ const sizes = {
 // The button leans toward the pointer, a soft light follows it, a sheen sweeps
 // across on hover and the arrow chip swaps its arrow. Reduced motion keeps only
 // the colour change.
-export function JoinButton({ to, label, variant = 'dark', size = 'md', className = '' }) {
+export function JoinButton({ to, label, shortLabel, variant = 'dark', size = 'md', className = '' }) {
   const dark = variant === 'dark';
   const look = sizes[size] || sizes.md;
   const reduced = useAppReducedMotion();
@@ -58,7 +58,16 @@ export function JoinButton({ to, label, variant = 'dark', size = 'md', className
           aria-hidden="true"
           className={`absolute inset-y-0 -left-1/2 w-1/3 -skew-x-[22deg] transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-[420%] ${dark ? 'bg-white/20' : 'bg-ink/10'}`}
         />
-        <span className="relative z-10 whitespace-nowrap">{label}</span>
+        <span className="relative z-10 whitespace-nowrap">
+          {shortLabel ? (
+            <>
+              <span className="sm:hidden">{shortLabel}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </>
+          ) : (
+            label
+          )}
+        </span>
         <span className={`relative z-10 flex shrink-0 items-center justify-center overflow-hidden rounded-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110 group-hover:rotate-[8deg] ${look.chip} ${dark ? 'bg-white text-ink' : 'bg-ink text-white'}`}>
           <ArrowUpRight className={`absolute transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${look.icon} ${look.travel}`} />
           <ArrowUpRight className={`absolute transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${look.icon} ${look.rest} group-hover:translate-x-0 group-hover:translate-y-0`} />

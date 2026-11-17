@@ -81,7 +81,7 @@ function Nav({ home = true }) {
     setTimeout(() => scrollToId(id, reduced), open ? 300 : 0);
   };
 
-  const primary = isAuthenticated ? { to: links.app, label: 'Open Vaultrix' } : { to: links.join, label: 'Join Vaultrix' };
+  const primary = isAuthenticated ? { to: links.app, label: 'Open Vaultrix', short: 'Open' } : { to: links.join, label: 'Join Vaultrix', short: 'Join' };
 
   const itemClass = (id) =>
     `relative isolate whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-ink ${active === id || hover === id ? 'text-ink' : 'text-ink/55'}`;
@@ -123,9 +123,7 @@ function Nav({ home = true }) {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="hidden sm:block">
-              <JoinButton to={primary.to} label={primary.label} size="sm" className="!rounded-full" />
-            </span>
+            <JoinButton to={primary.to} label={primary.label} shortLabel={primary.short} size="sm" className="!rounded-full" />
             <button
               type="button"
               aria-label="Open menu"

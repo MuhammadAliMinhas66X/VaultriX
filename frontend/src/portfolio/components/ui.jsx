@@ -128,15 +128,21 @@ export function Tilt({ children, className = '', max = 7 }) {
   );
 }
 
+// Every part of a frame is sized in cqw (1% of the frame's own width), so a
+// phone looks the same at 70px wide in the hero as at 400px wide in focus.
+const Img = ({ src, alt, priority }) => <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />;
+
 export function PhoneFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`relative rounded-[2.4rem] bg-ink p-[7px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ${className}`}>
-      <span aria-hidden="true" className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l bg-ink" />
-      <span aria-hidden="true" className="absolute -left-[3px] top-36 h-14 w-[3px] rounded-l bg-ink" />
-      <span aria-hidden="true" className="absolute -right-[3px] top-32 h-16 w-[3px] rounded-r bg-ink" />
-      <div className="relative overflow-hidden rounded-[1.95rem] bg-white">
-        <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
-        <span aria-hidden="true" className="absolute left-1/2 top-2 h-[18px] w-20 -translate-x-1/2 rounded-full bg-ink" />
+    <div className={`[container-type:inline-size] ${className}`}>
+      <div className="relative rounded-[17cqw] bg-ink p-[3.4cqw] shadow-[0_8cqw_16cqw_-6cqw_rgba(17,17,20,0.55)]">
+        <span aria-hidden="true" className="absolute -left-[1.1cqw] top-[22cqw] h-[8cqw] w-[1.1cqw] rounded-l-[0.5cqw] bg-ink" />
+        <span aria-hidden="true" className="absolute -left-[1.1cqw] top-[34cqw] h-[14cqw] w-[1.1cqw] rounded-l-[0.5cqw] bg-ink" />
+        <span aria-hidden="true" className="absolute -right-[1.1cqw] top-[30cqw] h-[18cqw] w-[1.1cqw] rounded-r-[0.5cqw] bg-ink" />
+        <div className="relative overflow-hidden rounded-[13.6cqw] bg-white">
+          <Img src={src} alt={alt} priority={priority} />
+          <span aria-hidden="true" className="absolute left-1/2 top-[2.6cqw] h-[7.2cqw] w-[28cqw] -translate-x-1/2 rounded-full bg-ink" />
+        </div>
       </div>
     </div>
   );
@@ -144,28 +150,14 @@ export function PhoneFrame({ src, alt, className = '', priority = false }) {
 
 export function AndroidFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`relative rounded-[1.1rem] bg-[#202024] p-[4px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-white/10 ${className}`}>
-      <span aria-hidden="true" className="absolute -right-[2.5px] top-[20%] h-12 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
-      <span aria-hidden="true" className="absolute -right-[2.5px] top-[31%] h-7 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
-      <div className="relative overflow-hidden rounded-[0.8rem] bg-white">
-        <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
-        <span aria-hidden="true" className="absolute left-1/2 top-[7px] h-[9px] w-[9px] -translate-x-1/2 rounded-full bg-[#0c0c0f] ring-[1.5px] ring-black/30" />
-      </div>
-    </div>
-  );
-}
-
-export function LaptopFrame({ src, alt, className = '', priority = false }) {
-  return (
-    <div className={className}>
-      <div className="relative rounded-t-[1rem] bg-ink p-[8px] pb-[8px] shadow-[0_40px_80px_-34px_rgba(17,17,20,0.5)]">
-        <div className="relative overflow-hidden rounded-[0.55rem] bg-white">
-          <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+    <div className={`[container-type:inline-size] ${className}`}>
+      <div className="relative rounded-[8cqw] bg-[#202024] p-[2.6cqw] shadow-[0_8cqw_16cqw_-6cqw_rgba(17,17,20,0.55)] ring-1 ring-white/10">
+        <span aria-hidden="true" className="absolute -right-[1cqw] top-[24cqw] h-[11cqw] w-[1cqw] rounded-r-[0.4cqw] bg-[#2c2c32]" />
+        <span aria-hidden="true" className="absolute -right-[1cqw] top-[40cqw] h-[7cqw] w-[1cqw] rounded-r-[0.4cqw] bg-[#2c2c32]" />
+        <div className="relative overflow-hidden rounded-[5.6cqw] bg-white">
+          <Img src={src} alt={alt} priority={priority} />
+          <span aria-hidden="true" className="absolute left-1/2 top-[2.8cqw] aspect-square w-[3.6cqw] -translate-x-1/2 rounded-full bg-[#0c0c0f] ring-[0.5cqw] ring-black/30" />
         </div>
-        <span aria-hidden="true" className="absolute left-1/2 top-[2.5px] h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-white/40" />
-      </div>
-      <div className="relative left-1/2 h-[11px] w-[114%] -translate-x-1/2 rounded-b-[0.9rem] bg-gradient-to-b from-[#dcdce0] to-[#a8a8b0] shadow-[0_18px_30px_-16px_rgba(17,17,20,0.5)]">
-        <span aria-hidden="true" className="absolute left-1/2 top-0 h-[4px] w-20 -translate-x-1/2 rounded-b-md bg-[#8c8c94]" />
       </div>
     </div>
   );
@@ -173,29 +165,47 @@ export function LaptopFrame({ src, alt, className = '', priority = false }) {
 
 export function TabletFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={`relative rounded-[1.45rem] bg-[#1c1c20] p-[11px] shadow-[0_40px_80px_-30px_rgba(17,17,20,0.55)] ring-1 ring-white/10 ${className}`}>
-      <span aria-hidden="true" className="absolute -top-[2.5px] right-[16%] h-[2.5px] w-10 rounded-t-sm bg-[#2c2c32]" />
-      <span aria-hidden="true" className="absolute -right-[2.5px] top-[12%] h-8 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
-      <span aria-hidden="true" className="absolute -right-[2.5px] top-[20%] h-8 w-[2.5px] rounded-r-sm bg-[#2c2c32]" />
-      <div className="relative overflow-hidden rounded-[0.75rem] bg-white">
-        <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+    <div className={`[container-type:inline-size] ${className}`}>
+      <div className="relative rounded-[5cqw] bg-[#1c1c20] p-[3.4cqw] shadow-[0_6cqw_12cqw_-5cqw_rgba(17,17,20,0.55)] ring-1 ring-white/10">
+        <span aria-hidden="true" className="absolute -top-[0.7cqw] right-[16cqw] h-[0.7cqw] w-[9cqw] rounded-t-[0.3cqw] bg-[#2c2c32]" />
+        <span aria-hidden="true" className="absolute -right-[0.7cqw] top-[12cqw] h-[6cqw] w-[0.7cqw] rounded-r-[0.3cqw] bg-[#2c2c32]" />
+        <span aria-hidden="true" className="absolute -right-[0.7cqw] top-[20cqw] h-[6cqw] w-[0.7cqw] rounded-r-[0.3cqw] bg-[#2c2c32]" />
+        <div className="relative overflow-hidden rounded-[2.2cqw] bg-white">
+          <Img src={src} alt={alt} priority={priority} />
+        </div>
+        <span aria-hidden="true" className="absolute left-1/2 top-[1.2cqw] aspect-square w-[1cqw] min-w-[2px] -translate-x-1/2 rounded-full bg-[#0b0b0d] ring-1 ring-white/10" />
       </div>
-      <span aria-hidden="true" className="absolute left-1/2 top-[3.5px] h-[5px] w-[5px] -translate-x-1/2 rounded-full bg-[#0b0b0d] ring-1 ring-white/10" />
+    </div>
+  );
+}
+
+export function LaptopFrame({ src, alt, className = '', priority = false }) {
+  return (
+    <div className={`[container-type:inline-size] ${className}`}>
+      <div className="relative rounded-t-[2cqw] bg-ink p-[1.5cqw] shadow-[0_5cqw_10cqw_-4cqw_rgba(17,17,20,0.5)]">
+        <div className="relative overflow-hidden rounded-[0.8cqw] bg-white">
+          <Img src={src} alt={alt} priority={priority} />
+        </div>
+        <span aria-hidden="true" className="absolute left-1/2 top-[0.5cqw] aspect-square w-[0.5cqw] min-w-[2px] -translate-x-1/2 rounded-full bg-white/40" />
+      </div>
+      <div className="relative left-1/2 h-[1.7cqw] min-h-[5px] w-[114%] -translate-x-1/2 rounded-b-[2cqw] bg-gradient-to-b from-[#dcdce0] to-[#a8a8b0] shadow-[0_3cqw_5cqw_-3cqw_rgba(17,17,20,0.5)]">
+        <span aria-hidden="true" className="absolute left-1/2 top-0 h-[0.7cqw] min-h-[2px] w-[14cqw] -translate-x-1/2 rounded-b-[0.6cqw] bg-[#8c8c94]" />
+      </div>
     </div>
   );
 }
 
 export function MonitorFrame({ src, alt, className = '', priority = false }) {
   return (
-    <div className={className}>
-      <div className="relative rounded-[0.7rem] bg-[#1c1c20] p-[7px] shadow-[0_40px_80px_-34px_rgba(17,17,20,0.5)] ring-1 ring-white/10">
-        <div className="relative overflow-hidden rounded-[0.35rem] bg-white">
-          <img src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async" className="block h-auto w-full" />
+    <div className={`[container-type:inline-size] ${className}`}>
+      <div className="relative rounded-[1.1cqw] bg-[#1c1c20] p-[1cqw] shadow-[0_5cqw_10cqw_-4cqw_rgba(17,17,20,0.5)] ring-1 ring-white/10">
+        <div className="relative overflow-hidden rounded-[0.5cqw] bg-white">
+          <Img src={src} alt={alt} priority={priority} />
         </div>
-        <span aria-hidden="true" className="absolute bottom-[2px] left-1/2 h-[2px] w-1.5 -translate-x-1/2 rounded-full bg-white/30" />
+        <span aria-hidden="true" className="absolute bottom-[0.3cqw] left-1/2 h-[0.3cqw] min-h-[2px] w-[0.8cqw] -translate-x-1/2 rounded-full bg-white/30" />
       </div>
-      <div className="mx-auto h-[clamp(14px,3.2vw,38px)] w-[15%] bg-gradient-to-b from-[#8f8f97] to-[#d9d9de]" />
-      <div className="mx-auto h-[7px] w-[32%] rounded-t-[3px] rounded-b-[8px] bg-gradient-to-b from-[#e4e4e8] to-[#a9a9b1] shadow-[0_14px_24px_-12px_rgba(17,17,20,0.5)]" />
+      <div className="mx-auto h-[5cqw] min-h-[10px] w-[15%] bg-gradient-to-b from-[#8f8f97] to-[#d9d9de]" />
+      <div className="mx-auto h-[1.2cqw] min-h-[5px] w-[32%] rounded-t-[0.5cqw] rounded-b-[1.4cqw] bg-gradient-to-b from-[#e4e4e8] to-[#a9a9b1] shadow-[0_2.5cqw_4cqw_-2cqw_rgba(17,17,20,0.5)]" />
     </div>
   );
 }
