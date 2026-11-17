@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
-import { Calculator, ShieldCheck } from 'lucide-react';
-import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon } from '../icons/NavIcons.jsx';
+import { ShieldCheck } from 'lucide-react';
+import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon, SalaryIcon } from '../icons/NavIcons.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useIncome } from '../../context/IncomeContext.jsx';
@@ -43,7 +43,7 @@ export default function useAppNav() {
     { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
     { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills' },
     { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
-    { id: 'salary', label: t('nav.salary'), icon: Calculator, to: '/salary' },
+    { id: 'salary', label: t('nav.salary'), icon: SalaryIcon, big: true, to: '/salary' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 

@@ -110,6 +110,12 @@ li {
   75% { transform: scale(1.1); }
 }
 
+@keyframes ni-spark {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  45% { transform: scale(1.35) rotate(90deg); }
+}
+
+html:not([data-reduce-motion='true']) .nav-hover:is(:hover, :focus-visible) .ni-spark { animation: ni-spark 0.9s ease-in-out both; }
 html:not([data-reduce-motion='true']) .nav-hover:is(:hover, :focus-visible) .ni-d1 { animation: ni-pop 0.65s ease-in-out both; }
 html:not([data-reduce-motion='true']) .nav-hover:is(:hover, :focus-visible) .ni-d2 { animation: ni-pop 0.65s ease-in-out 0.08s both; }
 html:not([data-reduce-motion='true']) .nav-hover:is(:hover, :focus-visible) .ni-d3 { animation: ni-pop 0.65s ease-in-out 0.16s both; }
