@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PiggyBank, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Vault } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { isSavingsLine } from '../../utils/salaryPlanMath.js';
 import { btn } from './ui.js';
@@ -28,7 +28,7 @@ export default function AllocationList({ rows, names, money, canWrite, busy, edi
                 <p className="break-words text-sm font-medium text-ink">{line.label}</p>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                   {savings ? (
-                    <span className="inline-flex items-center gap-1"><PiggyBank className="h-3.5 w-3.5" />{t('salary.categorySavings')}</span>
+                    <span className="inline-flex items-center gap-1"><Vault className="h-3.5 w-3.5" />{t('salary.categorySavings')}</span>
                   ) : (
                     <span>{categoryName || t('salary.categoryNone')}</span>
                   )}

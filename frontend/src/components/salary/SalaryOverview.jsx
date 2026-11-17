@@ -25,7 +25,8 @@ export default function SalaryOverview({ summary, currency, spent, afterSpending
   const { formatNumber } = useFormat();
   const pctText = (value) => formatNumber(value, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   const total = summary.salary;
-  const widthOf = (value) => (total > 0 ? Math.min(100, Math.max(0, (value / total) * 100)) : 0);
+  const scale = summary.over ? summary.allocated : total;
+  const widthOf = (value) => (scale > 0 ? Math.min(100, Math.max(0, (value / scale) * 100)) : 0);
   const overAmount = Math.abs(summary.unallocated);
   const streamItems = sources.map((item) => ({ value: item.id, label: item.name, sub: item.currency }));
   const showAfterSpending = afterSpending !== null && Math.abs(afterSpending - summary.unallocated) >= 0.005;
@@ -60,19 +61,26 @@ export default function SalaryOverview({ summary, currency, spent, afterSpending
       <div className="mt-5">
         <div
           role="img"
-          aria-label={`${t('salary.ringLabel')}: ${t('salary.percentAllocated', { percent: pctText(summary.allocatedPercent) })}`}
-          className="flex h-2 w-full overflow-hidden rounded-full bg-border/60"
+          aria-label={`${t('salary.otherAllocations')} ${money(summary.other)}, ${t('salary.categorySavings')} ${money(summary.savings)}, ${summary.over ? t('salary.overBy') : t('salary.unallocated')} ${money(overAmount)}`}
+          className="flex h-3 w-full overflow-hidden rounded-full bg-border/60"
         >
           <div className="h-full bg-ink transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${widthOf(summary.other)}%` }} />
-          <div className="h-full transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${Math.min(widthOf(summary.savings), 100 - widthOf(summary.other))}%`, background: SLATE }} />
+          <div className="h-full transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${widthOf(summary.savings)}%`, background: SLATE }} />
         </div>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-muted">
-          <span className="font-medium text-ink">{t('salary.percentAllocated', { percent: pctText(summary.allocatedPercent) })}</span>
-          <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-ink" />{t('salary.otherAllocations')}</span>
-            <span className="flex items-center gap-1.5"><span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: SLATE }} />{t('salary.categorySavings')}</span>
-          </span>
-        </div>
+        <ul className="mt-3 flex flex-col gap-2">
+          {[
+            { key: 'other', label: t('salary.otherAllocations'), value: summary.other, percent: Math.round((summary.allocatedPercent - summary.savingsPercent) * 100) / 100, swatch: <span className="h-2.5 w-2.5 rounded-sm bg-ink" /> },
+            { key: 'savings', label: t('salary.categorySavings'), value: summary.savings, percent: summary.savingsPercent, swatch: <span className="h-2.5 w-2.5 rounded-sm" style={{ background: SLATE }} /> },
+            { key: 'free', label: summary.over ? t('salary.overBy') : t('salary.unallocated'), value: overAmount, percent: summary.over ? Math.round((summary.allocatedPercent - 100) * 100) / 100 : summary.unallocatedPercent, swatch: <span className="h-2.5 w-2.5 rounded-sm border border-muted/60 bg-white" /> },
+          ].map((row) => (
+            <li key={row.key} className="flex items-center gap-2.5 text-sm">
+              <span aria-hidden="true" className="flex w-3 shrink-0 justify-center">{row.swatch}</span>
+              <span className="min-w-0 flex-1 text-muted">{row.label}</span>
+              <span className="whitespace-nowrap font-semibold tabular-nums text-ink">{money(row.value)}</span>
+              <span className="w-16 whitespace-nowrap text-end text-xs tabular-nums text-muted">{pctText(row.percent)}%</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {summary.over && (
@@ -102,8 +110,7 @@ export default function SalaryOverview({ summary, currency, spent, afterSpending
         ) : (
           <Row label={t('salary.monthlySalary')}>{money(total)}</Row>
         )}
-        <Row label={t('salary.allocated')}>{money(summary.allocated)}</Row>
-        <Row label={t('salary.categorySavings')}>{money(summary.savings)}</Row>
+        <Row label={t('salary.allocated')} hint={t('salary.percentAllocated', { percent: pctText(summary.allocatedPercent) })}>{money(summary.allocated)}</Row>
         <Row label={t('salary.spentThisMonth')}>{money(spent)}</Row>
         {showAfterSpending && <Row label={t('salary.saving')}>{money(afterSpending)}</Row>}
       </dl>
