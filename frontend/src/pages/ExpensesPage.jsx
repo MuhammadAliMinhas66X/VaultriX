@@ -73,6 +73,7 @@ function ExpensesPage() {
   const [range, setRange] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [query, setQuery] = useState('');
+  const [payerFilter, setPayerFilter] = useState('');
   const [panel, setPanel] = useState(null);
   const [busy, setBusy] = useState(false);
   const requestId = useRef(0);
@@ -147,10 +148,13 @@ function ExpensesPage() {
       if (range === 'today' && key !== todayKey) return false;
       if (range === 'week' && key < weekStart) return false;
       if (categoryFilter && (expense.categoryId || '') !== categoryFilter) return false;
+      if (payerFilter === 'mine' && (expense.givenTo || expense.paidBy === 'other')) return false;
+      if (payerFilter === 'others' && (expense.givenTo || expense.paidBy !== 'other')) return false;
+      if (payerFilter === 'lent' && !expense.givenTo) return false;
       if (needle && !`${expense.note} ${nameOf(expense.categoryId)}`.toLowerCase().includes(needle)) return false;
       return true;
     });
-  }, [expenses, range, categoryFilter, query, todayKey, names]);
+  }, [expenses, range, categoryFilter, payerFilter, query, todayKey, names]);
 
   const groups = useMemo(() => {
     const map = new Map();
@@ -369,6 +373,20 @@ function ExpensesPage() {
                         }`}
                       >
                         {rangeLabels[name]}
+                      </button>
+                    ))}
+                    <span aria-hidden="true" className="mx-0.5 w-px shrink-0 self-stretch bg-border" />
+                    {['mine', 'others', 'lent'].map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        aria-pressed={payerFilter === name}
+                        onClick={() => setPayerFilter((value) => (value === name ? '' : name))}
+                        className={`shrink-0 rounded-full border px-3.5 py-2 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                          payerFilter === name ? 'border-ink bg-ink text-white' : 'border-border bg-white text-muted hover:border-ink/30 hover:text-ink'
+                        }`}
+                      >
+                        {t(`expenses.payer.${name}`)}
                       </button>
                     ))}
                   </div>
