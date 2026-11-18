@@ -6,6 +6,13 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
 import BalanceCard from '../components/dashboard/BalanceCard.jsx';
 import BillsPanel from '../components/dashboard/BillsPanel.jsx';
+import MonthPulse from '../components/dashboard/MonthPulse.jsx';
+import AttentionPanel from '../components/dashboard/AttentionPanel.jsx';
+import CashFlowPanel from '../components/dashboard/CashFlowPanel.jsx';
+import CategoryPanel from '../components/dashboard/CategoryPanel.jsx';
+import LoansPanel from '../components/dashboard/LoansPanel.jsx';
+import PlansPanel from '../components/dashboard/PlansPanel.jsx';
+import RecentSpending from '../components/dashboard/RecentSpending.jsx';
 import GroupsHub from '../components/groups/GroupsHub.jsx';
 import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -18,6 +25,9 @@ import { useBalance } from '../hooks/useBalance.js';
 import { dateOptions, todayInput } from '../utils/dates.js';
 import { summarizeBills } from '../utils/billMath.js';
 import { monthKey } from '../utils/expenseMath.js';
+import { attentionItems, loanTotals, paceStats, recentSpending } from '../utils/dashboardMath.js';
+import { budgetRows as buildBudgetRows, buildTrend, spentByCategory } from '../utils/reportMath.js';
+import useExpenseCategories from '../hooks/useExpenseCategories.js';
 import { typeLabelKey } from '../components/income/incomeOptions.js';
 import { useResource } from '../data/useResource.js';
 
@@ -38,6 +48,19 @@ function DashboardPage() {
   const billsToday = todayInput();
   const billSummary = useMemo(() => (bills && rates ? summarizeBills(bills, rates, currency, billsToday) : null), [bills, rates, currency, billsToday]);
 
+  const thisMonth = monthKey(new Date());
+  const expensesResource = useResource('expenses', { month: thisMonth });
+  const totalsResource = useResource('expenseTotals', {});
+  const loansResource = useResource('loans');
+  const budgetsResource = useResource('budgets');
+  const goalsResource = useResource('goals');
+  const { byId, nameOf } = useExpenseCategories();
+  const monthExpenses = expensesResource.data ? expensesResource.data.expenses : NO_ITEMS;
+  const loans = loansResource.data ? loansResource.data.loans : NO_ITEMS;
+  const budgets = budgetsResource.data ? budgetsResource.data.budgets : NO_ITEMS;
+  const goals = goalsResource.data ? goalsResource.data.goals : NO_ITEMS;
+  const allTotals = totalsResource.data ? totalsResource.data.totals : NO_ITEMS;
+
   // Every number here comes from useBalance, the same source as the Income page.
   const data = balance.data;
   const summary = data ? { gross: data.income.gross, net: data.income.net, cuts: data.income.cuts, excluded: data.excluded } : null;
@@ -55,6 +78,35 @@ function DashboardPage() {
       .filter((code) => code !== currency && rates[code])
       .map((code) => (rates[code] >= 1 ? { code, from: currency, to: code, value: rates[code] } : { code, from: code, to: currency, value: 1 / rates[code] }));
   }, [streams, rates, currency]);
+
+  const insightsReady = Boolean(data && rates && expensesResource.data);
+  const trend = useMemo(
+    () => (data && rates && totalsResource.data ? buildTrend({ receipts: balance.receipts, streams: allStreams, totals: allTotals, rates, base: currency, end: thisMonth, count: 6 }) : NO_ITEMS),
+    [data, rates, totalsResource.data, balance.receipts, allStreams, allTotals, currency, thisMonth]
+  );
+  const pace = useMemo(() => (data ? paceStats({ spent: data.month.spentSelf, left: data.month.left, todayKey: billsToday }) : null), [data, billsToday]);
+  const budgetRows = useMemo(() => (rates ? buildBudgetRows(budgets, monthExpenses, rates, currency) : NO_ITEMS), [budgets, monthExpenses, rates, currency]);
+  const budgetByCategory = useMemo(() => new Map(budgetRows.map((row) => [row.categoryId, row])), [budgetRows]);
+  const categoryRows = useMemo(() => {
+    if (!rates) return NO_ITEMS;
+    const map = spentByCategory(monthExpenses, rates, currency);
+    return [...map.entries()].map(([key, value]) => ({ key, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+  }, [monthExpenses, rates, currency]);
+  const loanSums = useMemo(() => (rates ? loanTotals(loans, rates, currency) : null), [loans, rates, currency]);
+  const attention = useMemo(
+    () => (insightsReady ? attentionItems({ bills: bills || NO_ITEMS, loans, budgetRows, overspent: data.overspentMonth ? Math.abs(left) : 0, today: billsToday }) : NO_ITEMS),
+    [insightsReady, bills, loans, budgetRows, data, left, billsToday]
+  );
+  const recent = useMemo(() => recentSpending(monthExpenses, 5), [monthExpenses]);
+  const previousMonth = trend.length > 1 ? trend[trend.length - 2] : null;
+  const canWrite = user?.role !== 'viewer';
+  const hasBills = Boolean(bills && bills.length > 0);
+  const hasOpenLoans = Boolean(loanSums && (loanSums.owedToMe.count > 0 || loanSums.iOwe.count > 0));
+  const setupLinks = [
+    !hasBills && billsResource.data && { to: '/bills?add=1', label: t('bills.add') },
+    budgetsResource.data && budgets.length === 0 && { to: '/reports?tab=budgets', label: t('dash.addBudget') },
+    goalsResource.data && goals.length === 0 && { to: '/reports?tab=goals', label: t('dash.addGoal') },
+  ].filter(Boolean);
 
   const hasIncome = balance.receipts.length > 0 || Boolean(balance.opening && balance.opening.amount > 0) || streams.some((item) => item.expectedAmount !== null);
 
@@ -247,8 +299,30 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
-            {bills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
-            {latestCard}
+            {insightsReady && pace && <MonthPulse month={data.month} pace={pace} previous={previousMonth} currency={currency} />}
+            {insightsReady && (
+              <div className="-mb-5 lg:columns-2 lg:gap-5 [&>*]:mb-5 [&>*]:break-inside-avoid">
+                <AttentionPanel items={attention} nameOf={nameOf} currency={currency} />
+                {trend.length > 0 && <CashFlowPanel trend={trend} currentMonth={thisMonth} currency={currency} />}
+                <CategoryPanel rows={categoryRows} byId={byId} budgetByCategory={budgetByCategory} currency={currency} />
+                {hasBills && <BillsPanel bills={bills} summary={billSummary} currency={currency} today={billsToday} />}
+                {hasOpenLoans && <LoansPanel totals={loanSums} currency={currency} />}
+                <PlansPanel budgets={budgetRows} goals={goals} nameOf={nameOf} today={billsToday} currency={currency} />
+                <RecentSpending items={recent} byId={byId} />
+                {latestCard}
+              </div>
+            )}
+            {!insightsReady && latestCard}
+            {insightsReady && canWrite && setupLinks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-white px-5 py-3.5">
+                <span className="me-1 text-sm text-muted">{t('dash.setupTitle')}</span>
+                {setupLinks.map((link) => (
+                  <Link key={link.to} to={link.to} className="flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink transition hover:bg-border/60">
+                    <Plus className="h-3.5 w-3.5" /> {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
