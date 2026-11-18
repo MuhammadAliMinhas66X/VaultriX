@@ -7,11 +7,26 @@ import { useReminders } from '../../hooks/useReminders.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 
-const iconOf = { bill: Receipt, loanOwe: HandCoins, loanOwed: HandCoins };
+export const iconOf = { bill: Receipt, loanOwe: HandCoins, loanOwed: HandCoins, committeePay: Users, committeeLate: Users, committeePot: HandCoins, committeePayout: HandCoins };
 
 export const dueLabel = (days, t) => (days < 0 ? t('reminders.overdue', { count: Math.abs(days) }) : days === 0 ? t('reminders.today') : t('reminders.inDays', { count: days }));
 
-// The bell in the top bar: a badge with how many bills and loans need attention
+// "Bill · Overdue 3d", "2 late with payment"... one line for any reminder, shared with the Reports page.
+export const reminderLabel = (item, t) => {
+  const sub = {
+    bill: t('reminders.kindBill'),
+    loanOwe: t('reminders.kindOwe'),
+    loanOwed: t('reminders.kindOwed'),
+    committeePay: t('reminders.kindCommitteePay'),
+    committeeLate: t('reminders.kindCommitteeLate', { count: item.count }),
+    committeePot: t('reminders.kindCommitteePot', { count: item.count }),
+    committeePayout: t('reminders.kindCommitteePayout'),
+  }[item.kind];
+  const textOnly = item.kind === 'committeeLate' || item.kind === 'committeePot' || item.kind === 'committeePayout';
+  return textOnly ? sub : `${sub} · ${dueLabel(item.days, t)}`;
+};
+
+// The bell in the top bar: a badge with how many bills, loans and committee payments need attention
 // and a small list of them.
 function NotificationsBell() {
   const { t } = useTranslation();
@@ -90,7 +105,6 @@ function NotificationsBell() {
               <ul className="max-h-80 overflow-y-scroll [scrollbar-color:#c4c4c9_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#c4c4c9]">
                 {items.map((item) => {
                   const Icon = iconOf[item.kind];
-                  const sub = item.kind === 'bill' ? t('reminders.kindBill') : item.kind === 'loanOwe' ? t('reminders.kindOwe') : t('reminders.kindOwed');
                   return (
                     <li key={item.key} className="border-b border-border last:border-b-0">
                       <Link to={item.href} onClick={() => setOpen(false)} className="flex items-center gap-3 px-4 py-3 outline-none transition hover:bg-surface focus-visible:bg-surface">
@@ -100,7 +114,7 @@ function NotificationsBell() {
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-ink">{item.name}</span>
                           <span className={`block truncate text-xs ${item.days < 0 ? 'font-semibold text-ink' : 'text-muted'}`}>
-                            {sub} · {dueLabel(item.days, t)}
+                            {reminderLabel(item, t)}
                           </span>
                         </span>
                         <span className="shrink-0 whitespace-nowrap text-sm font-bold tabular-nums text-ink">{formatMoney(item.amount, { decimals: 0, currency: item.currency })}</span>

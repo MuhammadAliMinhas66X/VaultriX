@@ -1,70 +1,43 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
+import PageHeader, { pageWidth } from '../components/PageHeader.jsx';
+import MonthSwitcher from '../components/MonthSwitcher.jsx';
+import Snapshot from '../components/reports/Snapshot.jsx';
 import Overview from '../components/reports/Overview.jsx';
-import Budgets from '../components/reports/Budgets.jsx';
-import Goals from '../components/reports/Goals.jsx';
-import Accounts from '../components/reports/Accounts.jsx';
-import Committees from '../components/reports/Committees.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
-import { useFormat } from '../i18n/useFormat.js';
 import { useResource } from '../data/useResource.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
-import { monthKey, shiftMonth } from '../utils/expenseMath.js';
+import { monthKey } from '../utils/expenseMath.js';
 
-const TABS = ['overview', 'budgets', 'goals', 'accounts', 'committees'];
 const NONE = [];
+// Old links (`/reports?tab=goals`) still work: those tabs now have their own pages.
+const MOVED = { budgets: '/budgets', goals: '/goals', accounts: '/accounts', committees: '/committees' };
 
+// Reports = what is going on: what needs attention, how each area stands, and where the money went.
 export default function ReportsPage() {
   const { t } = useTranslation();
-  const { formatDate } = useFormat();
-  const { user } = useAuth();
   const { items, activeId } = useAppNav();
-  const canWrite = user?.role !== 'viewer';
-  const [params, setParams] = useSearchParams();
-  const tab = TABS.includes(params.get('tab')) ? params.get('tab') : 'overview';
-  const nowMonth = monthKey(new Date());
-  const [month, setMonth] = useState(nowMonth);
+  const [params] = useSearchParams();
+  const [month, setMonth] = useState(monthKey(new Date()));
   const { categories } = useExpenseCategories();
   const expensesResource = useResource('expenses', { month });
   const expenses = expensesResource.data ? expensesResource.data.expenses : NONE;
   const expenseCategories = useMemo(() => categories.filter((item) => !item.type || item.type === 'expense'), [categories]);
-  const monthLabel = formatDate(new Date(`${month}-01T00:00:00Z`), { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const showMonth = tab !== 'goals' && tab !== 'accounts' && tab !== 'committees';
+  const moved = MOVED[params.get('tab')];
+  if (moved) return <Navigate to={moved} replace />;
 
   return (
     <AppShell showLogo pageTitle={t('reports.title')} items={items} activeId={activeId}>
-      <div className="mx-auto w-full max-w-[980px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('reports.title')}</h1>
-            <p className="mt-1 max-w-xl text-sm text-muted">{t('reports.tagline')}</p>
-          </div>
-          {showMonth && (
-            <div className="flex items-center gap-1 rounded-xl border border-border bg-white p-1">
-              <button type="button" aria-label={t('expenses.prevMonth')} onClick={() => setMonth((value) => shiftMonth(value, -1))} className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"><ChevronLeft className="h-4 w-4 rtl:rotate-180" /></button>
-              <span className="min-w-[8.5rem] text-center text-sm font-semibold text-ink">{monthLabel}</span>
-              <button type="button" aria-label={t('expenses.nextMonth')} disabled={month >= nowMonth} onClick={() => setMonth((value) => shiftMonth(value, 1))} className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink disabled:opacity-40"><ChevronRight className="h-4 w-4 rtl:rotate-180" /></button>
-            </div>
-          )}
+      <div className={pageWidth}>
+        <PageHeader title={t('reports.title')} tagline={t('reports.tagline')}>
+          <MonthSwitcher month={month} onChange={setMonth} />
+        </PageHeader>
+        <div className="flex flex-col gap-8">
+          <Snapshot expenses={expenses} categories={expenseCategories} />
+          <Overview month={month} onMonth={setMonth} categories={expenseCategories} expenses={expenses} />
         </div>
-
-        <div role="tablist" aria-label={t('reports.title')} className="mb-5 flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-white p-1 sm:inline-flex">
-          {TABS.map((id) => (
-            <button key={id} ref={(el) => { if (el && tab === id) el.scrollIntoView({ inline: 'nearest', block: 'nearest' }); }} type="button" role="tab" aria-selected={tab === id} onClick={() => setParams(id === 'overview' ? {} : { tab: id }, { replace: true })} className={`shrink-0 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>
-              {t(`reports.tab.${id}`)}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'overview' && <Overview month={month} onMonth={setMonth} categories={expenseCategories} expenses={expenses} />}
-        {tab === 'budgets' && <Budgets categories={expenseCategories} expenses={expenses} canWrite={canWrite} />}
-        {tab === 'goals' && <Goals canWrite={canWrite} />}
-        {tab === 'accounts' && <Accounts canWrite={canWrite} />}
-        {tab === 'committees' && <Committees canWrite={canWrite} />}
       </div>
     </AppShell>
   );
