@@ -6,6 +6,7 @@ import { createAuthedUser } from './helpers.js';
 import Loan, { LOAN_DIRECTIONS } from '../../src/models/Loan.js';
 import Category, { CATEGORY_TYPE_VALUES } from '../../src/models/Category.js';
 import Account from '../../src/models/Account.js';
+import Committee from '../../src/models/Committee.js';
 import Expense from '../../src/models/Expense.js';
 import IncomeStream from '../../src/models/IncomeStream.js';
 import Bill from '../../src/models/Bill.js';
@@ -39,6 +40,14 @@ const cases = [
     make: (owner) => Category.create({ orgId: owner.user.orgId, createdBy: owner.user._id, name: 'Original', type: CATEGORY_TYPE_VALUES[0] }),
     exists: async (id) => Boolean(await Category.exists({ _id: id })),
     changed: async (id) => (await Category.findById(id)).name !== 'Original',
+  },
+  {
+    name: 'committees',
+    path: '/api/committees',
+    patch: { name: 'Hacked', contribution: 1000, currency: 'PKR', size: 4, mySlot: 2, startDate: '2026-01-05' },
+    make: (owner) => Committee.create({ orgId: owner.user.orgId, createdBy: owner.user._id, name: 'Original', currency: 'PKR', contributionMinor: 100000, size: 4, mySlot: 2, startDate: new Date('2026-01-05T00:00:00Z') }),
+    exists: async (id) => Boolean(await Committee.exists({ _id: id })),
+    changed: async (id) => (await Committee.findById(id)).name !== 'Original',
   },
   {
     name: 'accounts',
