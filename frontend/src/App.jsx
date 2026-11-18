@@ -14,6 +14,11 @@ import GroupPage from './pages/GroupPage.jsx';
 import JoinGroupPage from './pages/JoinGroupPage.jsx';
 import SalaryPage from './pages/SalaryPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
+import BudgetsPage from './pages/BudgetsPage.jsx';
+import GoalsPage from './pages/GoalsPage.jsx';
+import AccountsPage from './pages/AccountsPage.jsx';
+import CommitteesPage from './pages/CommitteesPage.jsx';
+import CommitteePage from './pages/CommitteePage.jsx';
 import MainShell from './components/layout/MainShell.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import IncomePage from './pages/IncomePage.jsx';
@@ -73,6 +78,11 @@ function App() {
                 <Route path="/bills" element={<BillsPage />} />
                 <Route path="/salary" element={<SalaryPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/budgets" element={<BudgetsPage />} />
+                <Route path="/goals" element={<GoalsPage />} />
+                <Route path="/accounts" element={<AccountsPage />} />
+                <Route path="/committees" element={<CommitteesPage />} />
+                <Route path="/committees/:id" element={<CommitteePage />} />
                 <Route path="/join-group" element={<JoinGroupPage />} />
                 <Route path="/groups" element={<GroupsPage />} />
                 <Route path="/groups/:id" element={<GroupPage />} />
