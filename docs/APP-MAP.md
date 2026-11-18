@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (326 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (335 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -109,9 +109,9 @@ flowchart LR
   - services: userService
   - utils: returnPath, avatar
 - `/dashboard` -> `frontend/src/pages/DashboardPage.jsx`
-  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, GroupsHub, Skeletons, incomeOptions
-  - hooks/data: useBalance, useResource
-  - utils: incomeMath, balanceMath, dates, billMath, expenseMath
+  - components: AppShell, useAppNav, BrandMark, BalanceCard, BillsPanel, MonthPulse, AttentionPanel, CashFlowPanel, CategoryPanel, LoansPanel, PlansPanel, RecentSpending, GroupsHub, Skeletons, incomeOptions
+  - hooks/data: useBalance, useExpenseCategories, useResource
+  - utils: incomeMath, balanceMath, dates, billMath, expenseMath, dashboardMath, reportMath
 - `/income` -> `frontend/src/pages/IncomePage.jsx`
   - components: Skeletons, AppShell, useAppNav, IncomeForm, incomeOptions, IncomeCard, IncomeDetail, BalanceOverview, OpeningBalanceSheet, Drawer
   - services: incomeStreamService
@@ -404,12 +404,12 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 96 files
-- `frontend/src/i18n/useFormat.js` is imported by 42 files
+- `frontend/src/i18n/useTranslation.js` is imported by 103 files
+- `frontend/src/i18n/useFormat.js` is imported by 49 files
 - `frontend/src/context/AuthContext.jsx` is imported by 38 files
 - `frontend/src/i18n/notifications.js` is imported by 32 files
-- `frontend/src/hooks/useMotionPreference.js` is imported by 30 files
-- `frontend/src/utils/dates.js` is imported by 24 files
+- `frontend/src/hooks/useMotionPreference.js` is imported by 31 files
+- `frontend/src/utils/dates.js` is imported by 25 files
 - `frontend/src/components/Combobox.jsx` is imported by 19 files
 - `backend/src/middleware/rateLimiters.js` is imported by 19 files
 - `frontend/src/services/api.js` is imported by 18 files
@@ -488,11 +488,13 @@ flowchart LR
 - `backend/src/routes/categoryRoutes.js`  (used by 1)
 - `backend/src/utils/categoryIcons.js`  (used by 1)
 - `frontend/src/components/bills/NewCategorySheet.jsx`  (used by 0)
+- `frontend/src/components/dashboard/CategoryPanel.jsx` - Where this month's own spending went. Rows with a budget show how much of it is left.  (used by 1)
 - `frontend/src/components/expenses/CategoryFilter.jsx` - A filter icon in the corner of the list. Opens a small menu of the categories  (used by 1)
 - `frontend/src/components/expenses/CategoryPicker.jsx`  (used by 1)
-- `frontend/src/components/expenses/categoryIcons.jsx`  (used by 4)
+- `frontend/src/components/expenses/categoryIcons.jsx`  (used by 6)
 ### dashboard
 - `frontend/src/pages/DashboardPage.jsx`  (used by 1)
+- `frontend/src/utils/dashboardMath.js` - Where the month stands today. `spent` is what I paid myself this month and  (used by 2)
 ### expenses
 - `backend/src/controllers/expenseController.js`  (used by 1)
 - `backend/src/models/Expense.js`  (used by 10)
@@ -502,10 +504,10 @@ flowchart LR
 - `backend/src/utils/expenseRepeat.js` - Makes the copies of repeating expenses that are due up to `now` (inclusive).  (used by 1)
 - `frontend/src/components/expenses/ExpenseForm.jsx`  (used by 1)
 - `frontend/src/components/groups/GroupExpenseSheet.jsx`  (used by 1)
-- `frontend/src/hooks/useExpenseCategories.js`  (used by 3)
+- `frontend/src/hooks/useExpenseCategories.js`  (used by 4)
 - `frontend/src/pages/ExpensesPage.jsx`  (used by 1)
 - `frontend/src/services/expenseService.js`  (used by 4)
-- `frontend/src/utils/expenseMath.js`  (used by 12)
+- `frontend/src/utils/expenseMath.js`  (used by 13)
 ### income
 - `backend/src/controllers/incomeStreamController.js`  (used by 1)
 - `backend/src/controllers/salaryPlanController.js`  (used by 1)
@@ -526,7 +528,7 @@ flowchart LR
 - `frontend/src/pages/SalaryPage.jsx`  (used by 1)
 - `frontend/src/services/incomeStreamService.js` - Always asks for archived streams too: the balance still needs them for old receipts.  (used by 2)
 - `frontend/src/services/salaryPlanService.js`  (used by 2)
-- `frontend/src/utils/incomeMath.js`  (used by 7)
+- `frontend/src/utils/incomeMath.js`  (used by 8)
 - `frontend/src/utils/salaryCuts.js`  (used by 7)
 - `frontend/src/utils/salaryPlanMath.js` - What a stream brings in per month after tax and deductions.  (used by 3)
 - `frontend/src/utils/taxRules.js`  (used by 2)
@@ -534,6 +536,7 @@ flowchart LR
 - `backend/src/controllers/loanController.js`  (used by 1)
 - `backend/src/models/Loan.js`  (used by 8)
 - `backend/src/routes/loanRoutes.js`  (used by 1)
+- `frontend/src/components/dashboard/LoansPanel.jsx`  (used by 1)
 - `frontend/src/components/loans/LoanAmounts.jsx`  (used by 2)
 - `frontend/src/components/loans/LoanCard.jsx`  (used by 1)
 - `frontend/src/components/loans/LoanDetail.jsx`  (used by 1)
@@ -652,7 +655,13 @@ flowchart LR
 - `frontend/src/components/Select.jsx`  (used by 1)
 - `frontend/src/components/Skeletons.jsx`  (used by 5)
 - `frontend/src/components/ToastViewport.jsx`  (used by 1)
+- `frontend/src/components/dashboard/AttentionPanel.jsx` - Everything that needs a decision today, in one list: overdue and soon-due bills and loans,  (used by 1)
 - `frontend/src/components/dashboard/BalanceCard.jsx`  (used by 1)
+- `frontend/src/components/dashboard/CashFlowPanel.jsx` - Six months of income against spending, with what was kept over the whole period.  (used by 1)
+- `frontend/src/components/dashboard/MonthPulse.jsx`  (used by 1)
+- `frontend/src/components/dashboard/PlansPanel.jsx`  (used by 1)
+- `frontend/src/components/dashboard/RecentSpending.jsx` - The last few things I paid for myself.  (used by 1)
+- `frontend/src/components/dashboard/Section.jsx` - One card header for every Dashboard section: dark icon tile, bold title, optional "View all" pill.  (used by 7)
 - `frontend/src/components/expenses/DailyChart.jsx`  (used by 1)
 - `frontend/src/components/expenses/MonthOverview.jsx`  (used by 1)
 - `frontend/src/components/groups/BalanceChips.jsx`  (used by 2)
@@ -697,7 +706,7 @@ flowchart LR
 - `frontend/src/hooks/useBalance.js` - The one source of balance numbers. status: 'wait' | 'error' | 'ready'.  (used by 2)
 - `frontend/src/hooks/useEmailCheck.js`  (used by 1)
 - `frontend/src/hooks/useGroupInvites.js` - Group invitations waiting for the signed-in person. Feeds the bell, the Groups  (used by 3)
-- `frontend/src/hooks/useMotionPreference.js`  (used by 30)
+- `frontend/src/hooks/useMotionPreference.js`  (used by 31)
 - `frontend/src/i18n/languageStorage.js` - Only the *signed-out* language (login / signup screens) lives in localStorage.  (used by 1)
 - `frontend/src/i18n/locales/ar.js`  (used by 2)
 - `frontend/src/i18n/locales/en.js`  (used by 2)
@@ -708,9 +717,9 @@ flowchart LR
 - `frontend/src/i18n/notifications.js`  (used by 32)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 42)
+- `frontend/src/i18n/useFormat.js`  (used by 49)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 9)
-- `frontend/src/i18n/useTranslation.js`  (used by 96)
+- `frontend/src/i18n/useTranslation.js`  (used by 103)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/GroupPage.jsx`  (used by 1)
 - `frontend/src/pages/GroupsPage.jsx`  (used by 1)
@@ -746,7 +755,7 @@ flowchart LR
 - `frontend/src/utils/committeeMath.js` - Same day rule as the server (`backend/src/utils/committee.js`): used only to preview a committee  (used by 1)
 - `frontend/src/utils/countries.js`  (used by 1)
 - `frontend/src/utils/csvImport.js` - Reads a CSV file of expenses. Works with commas or semicolons, quoted cells,  (used by 2)
-- `frontend/src/utils/dates.js`  (used by 24)
+- `frontend/src/utils/dates.js`  (used by 25)
 - `frontend/src/utils/deviceFallbackId.js` - A second, non-httpOnly device signal that backs up the server's own  (used by 1)
 - `frontend/src/utils/direction.js`  (used by 2)
 - `frontend/src/utils/emailRules.js`  (used by 4)
@@ -756,8 +765,8 @@ flowchart LR
 - `frontend/src/utils/options.js` - APPLICATION languages only: each code here must have a dictionary in  (used by 3)
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
-- `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
-- `frontend/src/utils/reportMath.js` - Month keys ending at `end`, oldest first.  (used by 3)
+- `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 2)
+- `frontend/src/utils/reportMath.js` - Month keys ending at `end`, oldest first.  (used by 6)
 - `frontend/src/utils/returnPath.js` - Remembers where a person was heading before they had to sign in or create an  (used by 3)
 - `frontend/src/utils/smartImport.js` - Reads a table (from parseCsv) and works out, on its own:  (used by 1)
 - `frontend/src/utils/useMediaQuery.js`  (used by 2)
