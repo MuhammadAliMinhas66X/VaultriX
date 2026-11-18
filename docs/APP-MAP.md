@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (319 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (320 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -136,7 +136,7 @@ flowchart LR
   - hooks/data: useResource, useExpenseCategories, useMotionPreference
   - utils: expenseMath, salaryPlanMath
 - `/reports` -> `frontend/src/pages/ReportsPage.jsx`
-  - components: AppShell, useAppNav, Overview, Budgets, Goals
+  - components: AppShell, useAppNav, Overview, Budgets, Goals, Accounts
   - hooks/data: useResource, useExpenseCategories
   - utils: expenseMath
 - `/join-group` -> `frontend/src/pages/JoinGroupPage.jsx`
@@ -343,6 +343,7 @@ flowchart LR
 - resource `salaryPlan`
 - resource `salaryPlans`
 - resource `budgets`
+- resource `accounts`
 - resource `goals`
 - resource `receipts`
 - resource `opening`
@@ -356,6 +357,7 @@ flowchart LR
 - a save to `/salary-plan` reloads salaryPlan, salaryPlans
 - a save to `/budgets` reloads budgets
 - a save to `/goals` reloads goals
+- a save to `/accounts` reloads accounts
 - a save to `/receipts` reloads receipts, opening, expenseTotals
 
 ## 7. Models (field names)
@@ -387,13 +389,13 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 95 files
-- `frontend/src/i18n/useFormat.js` is imported by 41 files
-- `frontend/src/context/AuthContext.jsx` is imported by 36 files
+- `frontend/src/i18n/useTranslation.js` is imported by 96 files
+- `frontend/src/i18n/useFormat.js` is imported by 42 files
+- `frontend/src/context/AuthContext.jsx` is imported by 37 files
+- `frontend/src/i18n/notifications.js` is imported by 31 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 30 files
-- `frontend/src/i18n/notifications.js` is imported by 30 files
 - `frontend/src/utils/dates.js` is imported by 24 files
-- `frontend/src/components/Combobox.jsx` is imported by 18 files
+- `frontend/src/components/Combobox.jsx` is imported by 19 files
 - `backend/src/middleware/rateLimiters.js` is imported by 18 files
 - `frontend/src/services/api.js` is imported by 17 files
 - `backend/src/middleware/auth.js` is imported by 17 files
@@ -411,7 +413,8 @@ flowchart LR
 - `backend/src/models/PendingAccountDeletion.js` - One pending row per user who confirmed their password (or typed DELETE,  (used by 2)
 - `backend/src/routes/accountRoutes.js` - Any signed-in org member can read (including a viewer) - writes need  (used by 1)
 - `frontend/src/components/layout/AccountMenu.jsx`  (used by 1)
-- `frontend/src/services/accountService.js`  (used by 0)
+- `frontend/src/components/reports/Accounts.jsx`  (used by 1)
+- `frontend/src/services/accountService.js`  (used by 2)
 ### admin
 - `backend/src/controllers/adminController.js`  (used by 1)
 - `backend/src/middleware/requireAdmin.js` - Must run after authenticate() - relies on req.user already being set.  (used by 1)
@@ -437,7 +440,7 @@ flowchart LR
 - `frontend/src/components/OtpInput.jsx`  (used by 4)
 - `frontend/src/components/PasswordStrength.jsx`  (used by 2)
 - `frontend/src/components/admin/AdminPasswordPrompt.jsx`  (used by 1)
-- `frontend/src/context/AuthContext.jsx`  (used by 36)
+- `frontend/src/context/AuthContext.jsx`  (used by 37)
 - `frontend/src/pages/ForgotPasswordPage.jsx`  (used by 1)
 - `frontend/src/pages/LoginPage.jsx`  (used by 1)
 - `frontend/src/pages/SignupPage.jsx`  (used by 1)
@@ -549,7 +552,7 @@ flowchart LR
 - `backend/src/controllers/userController.js`  (used by 1)
 - `backend/src/models/User.js`  (used by 12)
 - `backend/src/routes/userRoutes.js`  (used by 1)
-- `frontend/src/data/useResource.js`  (used by 12)
+- `frontend/src/data/useResource.js`  (used by 13)
 - `frontend/src/hooks/useReminders.js` - Bills and loans that are overdue or due within a week. Shared by the bell in  (used by 1)
 - `frontend/src/pages/SettingsPage.jsx`  (used by 1)
 - `frontend/src/services/userService.js`  (used by 2)
@@ -610,7 +613,7 @@ flowchart LR
 - `frontend/src/components/BrandMark.jsx`  (used by 12)
 - `frontend/src/components/Button.jsx`  (used by 15)
 - `frontend/src/components/Captcha.jsx`  (used by 3)
-- `frontend/src/components/Combobox.jsx`  (used by 18)
+- `frontend/src/components/Combobox.jsx`  (used by 19)
 - `frontend/src/components/Drawer.jsx`  (used by 6)
 - `frontend/src/components/EmailField.jsx`  (used by 3)
 - `frontend/src/components/ErrorBoundary.jsx`  (used by 2)
@@ -622,7 +625,7 @@ flowchart LR
 - `frontend/src/components/LockScreen.jsx`  (used by 1)
 - `frontend/src/components/LockTimerBadge.jsx`  (used by 1)
 - `frontend/src/components/Logo.jsx`  (used by 5)
-- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 11)
+- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 12)
 - `frontend/src/components/OfflineBanner.jsx` - A dedicated, full-width status bar for connectivity - distinct from the  (used by 1)
 - `frontend/src/components/PageLoader.jsx`  (used by 4)
 - `frontend/src/components/ProtectedRoute.jsx`  (used by 1)
@@ -683,12 +686,12 @@ flowchart LR
 - `frontend/src/i18n/locales/fr.js`  (used by 2)
 - `frontend/src/i18n/locales/hi.js`  (used by 2)
 - `frontend/src/i18n/locales/ur.js`  (used by 2)
-- `frontend/src/i18n/notifications.js`  (used by 30)
+- `frontend/src/i18n/notifications.js`  (used by 31)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 41)
+- `frontend/src/i18n/useFormat.js`  (used by 42)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 9)
-- `frontend/src/i18n/useTranslation.js`  (used by 95)
+- `frontend/src/i18n/useTranslation.js`  (used by 96)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/GroupPage.jsx`  (used by 1)
 - `frontend/src/pages/GroupsPage.jsx`  (used by 1)
@@ -729,7 +732,7 @@ flowchart LR
 - `frontend/src/utils/groupSplit.js` - Same rule the server uses, so the preview on screen matches what is saved.  (used by 1)
 - `frontend/src/utils/imageCompress.js`  (used by 3)
 - `frontend/src/utils/nameRules.js` - Mirrors backend/src/utils/validators.js cleanName(): letters (any script)  (used by 2)
-- `frontend/src/utils/options.js` - APPLICATION languages only: each code here must have a dictionary in  (used by 1)
+- `frontend/src/utils/options.js` - APPLICATION languages only: each code here must have a dictionary in  (used by 2)
 - `frontend/src/utils/paymentBrands.js`  (used by 5)
 - `frontend/src/utils/pdfWriter.js`  (used by 1)
 - `frontend/src/utils/reminders.js` - One list of things that need attention: unpaid bills and open loans that are  (used by 1)
