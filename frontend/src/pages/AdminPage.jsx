@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Activity,
   ArrowLeft,
   Ban,
   CheckCircle2,
@@ -38,6 +39,7 @@ import {
   X,
 } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
+import SystemHealth from '../components/admin/SystemHealth.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import Button from '../components/Button.jsx';
 import FormField from '../components/FormField.jsx';
@@ -1083,6 +1085,7 @@ const SECTIONS = [
   { id: 'users', label: 'Users', Icon: UsersIcon, Component: UsersSection },
   { id: 'security', label: 'Security', Icon: ShieldAlert, Component: SecuritySection },
   { id: 'audit', label: 'Audit log', Icon: ScrollText, Component: AuditLogSection },
+  { id: 'health', label: 'System health', Icon: Activity, Component: SystemHealth },
 ];
 
 function AdminPage() {

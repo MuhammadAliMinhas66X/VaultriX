@@ -131,3 +131,23 @@ export const exportAdminUsersCsv = async ({ search = '', status = 'all', passwor
     throw toApiError(error);
   }
 };
+
+// System health (backend/src/controllers/healthController.js). GET reads the
+// cached snapshot; the POST re-runs the checks (throttled on the server).
+export const getAdminHealth = async () => {
+  try {
+    const { data } = await api.get('/admin/health');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
+
+export const runAdminHealthCheck = async () => {
+  try {
+    const { data } = await api.post('/admin/health/check');
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
