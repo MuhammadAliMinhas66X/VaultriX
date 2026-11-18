@@ -4,6 +4,7 @@ import { listExpenses, listExpenseCategories } from '../services/expenseService.
 import { listLoans } from '../services/loanService.js';
 import { getSalaryPlan, listSalaryPlans } from '../services/salaryPlanService.js';
 import { listBudgets, listGoals } from '../services/planningService.js';
+import { listAccounts } from '../services/accountService.js';
 import { getExchangeRates } from '../services/fxService.js';
 import { listReceipts, getOpeningBalance, getExpenseTotals } from '../services/receiptService.js';
 
@@ -14,6 +15,7 @@ registerResource('categories', { fetch: () => listExpenseCategories(), staleMs: 
 registerResource('salaryPlan', { fetch: ({ month }) => getSalaryPlan(month), staleMs: 30000 });
 registerResource('salaryPlans', { fetch: () => listSalaryPlans(), staleMs: 30000 });
 registerResource('budgets', { fetch: () => listBudgets(), staleMs: 30000 });
+registerResource('accounts', { fetch: ({ archived }) => listAccounts(archived === '1'), staleMs: 30000 });
 registerResource('goals', { fetch: () => listGoals(), staleMs: 30000 });
 registerResource('receipts', { fetch: () => listReceipts(), staleMs: 30000 });
 registerResource('opening', { fetch: () => getOpeningBalance(), staleMs: 30000 });
@@ -36,5 +38,6 @@ registerRules([
   { prefix: '/salary-plan', invalidates: ['salaryPlan', 'salaryPlans'] },
   { prefix: '/budgets', invalidates: ['budgets'] },
   { prefix: '/goals', invalidates: ['goals'] },
+  { prefix: '/accounts', invalidates: ['accounts'] },
   { prefix: '/receipts', invalidates: ['receipts', 'opening', 'expenseTotals'] },
 ]);

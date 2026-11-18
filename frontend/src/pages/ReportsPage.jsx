@@ -6,6 +6,7 @@ import useAppNav from '../components/layout/useAppNav.jsx';
 import Overview from '../components/reports/Overview.jsx';
 import Budgets from '../components/reports/Budgets.jsx';
 import Goals from '../components/reports/Goals.jsx';
+import Accounts from '../components/reports/Accounts.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../i18n/useTranslation.js';
 import { useFormat } from '../i18n/useFormat.js';
@@ -13,7 +14,7 @@ import { useResource } from '../data/useResource.js';
 import useExpenseCategories from '../hooks/useExpenseCategories.js';
 import { monthKey, shiftMonth } from '../utils/expenseMath.js';
 
-const TABS = ['overview', 'budgets', 'goals'];
+const TABS = ['overview', 'budgets', 'goals', 'accounts'];
 const NONE = [];
 
 export default function ReportsPage() {
@@ -31,7 +32,7 @@ export default function ReportsPage() {
   const expenses = expensesResource.data ? expensesResource.data.expenses : NONE;
   const expenseCategories = useMemo(() => categories.filter((item) => !item.type || item.type === 'expense'), [categories]);
   const monthLabel = formatDate(new Date(`${month}-01T00:00:00Z`), { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const showMonth = tab !== 'goals';
+  const showMonth = tab !== 'goals' && tab !== 'accounts';
 
   return (
     <AppShell showLogo pageTitle={t('reports.title')} items={items} activeId={activeId}>
@@ -50,7 +51,7 @@ export default function ReportsPage() {
           )}
         </div>
 
-        <div role="tablist" aria-label={t('reports.title')} className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-border bg-white p-1 sm:inline-grid sm:min-w-[22rem]">
+        <div role="tablist" aria-label={t('reports.title')} className="mb-5 grid grid-cols-4 gap-1 rounded-xl border border-border bg-white p-1 sm:inline-grid sm:min-w-[28rem]">
           {TABS.map((id) => (
             <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setParams(id === 'overview' ? {} : { tab: id }, { replace: true })} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>
               {t(`reports.tab.${id}`)}
@@ -61,6 +62,7 @@ export default function ReportsPage() {
         {tab === 'overview' && <Overview month={month} onMonth={setMonth} categories={expenseCategories} expenses={expenses} />}
         {tab === 'budgets' && <Budgets categories={expenseCategories} expenses={expenses} canWrite={canWrite} />}
         {tab === 'goals' && <Goals canWrite={canWrite} />}
+        {tab === 'accounts' && <Accounts canWrite={canWrite} />}
       </div>
     </AppShell>
   );

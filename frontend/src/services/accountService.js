@@ -1,9 +1,9 @@
 import api from './api.js';
 import { toApiError } from './apiError.js';
 
-export const listAccounts = async () => {
+export const listAccounts = async (includeArchived = false) => {
   try {
-    const { data } = await api.get('/accounts');
+    const { data } = await api.get('/accounts', { params: includeArchived ? { includeArchived: 'true' } : {} });
     return data;
   } catch (error) {
     throw toApiError(error);
