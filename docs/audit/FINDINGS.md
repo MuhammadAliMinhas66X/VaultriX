@@ -48,7 +48,7 @@ All findings come from reading code in session 1. None was reproduced against a 
 
 ## F-007 Dependency audit cannot fail CI; multer 1.x
 - Severity: Low. Files: `.github/workflows/security.yml`, `backend/package.json`.
-- Description: `npm audit` has `continue-on-error: true`. `multer ^1.4.5-lts.1` is the 1.x line that upstream flags as having advisories fixed in 2.x. NOT VERIFIED: `npm audit` could not run offline.
+- Description: `npm audit` has `continue-on-error: true`. `multer ^1.4.5-lts.1` is the 1.x line that upstream flags as having advisories fixed in 2.x. Evidence added 2026-11-18: the owner's `npm install` reports 10 vulnerabilities (6 moderate, 4 high) in the backend; package names not captured yet (see DEPENDENCY-AUDIT.md). The multer point is still NOT VERIFIED.
 - Fix: run audit on a networked machine, upgrade multer after testing uploads, make high findings fail CI.
 - Status: OPEN, NOT VERIFIED.
 

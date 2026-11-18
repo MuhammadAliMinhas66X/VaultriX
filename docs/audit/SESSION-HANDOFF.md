@@ -19,13 +19,13 @@ HM-1: code written. Files in CHANGELOG.md.
 See REMEDIATION-ROADMAP.md, in order: verify HM-1, SEC-1, SEC-2, AUD-1, AUD-2, DEP-1.
 
 ## Known limitations
-No network, no MongoDB, no browser in the session sandbox. No vitest run, no build, no npm audit, no dynamic tests, no git history.
+No network, no MongoDB, no browser in the session sandbox. Backend vitest now run by the owner. Still missing: frontend tests and build, npm audit details, dynamic security tests, git history.
 
 ## Last verification
-Shim-run unit tests 21 of 21 passed; parse checks ok. See TEST-RESULTS.md.
+Owner ran `npm test` in backend on 2026-11-18 after merging v1_160: 33 files, 218 tests passed, including healthMonitor (16) and admin-health (5). Frontend `npm test`, `npm run build` and the browser check of the System health tab were not reported yet. See TEST-RESULTS.md.
 
 ## Exact next task
-Run HM-1 verification on the owner's PC with real tooling (commands at the bottom of TEST-RESULTS.md), fix anything that fails, then mark HM-1 COMPLETED. Then SEC-1.
+Finish HM-1: owner runs `cd frontend; npm test; npm run build` and opens Admin > System health. Fix anything that fails, then mark HM-1 COMPLETED. Then SEC-1 (F-001).
 
 ## Files to inspect
 backend/src/services/health*.js, backend/src/controllers/healthController.js, backend/src/routes/adminRoutes.js, frontend/src/components/admin/SystemHealth.jsx.
