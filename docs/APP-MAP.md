@@ -1,6 +1,6 @@
 # APP-MAP (generated, do not edit by hand)
 
-Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (320 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
+Built by `node docs/dev/make-app-map.mjs` from the real imports and routes (319 files). Rebuild it after every round. A new chat should read THIS file and CLAUDE.md, then open only the files named here for the feature being changed.
 
 ## 1. How data flows
 
@@ -131,7 +131,7 @@ flowchart LR
   - hooks/data: useMotionPreference, useExpenseCategories, useResource
   - utils: billers, billMath, billDates, dates, billPrefs
 - `/salary` -> `frontend/src/pages/SalaryPage.jsx`
-  - components: AppShell, useAppNav, Combobox, MoneyInput, SalaryRing
+  - components: AppShell, useAppNav, AllocationForm, AllocationList, SalaryHistory, SalaryOverview, ui
   - services: salaryPlanService
   - hooks/data: useResource, useExpenseCategories, useMotionPreference
   - utils: expenseMath, salaryPlanMath
@@ -389,13 +389,13 @@ flowchart LR
 
 ## 8. Where is it used (most connected files: change with care)
 
-- `frontend/src/i18n/useTranslation.js` is imported by 96 files
-- `frontend/src/i18n/useFormat.js` is imported by 42 files
+- `frontend/src/i18n/useTranslation.js` is imported by 95 files
+- `frontend/src/i18n/useFormat.js` is imported by 41 files
 - `frontend/src/context/AuthContext.jsx` is imported by 37 files
 - `frontend/src/i18n/notifications.js` is imported by 31 files
-- `frontend/src/hooks/useMotionPreference.js` is imported by 30 files
+- `frontend/src/hooks/useMotionPreference.js` is imported by 29 files
 - `frontend/src/utils/dates.js` is imported by 24 files
-- `frontend/src/components/Combobox.jsx` is imported by 19 files
+- `frontend/src/components/Combobox.jsx` is imported by 18 files
 - `backend/src/middleware/rateLimiters.js` is imported by 18 files
 - `frontend/src/services/api.js` is imported by 17 files
 - `backend/src/middleware/auth.js` is imported by 17 files
@@ -504,9 +504,8 @@ flowchart LR
 - `frontend/src/components/income/IncomeForm.jsx`  (used by 1)
 - `frontend/src/components/income/SalaryCutsPanel.jsx`  (used by 1)
 - `frontend/src/components/income/incomeOptions.js`  (used by 5)
-- `frontend/src/components/salary/SalaryHistory.jsx`  (used by 0)
-- `frontend/src/components/salary/SalaryOverview.jsx`  (used by 0)
-- `frontend/src/components/salary/SalaryRing.jsx`  (used by 1)
+- `frontend/src/components/salary/SalaryHistory.jsx`  (used by 1)
+- `frontend/src/components/salary/SalaryOverview.jsx`  (used by 1)
 - `frontend/src/context/IncomeContext.jsx`  (used by 11)
 - `frontend/src/pages/IncomePage.jsx`  (used by 1)
 - `frontend/src/pages/SalaryPage.jsx`  (used by 1)
@@ -613,7 +612,7 @@ flowchart LR
 - `frontend/src/components/BrandMark.jsx`  (used by 12)
 - `frontend/src/components/Button.jsx`  (used by 15)
 - `frontend/src/components/Captcha.jsx`  (used by 3)
-- `frontend/src/components/Combobox.jsx`  (used by 19)
+- `frontend/src/components/Combobox.jsx`  (used by 18)
 - `frontend/src/components/Drawer.jsx`  (used by 6)
 - `frontend/src/components/EmailField.jsx`  (used by 3)
 - `frontend/src/components/ErrorBoundary.jsx`  (used by 2)
@@ -625,7 +624,7 @@ flowchart LR
 - `frontend/src/components/LockScreen.jsx`  (used by 1)
 - `frontend/src/components/LockTimerBadge.jsx`  (used by 1)
 - `frontend/src/components/Logo.jsx`  (used by 5)
-- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 12)
+- `frontend/src/components/MoneyInput.jsx` - A plain text box for money: no up/down arrows, no scroll-wheel changes, only  (used by 11)
 - `frontend/src/components/OfflineBanner.jsx` - A dedicated, full-width status bar for connectivity - distinct from the  (used by 1)
 - `frontend/src/components/PageLoader.jsx`  (used by 4)
 - `frontend/src/components/ProtectedRoute.jsx`  (used by 1)
@@ -668,9 +667,9 @@ flowchart LR
 - `frontend/src/components/reports/Budgets.jsx`  (used by 1)
 - `frontend/src/components/reports/Goals.jsx`  (used by 1)
 - `frontend/src/components/reports/Overview.jsx`  (used by 1)
-- `frontend/src/components/salary/AllocationForm.jsx`  (used by 0)
-- `frontend/src/components/salary/AllocationList.jsx`  (used by 0)
-- `frontend/src/components/salary/ui.js` - One small button and field system for the salary planner.  (used by 4)
+- `frontend/src/components/salary/AllocationForm.jsx`  (used by 1)
+- `frontend/src/components/salary/AllocationList.jsx`  (used by 1)
+- `frontend/src/components/salary/ui.js` - One small button and field system for the salary planner.  (used by 5)
 - `frontend/src/components/settings/DataSection.jsx`  (used by 1)
 - `frontend/src/components/settings/PeopleSection.jsx`  (used by 1)
 - `frontend/src/data/dataStore.js`  (used by 2)
@@ -678,7 +677,7 @@ flowchart LR
 - `frontend/src/hooks/useBalance.js` - The one source of balance numbers. status: 'wait' | 'error' | 'ready'.  (used by 2)
 - `frontend/src/hooks/useEmailCheck.js`  (used by 1)
 - `frontend/src/hooks/useGroupInvites.js` - Group invitations waiting for the signed-in person. Feeds the bell, the Groups  (used by 3)
-- `frontend/src/hooks/useMotionPreference.js`  (used by 30)
+- `frontend/src/hooks/useMotionPreference.js`  (used by 29)
 - `frontend/src/i18n/languageStorage.js` - Only the *signed-out* language (login / signup screens) lives in localStorage.  (used by 1)
 - `frontend/src/i18n/locales/ar.js`  (used by 2)
 - `frontend/src/i18n/locales/en.js`  (used by 2)
@@ -689,9 +688,9 @@ flowchart LR
 - `frontend/src/i18n/notifications.js`  (used by 31)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
-- `frontend/src/i18n/useFormat.js`  (used by 42)
+- `frontend/src/i18n/useFormat.js`  (used by 41)
 - `frontend/src/i18n/useLocalizedOptions.js`  (used by 9)
-- `frontend/src/i18n/useTranslation.js`  (used by 96)
+- `frontend/src/i18n/useTranslation.js`  (used by 95)
 - `frontend/src/main.jsx` - GoogleOAuthProvider deliberately sits OUTSIDE StrictMode: it calls  (used by 0)
 - `frontend/src/pages/GroupPage.jsx`  (used by 1)
 - `frontend/src/pages/GroupsPage.jsx`  (used by 1)
