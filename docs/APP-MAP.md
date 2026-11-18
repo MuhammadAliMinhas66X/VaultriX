@@ -161,7 +161,7 @@ flowchart LR
 - `frontend/src/services/authService.js`: POST /auth/signup | POST /auth/signup/verify | POST /auth/login | POST /auth/login-status | POST /auth/logout | POST /auth/refresh | GET /auth/me | POST /auth/google | POST /auth/link-google | POST /auth/unlink-google | POST /auth/verify-device | POST /auth/verify-mfa | POST /auth/validate-email | POST /auth/forgot-password | POST /auth/verify-reset-code | POST /auth/reset-password
 - `frontend/src/services/billService.js`: GET /bills | POST /bills | PATCH /bills/:id | DELETE /bills/:id | POST /bills/:id/payments | DELETE /bills/:id/payments/:id | POST /bills/:id/cancel | POST /bills/:id/recurring
 - `frontend/src/services/dataService.js`: GET /data/export/:id | POST /data/import/expenses | POST /data/import
-- `frontend/src/services/expenseService.js`: GET /expenses | POST /expenses | PATCH /expenses/:id | DELETE /expenses/:id | GET /categories | POST /categories | PATCH /categories/:id | DELETE /categories/:id
+- `frontend/src/services/expenseService.js`: GET /expenses | POST /expenses | PATCH /expenses/:id | DELETE /expenses/:id/receipt | DELETE /expenses/:id | GET /categories | POST /categories | PATCH /categories/:id | DELETE /categories/:id
 - `frontend/src/services/fxService.js`: GET /fx/rates
 - `frontend/src/services/groupService.js`: GET /groups | POST /groups | GET /groups/:id | DELETE /groups/:id | POST /groups/:id/leave | POST /groups/join | POST /groups/:id/invites | DELETE /groups/:id/invites/:id | POST /groups/:id/expenses | PATCH /groups/:id/expenses/:id | DELETE /groups/:id/expenses/:id | POST /groups/:id/expenses/:id/my-expenses | POST /groups/:id/settlements | DELETE /groups/:id/settlements/:id | GET /groups/invites/mine | POST /groups/invites/:id/accept | DELETE /groups/invites/:id
 - `frontend/src/services/incomeStreamService.js`: GET /income-streams | POST /income-streams | PATCH /income-streams/:id | DELETE /income-streams/:id
@@ -261,12 +261,14 @@ flowchart LR
 - POST /api/loans/:id/payments/:paymentId/proof  (write)
 - DELETE /api/loans/:id/payments/:paymentId/proof  (write)
 ### /api/expenses
-- controller `backend/src/controllers/expenseController.js`; models: Expense, Category, Loan; helpers: validators, expenseLoanLink, financeInput, expenseRepeat, billRecurrence, balanceTotals
+- controller `backend/src/controllers/expenseController.js`; models: Expense, Category, Loan; helpers: validators, expenseLoanLink, financeInput, expenseRepeat, billRecurrence, balanceTotals, imageStorage
 - GET /api/expenses/totals
 - GET /api/expenses
 - POST /api/expenses  (write)
 - PATCH /api/expenses/:id  (write)
 - DELETE /api/expenses/:id  (write)
+- POST /api/expenses/:id/receipt  (write)
+- DELETE /api/expenses/:id/receipt  (write)
 ### /api/salary-plan
 - controller `backend/src/controllers/salaryPlanController.js`; models: SalaryPlan, Category, IncomeStream; helpers: financeInput, currencies
 - GET /api/salary-plan
@@ -350,7 +352,7 @@ flowchart LR
 - `Account`: orgId, name, type, currency, balanceMinor, color, isArchived, createdBy
 - `Bill`: amountMinor, paidAt, payMethod, payName, note, expenseId, seq, dueAt, periodStart, periodEnd, nextBillAt, orgId, createdBy, billerName, billerId, categoryId, amountMinor, installationMinor, currency, dueAt, periodStart, periodEnd, billerAccount, payMethod, payName, note, frequency, seriesState
 - `Category`: orgId, name, type, color, icon, isArchived, isDefault, createdBy
-- `Expense`: orgId, createdBy, amountMinor, currency, categoryId, spentAt, note, payMethod, payName, paidBy, payerName, givenTo, billId, billPaymentId, loanId, groupExpenseId, repeatFrequency, repeatAnchor, repeatStep, repeatOf, repeatKey
+- `Expense`: orgId, createdBy, amountMinor, currency, categoryId, spentAt, note, receipt, payMethod, payName, paidBy, payerName, givenTo, billId, billPaymentId, loanId, groupExpenseId, repeatFrequency, repeatAnchor, repeatStep, repeatOf, repeatKey
 - `Group`: userId, name, joinedAt, left, name, currency, createdBy, members
 - `GroupExpense`: userId, amountMinor, percentBp, groupId, createdBy, description, amountMinor, currency, spentAt, paidBy, splitType, shares, repeatFrequency, repeatAnchor, repeatStep, repeatOf, repeatKey
 - `GroupInvite`: groupId, invitedBy, email, codeHash, expiresAt
@@ -375,8 +377,8 @@ flowchart LR
 - `frontend/src/i18n/useTranslation.js` is imported by 91 files
 - `frontend/src/i18n/useFormat.js` is imported by 37 files
 - `frontend/src/context/AuthContext.jsx` is imported by 32 files
+- `frontend/src/i18n/notifications.js` is imported by 28 files
 - `frontend/src/hooks/useMotionPreference.js` is imported by 27 files
-- `frontend/src/i18n/notifications.js` is imported by 27 files
 - `frontend/src/utils/dates.js` is imported by 24 files
 - `frontend/src/components/Combobox.jsx` is imported by 17 files
 - `backend/src/middleware/rateLimiters.js` is imported by 17 files
@@ -471,7 +473,7 @@ flowchart LR
 - `frontend/src/components/groups/GroupExpenseSheet.jsx`  (used by 1)
 - `frontend/src/hooks/useExpenseCategories.js`  (used by 2)
 - `frontend/src/pages/ExpensesPage.jsx`  (used by 1)
-- `frontend/src/services/expenseService.js`  (used by 3)
+- `frontend/src/services/expenseService.js`  (used by 4)
 - `frontend/src/utils/expenseMath.js`  (used by 10)
 ### income
 - `backend/src/controllers/incomeStreamController.js`  (used by 1)
@@ -541,7 +543,7 @@ flowchart LR
 - `frontend/src/utils/avatar.js`  (used by 8)
 ### shared
 - `backend/src/app.js`  (used by 1)
-- `backend/src/config/cloudinary.js`  (used by 6)
+- `backend/src/config/cloudinary.js`  (used by 7)
 - `backend/src/config/database.js`  (used by 1)
 - `backend/src/config/env.js` - The one account allowed into the Admin Dashboard (see  (used by 3)
 - `backend/src/controllers/dataController.js`  (used by 1)
@@ -552,7 +554,7 @@ flowchart LR
 - `backend/src/middleware/deviceId.js` - Identifies "this device" well enough to cap how many accounts can be  (used by 1)
 - `backend/src/middleware/errorHandler.js`  (used by 1)
 - `backend/src/middleware/originGuard.js`  (used by 1)
-- `backend/src/middleware/upload.js`  (used by 3)
+- `backend/src/middleware/upload.js`  (used by 4)
 - `backend/src/models/Group.js` - A shared group (flatmates, a trip). People keep their own private workspace;  (used by 3)
 - `backend/src/models/GroupInvite.js`  (used by 2)
 - `backend/src/models/GroupSettlement.js` - "Sara paid Ali 1500": clears part of what Sara owes in the group.  (used by 2)
@@ -564,7 +566,7 @@ flowchart LR
 - `backend/src/routes/receiptRoutes.js`  (used by 1)
 - `backend/src/routes/teamRoutes.js`  (used by 1)
 - `backend/src/server.js`  (used by 0)
-- `backend/src/services/imageStorage.js`  (used by 4)
+- `backend/src/services/imageStorage.js`  (used by 5)
 - `backend/src/services/reminderDigest.js` - Reminder emails. One digest per person per day, only when something is  (used by 1)
 - `backend/src/utils/backupCodes.js` - Excludes visually-confusable characters (0/O, 1/I/L) so a code is easy to  (used by 1)
 - `backend/src/utils/balanceTotals.js` - Pure helpers for the balance totals endpoint. Kept free of database calls so  (used by 1)
@@ -636,7 +638,7 @@ flowchart LR
 - `frontend/src/components/loans/PaymentsChart.jsx`  (used by 1)
 - `frontend/src/components/loans/ProofImage.jsx`  (used by 1)
 - `frontend/src/components/loans/ProofPicker.jsx`  (used by 2)
-- `frontend/src/components/loans/ProofSlot.jsx`  (used by 1)
+- `frontend/src/components/loans/ProofSlot.jsx`  (used by 2)
 - `frontend/src/components/loans/StepChart.jsx`  (used by 2)
 - `frontend/src/components/loans/WherePicker.jsx`  (used by 4)
 - `frontend/src/components/onboarding/OptionTile.jsx`  (used by 1)
@@ -661,7 +663,7 @@ flowchart LR
 - `frontend/src/i18n/locales/fr.js`  (used by 2)
 - `frontend/src/i18n/locales/hi.js`  (used by 2)
 - `frontend/src/i18n/locales/ur.js`  (used by 2)
-- `frontend/src/i18n/notifications.js`  (used by 27)
+- `frontend/src/i18n/notifications.js`  (used by 28)
 - `frontend/src/i18n/translate.js` - A language is an application language only if a dictionary exists for it.  (used by 3)
 - `frontend/src/i18n/translations.js`  (used by 1)
 - `frontend/src/i18n/useFormat.js`  (used by 37)
