@@ -17,7 +17,7 @@ const CHIPS = [
 
 // Add or edit one allocation. `initial` = { label, amount, category } when editing.
 // onSubmit({ label, amount, category }) where category is '', 'savings' or an expense category id.
-export default function AllocationForm({ initial, categories, busy, onSubmit, onCancel }) {
+export default function AllocationForm({ initial, categories, busy, onSubmit, onCancel, bills = [] }) {
   const { t } = useTranslation();
   const editing = Boolean(initial);
   const [label, setLabel] = useState(initial ? initial.label : '');
@@ -114,6 +114,29 @@ export default function AllocationForm({ initial, categories, busy, onSubmit, on
           )}
         </div>
       </div>
+
+      {!editing && bills.length > 0 && (
+        <div className="mt-3 flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted">{t('salary.fromBills')}</span>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0">
+            {bills.map((bill) => (
+              <button
+                key={bill.id}
+                type="button"
+                onClick={() => {
+                  setLabel(bill.label);
+                  setAmount(String(bill.amount));
+                  setCategory('');
+                  setErrors({});
+                }}
+                className="h-7 shrink-0 whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium text-ink outline-none transition hover:border-ink/40 hover:bg-surface focus-visible:ring-2 focus-visible:ring-accent/30"
+              >
+                {bill.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!editing && (
         <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0" role="group" aria-label={t('salary.lineLabelPlaceholder')}>

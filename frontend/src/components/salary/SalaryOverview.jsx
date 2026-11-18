@@ -20,7 +20,7 @@ function Row({ label, hint, children }) {
 }
 
 // Salary, allocated, unallocated and the income stream connection in one compact card.
-export default function SalaryOverview({ summary, currency, spent, afterSpending, stream, detached, canWrite, busy, onDisconnect, onReconnect, sources, onPickSource, salaryDraft, onSalaryDraft, onSalaryCommit, money }) {
+export default function SalaryOverview({ arrival, summary, currency, spent, afterSpending, stream, detached, canWrite, busy, onDisconnect, onReconnect, sources, onPickSource, salaryDraft, onSalaryDraft, onSalaryCommit, money }) {
   const { t } = useTranslation();
   const { formatNumber } = useFormat();
   const pctText = (value) => formatNumber(value, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -45,6 +45,13 @@ export default function SalaryOverview({ summary, currency, spent, afterSpending
           </button>
         )}
       </div>
+
+      {arrival && (
+        <p className="mt-1.5 flex items-center gap-2 text-xs text-muted">
+          <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${arrival.received ? 'bg-ink' : 'border border-muted bg-white'}`} />
+          {arrival.text}
+        </p>
+      )}
 
       {!detached && sources.length > 1 && (
         <div className="mt-3">
