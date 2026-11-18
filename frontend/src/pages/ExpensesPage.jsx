@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CornerDownRight, Plus, Receipt, Repeat, Search, X } from 'lucide-react';
+import { CornerDownRight, Paperclip, Plus, Receipt, Repeat, Search, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -20,6 +20,7 @@ import {
   listExpenses,
   createExpense,
   updateExpense,
+  uploadExpenseReceipt,
   deleteExpense,
   listExpenseCategories,
   createExpenseCategory,
@@ -184,6 +185,7 @@ function ExpensesPage() {
         note: expense.note || '',
         repeat: expense.repeat || 'none',
         repeatOf: expense.repeatOf || null,
+        receipt: expense.receipt || null,
         kind: expense.givenTo ? 'given' : expense.paidBy === 'other' ? 'borrowed' : 'spent',
         payer: expense.givenTo || expense.paidBy === 'other' ? (people.includes(expense.givenTo || expense.payerName) ? `person:${expense.givenTo || expense.payerName}` : 'new') : 'self',
         payerName: (expense.givenTo || expense.paidBy === 'other') && !people.includes(expense.givenTo || expense.payerName) ? expense.givenTo || expense.payerName : '',
@@ -209,14 +211,21 @@ function ExpensesPage() {
 
   const closePanel = () => setPanel(null);
 
-  const handleSubmit = async (payload, extra) => {
+  const handleSubmit = async (payload, extra, receiptFile) => {
     setBusy(true);
     try {
       if (panel.mode === 'edit') {
         await updateExpense(panel.expense.id, payload);
         notify.success(t('expenses.updatedTitle'));
       } else {
-        await createExpense(payload);
+        const created = await createExpense(payload);
+        if (receiptFile && created.expense) {
+          try {
+            await uploadExpenseReceipt(created.expense.id, receiptFile);
+          } catch (failure) {
+            notify.error(tServer(failure));
+          }
+        }
         remember({ categoryId: payload.categoryId || '', currency: payload.currency, payKey: extra.payKey, payCustom: extra.payCustom });
         notify.success(t('expenses.addedBody', { amount: formatMoney(payload.amount, { decimals: 2, currency: payload.currency }) }), { title: t('expenses.addedTitle') });
       }
@@ -418,6 +427,7 @@ function ExpensesPage() {
                                   <span className="block truncate text-[15px] font-semibold text-ink">{nameOf(expense.categoryId)}</span>
                                   <span className="mt-1 flex items-center gap-2">
                                     {expense.billId && <span className="shrink-0 rounded-full border border-ink px-2 py-0.5 text-[11px] font-semibold text-ink">{t('bills.fromBill')}</span>}
+                                    {expense.hasReceipt && <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={2} aria-label={t('expenses.receiptLabel')} />}
                                     {(expense.repeat !== 'none' || expense.repeatOf) && (
                                       <span className="flex shrink-0 items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-ink ring-1 ring-border">
                                         <Repeat className="h-3 w-3" strokeWidth={2.25} />
@@ -512,9 +522,11 @@ function ExpensesPage() {
             currencies={currencies}
             busy={busy}
             onCancel={closePanel}
-            onSubmit={(payload) => {
+            expenseId={panel.mode === 'edit' ? panel.expense.id : null}
+            onReceiptChange={() => load(month)}
+            onSubmit={(payload, receiptFile) => {
               const form = { payKey: panel.mode === 'add' ? keyFor(payload.payMethod, payload.payName) : '', payCustom: panel.mode === 'add' ? customFor(payload.payMethod, payload.payName) : '' };
-              return handleSubmit(payload, form);
+              return handleSubmit(payload, form, receiptFile);
             }}
             onDelete={handleDelete}
             onAddCategory={addCategory}

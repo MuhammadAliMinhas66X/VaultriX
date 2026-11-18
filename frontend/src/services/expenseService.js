@@ -13,6 +13,13 @@ const run = async (request) => {
 export const listExpenses = (month) => run(() => api.get('/expenses', { params: { month } }));
 export const createExpense = (payload) => run(() => api.post('/expenses', payload));
 export const updateExpense = (id, payload) => run(() => api.patch(`/expenses/${id}`, payload));
+const sendImage = (url, file) => {
+  const form = new FormData();
+  form.append('image', file);
+  return run(() => api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 60000 }));
+};
+export const uploadExpenseReceipt = (id, file) => sendImage(`/expenses/${id}/receipt`, file);
+export const removeExpenseReceipt = (id) => run(() => api.delete(`/expenses/${id}/receipt`));
 export const deleteExpense = (id) => run(() => api.delete(`/expenses/${id}`));
 
 export const listExpenseCategories = async () => {

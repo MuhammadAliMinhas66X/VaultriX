@@ -7,6 +7,9 @@ import Combobox from '../Combobox.jsx';
 import FieldError from '../FieldError.jsx';
 import ErrorSlot from '../ErrorSlot.jsx';
 import WherePicker from '../loans/WherePicker.jsx';
+import ProofSlot from '../loans/ProofSlot.jsx';
+import { notify } from '../../i18n/notifications.js';
+import { uploadExpenseReceipt, removeExpenseReceipt } from '../../services/expenseService.js';
 import CategoryPicker from './CategoryPicker.jsx';
 import { splitKey, isOtherKey, todayLocal } from '../loans/loanOptions.js';
 import { useTranslation } from '../../i18n/useTranslation.js';
@@ -14,10 +17,51 @@ import { useFormat } from '../../i18n/useFormat.js';
 import { initialsFromName } from '../../utils/avatar.js';
 import { dateOptions } from '../../utils/dates.js';
 
-function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onUpdateCategory, onRemoveCategory, onCancel, busy }) {
-  const { t } = useTranslation();
+function ExpenseForm({ expenseId, onReceiptChange, initial, people, loans = [], enteredAt, loanId, categories, currencies, mode, onSubmit, onDelete, onAddCategory, onUpdateCategory, onRemoveCategory, onCancel, busy }) {
+  const { t, tServer } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
   const [form, setForm] = useState(initial);
+  const [receipt, setReceipt] = useState(initial.receipt || null);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const chooseReceipt = async (file) => {
+    if (!expenseId) {
+      if (receipt && pendingFile) URL.revokeObjectURL(receipt.thumb);
+      const url = URL.createObjectURL(file);
+      setPendingFile(file);
+      setReceipt({ thumb: url, full: url });
+      return;
+    }
+    setUploading(true);
+    try {
+      const data = await uploadExpenseReceipt(expenseId, file);
+      setReceipt(data.expense.receipt);
+      if (onReceiptChange) onReceiptChange();
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const dropReceipt = async () => {
+    if (!expenseId) {
+      setPendingFile(null);
+      setReceipt(null);
+      return;
+    }
+    setUploading(true);
+    try {
+      await removeExpenseReceipt(expenseId);
+      setReceipt(null);
+      if (onReceiptChange) onReceiptChange();
+    } catch (error) {
+      notify.error(tServer(error));
+    } finally {
+      setUploading(false);
+    }
+  };
   const [errors, setErrors] = useState({});
   const [confirming, setConfirming] = useState(false);
 
@@ -83,7 +127,7 @@ function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categorie
       payMethod: where.method,
       payName: where.name,
       ...(form.repeatOf ? {} : { repeat: kind === 'spent' ? form.repeat || 'none' : 'none' }),
-    });
+    }, pendingFile);
   };
 
   const repeatItems = ['none', 'daily', 'weekly', 'monthly', 'yearly'].map((value) => ({ value, label: t(`expenses.repeat${value[0].toUpperCase()}${value.slice(1)}`) }));
@@ -220,6 +264,11 @@ function ExpenseForm({ initial, people, loans = [], enteredAt, loanId, categorie
         </div>
       )}
       {form.repeatOf && <p className="text-xs text-muted">{t('expenses.repeatCopy')}</p>}
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-ink">{t('expenses.receiptLabel')} <span className="font-normal text-muted">({t('loans.optional')})</span></span>
+        <ProofSlot proof={receipt} uploading={uploading} onUpload={chooseReceipt} onRemove={dropReceipt} />
+      </div>
 
       <p className="-mt-3 text-xs text-muted">{t('loans.enteredOn', { date: formatDate(new Date(enteredAt || Date.now()), dateOptions) })}</p>
 
