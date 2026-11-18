@@ -34,6 +34,9 @@ const checks = [
   ['backend/src/routes/groupRoutes.js', '/invites/mine', 'group invitations (invites/mine) are missing'],
   ['frontend/src/pages/DashboardPage.jsx', 'GroupsHub', 'the Dashboard lost the Groups card'],
   ['frontend/src/components/layout/NotificationsBell.jsx', 'useGroupInvites', 'the bell lost group invitations'],
+  ['backend/src/app.js', "app.use('/api/budgets'", 'the /api/budgets route is not mounted (Reports)'],
+  ['backend/src/app.js', "app.use('/api/goals'", 'the /api/goals route is not mounted (Reports)'],
+  ['frontend/src/App.jsx', '/reports', 'the /reports route is missing (Reports)'],
   ['frontend/src/pages/SettingsPage.jsx', 'PeopleSection', 'Settings lost the People section'],
   ['frontend/src/components/layout/NotificationsBell.jsx', 'useReminders', 'the notification bell is missing'],
 ];
