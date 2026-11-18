@@ -869,6 +869,7 @@ export default {
   'expenses.repeatHint': 'ہر بار تاریخ آنے پر نئی کاپی خود بخود شامل ہو جاتی ہے۔ روکنے کے لیے «نہیں دہرایا جائے گا» چنیں۔',
   'expenses.repeatCopy': 'دہرائے جانے والے خرچ سے خود بخود شامل ہوا۔',
   'expenses.repeatPill': 'دہراؤ',
+  'expenses.receiptLabel': "رسید کی تصویر",
   'expenses.kindSpent': 'میں نے خرچ کیا',
   'expenses.kindBorrowed': 'کسی نے میرے لیے ادا کیا',
   'expenses.kindGiven': 'میں نے کسی کو دیا',

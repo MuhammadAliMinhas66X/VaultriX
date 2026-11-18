@@ -869,6 +869,7 @@ export default {
   'expenses.repeatHint': 'हर बार तारीख़ आने पर नई प्रति अपने आप जुड़ जाती है। रोकने के लिए "दोहराया नहीं जाएगा" चुनें।',
   'expenses.repeatCopy': 'दोहराए जाने वाले ख़र्च से अपने आप जोड़ा गया।',
   'expenses.repeatPill': 'दोहराव',
+  'expenses.receiptLabel': "रसीद की फ़ोटो",
   'expenses.kindSpent': 'मैंने खर्च किया',
   'expenses.kindBorrowed': 'किसी ने मेरे लिए दिया',
   'expenses.kindGiven': 'मैंने किसी को दिया',

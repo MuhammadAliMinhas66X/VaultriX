@@ -869,6 +869,7 @@ export default {
   'expenses.repeatHint': 'Se añade una copia nueva sola cada vez que llega la fecha. Para detenerlo, elige «No se repite».',
   'expenses.repeatCopy': 'Añadido automáticamente por un gasto recurrente.',
   'expenses.repeatPill': 'Recurrente',
+  'expenses.receiptLabel': "Foto del recibo",
   'expenses.kindSpent': 'Yo gasté',
   'expenses.kindBorrowed': 'Alguien pagó por mí',
   'expenses.kindGiven': 'Di dinero a alguien',

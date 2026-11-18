@@ -869,6 +869,7 @@ export default {
   'expenses.repeatHint': 'A new copy is added on its own each time the date comes round. To stop it, choose "Does not repeat".',
   'expenses.repeatCopy': 'Added automatically by a repeating expense.',
   'expenses.repeatPill': 'Repeats',
+  'expenses.receiptLabel': "Receipt photo",
   'expenses.kindSpent': 'I spent',
   'expenses.kindBorrowed': 'Someone paid for me',
   'expenses.kindGiven': 'I gave to someone',

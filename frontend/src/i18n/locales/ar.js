@@ -869,6 +869,7 @@ export default {
   'expenses.repeatHint': 'تُضاف نسخة جديدة تلقائياً كلما حان التاريخ. للإيقاف اختر «لا يتكرر».',
   'expenses.repeatCopy': 'أُضيف تلقائياً من مصروف متكرر.',
   'expenses.repeatPill': 'متكرر',
+  'expenses.receiptLabel': "صورة الإيصال",
   'expenses.kindSpent': 'أنا أنفقت',
   'expenses.kindBorrowed': 'شخص دفع عني',
   'expenses.kindGiven': 'أعطيت شخصاً مالاً',
