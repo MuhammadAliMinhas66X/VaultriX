@@ -2,8 +2,10 @@ import { forwardRef } from 'react';
 
 // A plain text box for money: no up/down arrows, no scroll-wheel changes, only
 // digits and one dot, and at most `decimals` places. Gives back a clean string.
-export const cleanMoney = (raw, decimals = 2) => {
-  const text = String(raw ?? '').replace(/,/g, '.').replace(/[^\d.]/g, '');
+export const cleanMoney = (raw, decimals = 2, allowNegative = false) => {
+  const source = String(raw ?? '');
+  if (allowNegative && source.trim().startsWith('-')) return `-${cleanMoney(source.replace(/-/g, ''), decimals)}`;
+  const text = source.replace(/,/g, '.').replace(/[^\d.]/g, '');
   const dot = text.indexOf('.');
   if (dot === -1) return text.replace(/^0+(?=\d)/, '').slice(0, 12);
   const whole = text.slice(0, dot).replace(/^0+(?=\d)/, '').slice(0, 12) || '0';
@@ -11,7 +13,7 @@ export const cleanMoney = (raw, decimals = 2) => {
   return decimals > 0 ? `${whole}.${fraction}` : whole;
 };
 
-const MoneyInput = forwardRef(function MoneyInput({ value, onChange, decimals = 2, className = '', ...rest }, ref) {
+const MoneyInput = forwardRef(function MoneyInput({ value, onChange, decimals = 2, allowNegative = false, className = '', ...rest }, ref) {
   return (
     <input
       ref={ref}
@@ -19,7 +21,7 @@ const MoneyInput = forwardRef(function MoneyInput({ value, onChange, decimals = 
       inputMode="decimal"
       autoComplete="off"
       value={value}
-      onChange={(event) => onChange(cleanMoney(event.target.value, decimals))}
+      onChange={(event) => onChange(cleanMoney(event.target.value, decimals, allowNegative))}
       className={className}
       {...rest}
     />

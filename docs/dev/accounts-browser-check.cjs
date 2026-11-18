@@ -60,6 +60,8 @@ const user = { id: 'u1', name: 'Ali', email: 'm@example.com', currency: 'PKR', l
     if (!created || created.name !== 'Bank' || created.balance !== 50000 || created.currency !== 'PKR') problems.push(`${tag}: create payload wrong ${JSON.stringify(created)}`);
 
     await page.getByRole('button', { name: 'Edit' }).first().click();
+    await page.getByLabel('Balance').fill('-250');
+    if ((await page.getByLabel('Balance').inputValue()) !== '-250') problems.push(`${tag}: negative balance not accepted`);
     await page.getByLabel('Balance').fill('15000');
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForTimeout(500);

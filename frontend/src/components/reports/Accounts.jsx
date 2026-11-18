@@ -81,7 +81,7 @@ function AccountForm({ account, currency, onDone, onCancel }) {
         <span className="text-sm font-medium text-ink">{t('accounts.balance')}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted">{code}</span>
-          <MoneyInput value={balance} onChange={setBalance} aria-label={t('accounts.balance')} placeholder="0" className={field} />
+          <MoneyInput allowNegative value={balance} onChange={setBalance} aria-label={t('accounts.balance')} placeholder="0" className={field} />
         </div>
       </label>
       <div className="flex items-center gap-2.5">
@@ -170,7 +170,7 @@ export default function Accounts({ canWrite }) {
                 <p className="truncate text-sm font-semibold text-ink">{account.name}</p>
                 <p className="text-xs text-muted">{t(`accounts.type.${account.type}`)}{account.isArchived ? ` · ${t('accounts.archived')}` : ''}</p>
               </div>
-              <span className="whitespace-nowrap text-sm font-bold tabular-nums text-ink">{formatMoney(account.balance, { currency: account.currency })}</span>
+              <span className={`whitespace-nowrap text-sm font-bold tabular-nums ${account.balance < 0 ? 'text-red-600' : 'text-ink'}`}>{formatMoney(account.balance, { currency: account.currency })}</span>
               {canWrite && (
                 <div className="flex shrink-0 items-center gap-0.5">
                   <button type="button" aria-label={t('reports.edit')} onClick={() => setEditing(account)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition hover:bg-surface hover:text-ink"><Pencil className="h-4 w-4" /></button>
