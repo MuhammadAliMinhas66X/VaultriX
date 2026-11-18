@@ -146,3 +146,14 @@ export function SalaryIcon({ className = '', strokeWidth = 1.75 }) {
     </svg>
   );
 }
+
+export function ReportsIcon({ className = '', strokeWidth = 1.75 }) {
+  return (
+    <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
+      <path d="M3.5 20.5h17" />
+      <rect className="ni-d1" x="5" y="12" width="3.4" height="6.5" rx="1" fill="currentColor" fillOpacity="0.08" />
+      <rect className="ni-d2" x="10.3" y="7" width="3.4" height="11.5" rx="1" fill="currentColor" fillOpacity="0.08" />
+      <rect className="ni-d3" x="15.6" y="3.5" width="3.4" height="15" rx="1" fill="currentColor" fillOpacity="0.08" />
+    </svg>
+  );
+}
