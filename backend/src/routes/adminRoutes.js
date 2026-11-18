@@ -17,7 +17,8 @@ import {
 } from '../controllers/adminController.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/requireAdmin.js';
-import { stepUpLimiter } from '../middleware/rateLimiters.js';
+import { stepUpLimiter, healthCheckLimiter } from '../middleware/rateLimiters.js';
+import { getHealth, runHealthCheck } from '../controllers/healthController.js';
 import { requireAdminPassword } from '../middleware/requireAdminPassword.js';
 
 const router = Router();
@@ -32,6 +33,12 @@ const stepUp = [stepUpLimiter, requireAdminPassword];
 router.get('/overview', getOverview);
 router.get('/audit-log', getAuditLog);
 router.get('/security-overview', getSecurityOverview);
+
+// System health (docs/audit/API-HEALTH-MONITORING.md). Admin only, like
+// everything in this router. GET returns the cached snapshot; POST re-runs
+// the checks and is throttled.
+router.get('/health', getHealth);
+router.post('/health/check', healthCheckLimiter, runHealthCheck);
 
 // Must come before '/users/:id' - otherwise Express would match "export"
 // as an :id param and hand this request to getUserDetail instead.

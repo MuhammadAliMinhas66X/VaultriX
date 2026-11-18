@@ -150,7 +150,7 @@ export const getRates = async (base, symbols = []) => {
   return withLiveRates(table, symbols);
 };
 
-const getRateTable = async (base) => {
+export const getRateTable = async (base) => {
   const key = base.toUpperCase();
   const cached = cache.get(key);
   const now = Date.now();

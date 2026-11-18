@@ -27,6 +27,7 @@ import receiptRoutes from './routes/receiptRoutes.js';
 import dataRoutes from './routes/dataRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import groupRoutes from './routes/groupRoutes.js';
+import { requestMetrics } from './services/healthRuntime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -99,6 +100,7 @@ app.use(
   })
 );
 
+app.use('/api', requestMetrics.middleware);
 app.use('/api', originGuard(origins));
 app.use('/api', apiLimiter, noStore);
 

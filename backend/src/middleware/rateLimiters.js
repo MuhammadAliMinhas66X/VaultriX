@@ -58,3 +58,7 @@ export const teamLimiter = build(15 * 60 * 1000, 3000, { keyGenerator: userKey }
 export const financeLimiter = build(15 * 60 * 1000, 20000, { keyGenerator: userKey });
 export const uploadLimiter = build(15 * 60 * 1000, 1000, { keyGenerator: userKey });
 export const fxLimiter = build(15 * 60 * 1000, 20000, { keyGenerator: userKey });
+
+// "Check now" on the admin System health screen. The monitor also throttles
+// forced re-checks itself; this is the outer guard.
+export const healthCheckLimiter = build(15 * 60 * 1000, 30, { keyGenerator: userKey });
