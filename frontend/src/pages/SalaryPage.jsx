@@ -45,6 +45,7 @@ export default function SalaryPage() {
   const logsResource = useResource('salaryPlans');
   const previousResource = useResource('salaryPlan', { month: shiftMonth(month, -1) });
   const receiptsResource = useResource('receipts');
+  const billsResource = useResource('bills', { today: new Date().toISOString().slice(0, 10) });
   const plan = planResource.data ? planResource.data.plan : null;
   const logs = logsResource.data ? logsResource.data.plans : NONE;
   const totalsResource = useResource('expenseTotals', {}, { enabled: logs.length > 0 });
@@ -52,6 +53,7 @@ export default function SalaryPage() {
   const saved = plan ? plan.lines : NONE;
   const previousLines = previousResource.data ? previousResource.data.plan.lines : NONE;
   const receipts = receiptsResource.data ? receiptsResource.data.receipts : NONE;
+  const allBills = billsResource.data ? billsResource.data.bills : NONE;
   const expenses = expensesResource.data ? expensesResource.data.expenses : NONE;
 
   const detached = Boolean(plan && plan.detached);
@@ -114,6 +116,8 @@ export default function SalaryPage() {
   };
 
   const copyLast = () => persist(previousLines.map((line, index) => ({ id: `copy-${index}`, label: line.label, amount: line.amount, categoryId: line.categoryId || null })), { message: t('salary.copied') });
+
+  const dueBills = useMemo(() => allBills.filter((bill) => !bill.cancelledAt && bill.remaining > 0 && bill.currency === currency && String(bill.dueAt).slice(0, 7) === month && !lines.some((line) => line.label.trim().toLowerCase() === bill.billerName.trim().toLowerCase())).slice(0, 8), [allBills, currency, month, lines]);
 
   const arrival = useMemo(() => {
     if (!stream || month > nowMonth) return null;
@@ -224,10 +228,22 @@ export default function SalaryPage() {
                   <MoneyInput value={salaryDraft} onChange={setSalaryDraft} disabled={!canWrite} onBlur={commitSalary} onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()} aria-label={t('salary.totalLabel')} className="w-full min-w-0 bg-transparent text-3xl font-semibold tabular-nums tracking-tight text-ink outline-none" />
                 </div>
                 {canWrite && (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-col gap-2.5">
+                  <div className="flex flex-wrap gap-2">
                     {CHIPS.map((key) => (
                       <button key={key} type="button" onClick={() => setLabel(t(key))} className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition hover:border-ink/40 hover:text-ink">{t(key)}</button>
                     ))}
+                  </div>
+                  {dueBills.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-muted">{t('salary.fromBills')}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {dueBills.map((bill) => (
+                          <button key={bill.id} type="button" onClick={() => { setLabel(bill.billerName.slice(0, 40)); setAmount(String(bill.remaining)); }} className="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs font-medium text-ink transition hover:border-ink/40 hover:bg-surface">{bill.billerName} · {money(bill.remaining)}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   </div>
                 )}
 

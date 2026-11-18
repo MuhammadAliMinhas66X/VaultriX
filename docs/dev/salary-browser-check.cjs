@@ -35,6 +35,7 @@ let plans = {};
       else if (path === '/income-streams') body = { success: true, incomeStreams: [stream] };
       else if (path === '/categories') body = { success: true, categories: cats };
       else if (path === '/receipts') body = { success: true, receipts: [{ id: 'r1', streamId: 's1', receivedAt: day, amount: 100000, currency: 'PKR', note: '' }], capped: false };
+      else if (path === '/bills') body = { success: true, bills: [{ id: 'b1', billerName: 'PTCL', remaining: 3160, currency: 'PKR', dueAt: day, cancelledAt: null }] };
       else if (path === '/expenses') body = { success: true, expenses, capped: false };
       else if (path === '/expenses/totals') body = { success: true, totals: [{ month, currency: 'PKR', self: 15000, other: 0, repaid: 0 }] };
       else if (path === '/salary-plan') {
