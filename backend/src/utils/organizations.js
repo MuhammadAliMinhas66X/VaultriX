@@ -10,7 +10,7 @@ import IncomeReceipt from '../models/IncomeReceipt.js';
 import Invite from '../models/Invite.js';
 import SalaryPlan from '../models/SalaryPlan.js';
 import { isImageStorageReady } from '../config/cloudinary.js';
-import { destroyByPrefix, loansPrefix } from '../services/imageStorage.js';
+import { destroyByPrefix, loansPrefix, expensesPrefix } from '../services/imageStorage.js';
 
 // When the owner of a shared workspace leaves, someone else must own it: first an admin,
 // then a member, then a viewer (oldest account first). Returns the new owner id or null.
@@ -31,7 +31,10 @@ export const removeOrganizationIfEmpty = async (orgId) => {
   const remainingMembers = await User.countDocuments({ orgId });
   if (remainingMembers > 0) return false;
 
-  if (isImageStorageReady()) await destroyByPrefix(loansPrefix(orgId));
+  if (isImageStorageReady()) {
+    await destroyByPrefix(loansPrefix(orgId));
+    await destroyByPrefix(expensesPrefix(orgId));
+  }
 
   await Promise.all([
     IncomeStream.deleteMany({ orgId }),

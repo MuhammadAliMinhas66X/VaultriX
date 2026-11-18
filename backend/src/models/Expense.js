@@ -12,6 +12,11 @@ const expenseSchema = new mongoose.Schema(
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
     spentAt: { type: Date, required: true },
     note: { type: String, default: '' },
+    // Photo of the paper receipt (private image storage, same as loan proofs).
+    receipt: {
+      type: new mongoose.Schema({ publicId: String, version: Number }, { _id: false }),
+      default: null,
+    },
     payMethod: { type: String, enum: [...EXPENSE_METHODS, ''], default: '' },
     payName: { type: String, default: '' },
     paidBy: { type: String, enum: ['self', 'other'], default: 'self' },

@@ -20,11 +20,16 @@ import { EXPENSE_REPEATS } from '../models/Expense.js';
 import { generateRepeats } from '../utils/expenseRepeat.js';
 import { addSteps } from '../utils/billRecurrence.js';
 import { repaidMinorOf, buildTotals } from '../utils/balanceTotals.js';
+import { isImageStorageReady } from '../config/cloudinary.js';
+import { uploadPrivateImage, privateImageUrls, destroyImage, expenseReceiptPublicId } from '../services/imageStorage.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
 const BILL_LINKED = 'This expense comes from a bill payment. Change it from Bills.';
 const LINKED_EDIT = 'This expense is linked to a loan that already has payments, so its amount, currency, date and payer cannot be changed.';
+const UPLOAD_UNAVAILABLE = 'Photo upload is not available right now.';
+const UPLOAD_FAILED = 'Could not upload that photo. Please try again.';
+const NO_IMAGE = 'Choose an image to upload.';
 const LINKED_DELETE = 'This expense is linked to a loan that already has payments. Delete those payments first.';
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
@@ -45,6 +50,8 @@ const toExpenseDto = (expense) => ({
   loanId: expense.loanId ? String(expense.loanId) : null,
   repeat: expense.repeatFrequency || 'none',
   repeatOf: expense.repeatOf ? String(expense.repeatOf) : null,
+  hasReceipt: Boolean(expense.receipt && expense.receipt.publicId),
+  receipt: isImageStorageReady() ? privateImageUrls(expense.receipt) : null,
   createdAt: expense.createdAt,
 });
 
@@ -418,8 +425,52 @@ export const deleteExpense = async (req, res, next) => {
     }
 
     await Expense.deleteOne({ _id: expense._id });
+    if (expense.receipt && expense.receipt.publicId && isImageStorageReady()) await destroyImage(expense.receipt.publicId);
     res.json({ success: true });
   } catch (error) {
     handleError(res, next, error);
+  }
+};
+
+// --- Receipt photo ---------------------------------------------------------
+
+const sendOne = async (req, res, expense) => {
+  const [dto] = await withLoans(req.user.orgId, [expense.toObject()]);
+  res.json({ success: true, expense: dto });
+};
+
+export const setReceipt = async (req, res, next) => {
+  try {
+    const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
+    if (!expense) return fail(res, 404, NOT_FOUND);
+    if (!req.file) return fail(res, 400, NO_IMAGE);
+    if (!isImageStorageReady()) return fail(res, 503, UPLOAD_UNAVAILABLE);
+
+    let stored;
+    try {
+      stored = await uploadPrivateImage(req.file.buffer, expenseReceiptPublicId(req.user.orgId, expense._id));
+    } catch (error) {
+      console.error('Receipt upload failed:', error.message);
+      return fail(res, 502, UPLOAD_FAILED);
+    }
+    expense.receipt = { publicId: stored.publicId, version: stored.version };
+    await expense.save();
+    return await sendOne(req, res, expense);
+  } catch (error) {
+    return handleError(res, next, error);
+  }
+};
+
+export const removeReceipt = async (req, res, next) => {
+  try {
+    const expense = await Expense.findOne({ _id: req.params.id, orgId: req.user.orgId });
+    if (!expense) return fail(res, 404, NOT_FOUND);
+    const publicId = expense.receipt && expense.receipt.publicId;
+    expense.receipt = null;
+    await expense.save();
+    if (publicId && isImageStorageReady()) await destroyImage(publicId);
+    return await sendOne(req, res, expense);
+  } catch (error) {
+    return handleError(res, next, error);
   }
 };

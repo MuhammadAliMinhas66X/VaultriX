@@ -5,6 +5,8 @@ const root = () => (process.env.CLOUDINARY_FOLDER || 'vaultrix').replace(/[^a-zA
 export const avatarPublicId = (userId) => `${root()}/avatars/${userId}`;
 export const loanReceivedPublicId = (orgId, loanId) => `${root()}/loans/${orgId}/${loanId}/received`;
 export const loanPaymentPublicId = (orgId, loanId, paymentId) => `${root()}/loans/${orgId}/${loanId}/payments/${paymentId}`;
+export const expenseReceiptPublicId = (orgId, expenseId) => `${root()}/expenses/${orgId}/${expenseId}`;
+export const expensesPrefix = (orgId) => `${root()}/expenses/${orgId}/`;
 export const loansPrefix = (orgId) => `${root()}/loans/${orgId}/`;
 
 const sendBuffer = (buffer, options) =>
