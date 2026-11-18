@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { roundDay, committeeSummary } from '../../src/utils/committee.js';
+import { roundDay, committeeSummary, assignWinner, slotsAreValid } from '../../src/utils/committee.js';
 
 const start = new Date('2026-01-31T00:00:00Z');
 const base = { startDate: new Date('2026-01-05T00:00:00Z'), frequency: 'monthly', size: 4, contributionMinor: 500000, mySlot: 2, paid: [], payoutReceivedAt: null };
@@ -38,5 +38,67 @@ describe('committee summary', () => {
     expect(committeeSummary({ ...base, paid }, '2026-06-01').finished).toBe(false);
     expect(committeeSummary({ ...base, paid, payoutReceivedAt: new Date('2026-02-06T00:00:00Z') }, '2026-06-01').finished).toBe(true);
     expect(committeeSummary({ ...base, paid }, '2026-06-01').next).toBeNull();
+  });
+});
+
+const person = (name, slot, rounds = []) => ({ _id: name, name, slot, payments: rounds.map((round) => ({ round, paidAt: new Date('2026-01-05T00:00:00Z'), amountMinor: 500000 })) });
+const organizer = { ...base, role: 'organizer', mySlot: 1, members: [person('Ali', 2, [1, 2]), person('Sara', null, [1]), person('Omar', 4, [])] };
+
+describe('organizer view', () => {
+  it('finds each round winner and counts who paid the round', () => {
+    const summary = committeeSummary({ ...organizer, paid: [{ round: 1, paidAt: new Date('2026-01-05T00:00:00Z'), amountMinor: 500000 }] }, '2026-02-10');
+    expect(summary.rounds[0].winner).toEqual({ type: 'me', id: null, name: null });
+    expect(summary.rounds[1].winner).toMatchObject({ type: 'member', name: 'Ali' });
+    expect(summary.rounds[2].winner).toBeNull();
+    expect(summary.rounds[0].collected).toBe(4 - 1); // me + Ali + Sara
+    expect(summary.rounds[1].collected).toBe(1); // Ali only
+  });
+
+  it('lists who is late and what is owed for rounds already past due', () => {
+    const summary = committeeSummary(organizer, '2026-02-10');
+    expect(summary.members.find((item) => item.name === 'Omar').lateRounds).toEqual([1, 2]);
+    expect(summary.members.find((item) => item.name === 'Sara').lateRounds).toEqual([2]);
+    expect(summary.members.find((item) => item.name === 'Ali').lateRounds).toEqual([]);
+    expect(summary.lateMembers).toBe(2);
+    expect(summary.owedMinor).toBe(3 * 500000);
+  });
+
+  it('counts pots that are due and not handed over yet, and names still missing', () => {
+    const summary = committeeSummary(organizer, '2026-02-10');
+    expect(summary.potsToHandOver).toBe(1);
+    expect(summary.missingNames).toBe(0);
+    const done = committeeSummary({ ...organizer, payouts: [{ round: 2, paidAt: new Date('2026-02-06T00:00:00Z') }] }, '2026-02-10');
+    expect(done.potsToHandOver).toBe(0);
+    expect(committeeSummary({ ...organizer, members: [person('Ali', 2)] }, '2026-02-10').missingNames).toBe(2);
+  });
+
+  it('has an undrawn payout until the member knows the turn', () => {
+    const summary = committeeSummary({ ...base, mySlot: null }, '2026-03-01');
+    expect(summary.payoutStatus).toBe('undrawn');
+    expect(summary.payoutDay).toBeNull();
+  });
+});
+
+describe('draw', () => {
+  it('gives a round to one person only and frees their old round', () => {
+    const result = assignWinner(organizer, 2, 'Sara');
+    expect(result.slots.get('Sara')).toBe(2);
+    expect(result.slots.get('Ali')).toBeNull();
+    expect(result.mySlot).toBe(1);
+    const swapped = assignWinner(organizer, 1, 'Ali');
+    expect(swapped.mySlot).toBeNull();
+    expect(swapped.slots.get('Ali')).toBe(1);
+  });
+
+  it('can give a round to me and clear it', () => {
+    expect(assignWinner(organizer, 3, 'me').mySlot).toBe(3);
+    expect(assignWinner(organizer, 1, null).mySlot).toBeNull();
+    expect(assignWinner(organizer, 3, 'Nobody')).toBeNull();
+  });
+
+  it('rejects shared or out of range turns', () => {
+    expect(slotsAreValid(organizer)).toBe(true);
+    expect(slotsAreValid({ ...organizer, members: [person('Ali', 1)] })).toBe(false);
+    expect(slotsAreValid({ ...organizer, members: [person('Ali', 9)] })).toBe(false);
   });
 });
