@@ -43,11 +43,15 @@ export default function SalaryPage() {
   const planResource = useResource('salaryPlan', { month });
   const expensesResource = useResource('expenses', { month });
   const logsResource = useResource('salaryPlans');
+  const previousResource = useResource('salaryPlan', { month: shiftMonth(month, -1) });
+  const receiptsResource = useResource('receipts');
   const plan = planResource.data ? planResource.data.plan : null;
   const logs = logsResource.data ? logsResource.data.plans : NONE;
   const totalsResource = useResource('expenseTotals', {}, { enabled: logs.length > 0 });
   const totals = totalsResource.data ? totalsResource.data.totals : NONE;
   const saved = plan ? plan.lines : NONE;
+  const previousLines = previousResource.data ? previousResource.data.plan.lines : NONE;
+  const receipts = receiptsResource.data ? receiptsResource.data.receipts : NONE;
   const expenses = expensesResource.data ? expensesResource.data.expenses : NONE;
 
   const detached = Boolean(plan && plan.detached);
@@ -108,6 +112,14 @@ export default function SalaryPage() {
     if (value === plan.salary) return undefined;
     return persist(lines, { isDetached: true, amountNow: value, currencyNow: currency, message: t('salary.saved') });
   };
+
+  const copyLast = () => persist(previousLines.map((line, index) => ({ id: `copy-${index}`, label: line.label, amount: line.amount, categoryId: line.categoryId || null })), { message: t('salary.copied') });
+
+  const arrival = useMemo(() => {
+    if (!stream || month > nowMonth) return null;
+    const found = receipts.find((item) => item.streamId === stream.id && String(item.receivedAt).slice(0, 7) === month);
+    return found ? found.receivedAt : false;
+  }, [receipts, stream, month, nowMonth]);
 
   const detach = () => persist(lines, { isDetached: true, amountNow: streamNet, currencyNow: stream.currency, message: t('salary.detached') });
   const attach = () => persist(lines, { isDetached: false, message: t('salary.attached') });
@@ -187,6 +199,12 @@ export default function SalaryPage() {
                   <div className="min-w-0">
                     {detached && <span className="mb-1.5 inline-block rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">{t('salary.detachedBadge')}</span>}
                     <p className="truncate text-lg font-semibold tracking-tight text-ink">{stream ? stream.name : t('salary.attachedBadge')}</p>
+                    {arrival !== null && (
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                        <span className={`h-1.5 w-1.5 rounded-full ${arrival ? 'bg-emerald-500' : 'bg-border'}`} />
+                        {arrival ? t('salary.arrived', { date: formatDate(new Date(arrival), { day: 'numeric', month: 'short', timeZone: 'UTC' }) }) : t('salary.notArrived')}
+                      </p>
+                    )}
                   </div>
                   {canWrite && (
                     <button type="button" disabled={busy} onClick={detached ? attach : detach} className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition disabled:opacity-60 ${detached ? 'border border-border text-ink hover:bg-surface' : 'bg-ink text-white hover:opacity-90'}`}>
@@ -237,7 +255,10 @@ export default function SalaryPage() {
                 )}
 
                 {lines.length === 0 ? (
-                  <p className="mt-5 rounded-xl bg-surface px-4 py-6 text-center text-sm text-muted">{t('salary.emptyLines')}</p>
+                  <div className="mt-5 flex flex-col items-center gap-3 rounded-xl bg-surface px-4 py-6 text-center">
+                    <p className="text-sm text-muted">{t('salary.emptyLines')}</p>
+                    {canWrite && previousLines.length > 0 && <button type="button" disabled={busy} onClick={copyLast} className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-medium text-ink transition hover:bg-surface disabled:opacity-60">{t('salary.copyLast')}</button>}
+                  </div>
                 ) : (
                   <ul className="mt-5 flex flex-col gap-2.5">
                     <AnimatePresence initial={false}>

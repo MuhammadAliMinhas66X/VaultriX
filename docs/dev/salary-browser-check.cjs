@@ -19,6 +19,9 @@ let plans = {};
   for (const [tag, w, h] of [['desktop', 1280, 1000], ['phone', 390, 844]]) {
     puts.length = 0;
     plans = {};
+    const prev = new Date(); prev.setUTCDate(1); prev.setUTCMonth(prev.getUTCMonth() - 1);
+    const prevKey = prev.toISOString().slice(0, 7);
+    plans[prevKey] = { month: prevKey, streamId: 's1', detached: false, salary: 0, currency: null, lines: [{ id: 'p1', label: 'Rent', amount: 30000, categoryId: null }] };
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => problems.push(`${tag} pageerror: ${e.message}`));
@@ -31,6 +34,7 @@ let plans = {};
       else if (path === '/fx/rates') body = { success: true, base: 'PKR', rates: { PKR: 1 }, live: [], liveAt: day };
       else if (path === '/income-streams') body = { success: true, incomeStreams: [stream] };
       else if (path === '/categories') body = { success: true, categories: cats };
+      else if (path === '/receipts') body = { success: true, receipts: [{ id: 'r1', streamId: 's1', receivedAt: day, amount: 100000, currency: 'PKR', note: '' }], capped: false };
       else if (path === '/expenses') body = { success: true, expenses, capped: false };
       else if (path === '/expenses/totals') body = { success: true, totals: [{ month, currency: 'PKR', self: 15000, other: 0, repaid: 0 }] };
       else if (path === '/salary-plan') {
@@ -53,6 +57,13 @@ let plans = {};
     if (await page.locator('svg[role="img"]').count() < 1) problems.push(`${tag}: ring missing`);
 
     await page.getByRole('button', { name: 'Detach from income stream' }).click();
+    await page.getByText('Salary received').first().waitFor({ timeout: 5000 }).catch(() => problems.push(`${tag}: salary arrived line missing`));
+    await page.getByRole('button', { name: "Copy last month's plan" }).click();
+    await page.waitForTimeout(600);
+    const copied = puts[puts.length - 1];
+    if (!copied || copied.lines.length !== 1 || copied.lines[0].label !== 'Rent' || copied.lines[0].amount !== 30000) problems.push(`${tag}: copy payload wrong ${JSON.stringify(copied)}`);
+    await page.getByRole('button', { name: 'Remove' }).first().click();
+    await page.waitForTimeout(600);
     await page.getByText('Total salary this month').waitFor();
     if (!puts.length || puts[0].detached !== true || puts[0].salary !== 100000 || puts[0].currency !== 'PKR') problems.push(`${tag}: detach payload wrong ${JSON.stringify(puts[0])}`);
 
