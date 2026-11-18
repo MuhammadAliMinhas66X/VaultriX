@@ -10,6 +10,8 @@ import Expense from '../../src/models/Expense.js';
 import IncomeStream from '../../src/models/IncomeStream.js';
 import Bill from '../../src/models/Bill.js';
 import IncomeReceipt from '../../src/models/IncomeReceipt.js';
+import Goal from '../../src/models/Goal.js';
+import Budget from '../../src/models/Budget.js';
 import Organization from '../../src/models/Organization.js';
 
 const { default: app } = await import('../../src/app.js');
@@ -85,6 +87,25 @@ const cases = [
     },
     exists: async (id) => Boolean(await IncomeReceipt.exists({ _id: id })),
     changed: async (id) => (await IncomeReceipt.findById(id)).note !== 'Original',
+  },
+  {
+    name: 'goals',
+    path: '/api/goals',
+    patch: { name: 'Hacked', target: 5, currency: 'PKR' },
+    make: (owner) => Goal.create({ orgId: owner.user.orgId, name: 'Original', targetMinor: 100000, currency: 'PKR' }),
+    exists: async (id) => Boolean(await Goal.exists({ _id: id })),
+    changed: async (id) => (await Goal.findById(id)).name !== 'Original',
+  },
+  {
+    name: 'budgets',
+    path: '/api/budgets',
+    patch: { amount: 1 },
+    make: async (owner) => {
+      const category = await Category.create({ orgId: owner.user.orgId, name: 'Food', type: 'expense' });
+      return Budget.create({ orgId: owner.user.orgId, categoryId: category._id, amountMinor: 100000, currency: 'PKR' });
+    },
+    exists: async (id) => Boolean(await Budget.exists({ _id: id })),
+    changed: async (id) => (await Budget.findById(id)).amountMinor !== 100000,
   },
 ];
 
