@@ -50,6 +50,24 @@ npm install
 npm start
 ```
 
+## Technology stack
+
+React (Vite, Tailwind) frontend; Node/Express backend; MongoDB (Mongoose); JWT access tokens plus an HttpOnly refresh cookie; Cloudinary for private images; SMTP email; six languages (English, French, Spanish, Arabic, Hindi, Urdu). Tests use vitest (and supertest on the backend).
+
+## Commands
+
+Backend: `npm run dev`, `npm test`. Frontend: `npm run dev`, `npm test`, `npm run build`. Never commit `.env` files; copy `.env.example` and fill values locally.
+
+## Security and health monitoring
+
+Security practices and the open audit findings are in `docs/audit/`. Admins can see service health under Admin, System health (`GET /api/admin/health`, admin only). The public `GET /api/health` is a liveness check only. See `docs/audit/API-HEALTH-MONITORING.md`.
+
+## Documentation
+
+- `CLAUDE.md`: operating manual for Claude agents.
+- `docs/audit/README.md`: audit index, findings, roadmap, session handoff.
+- `docs/APP-MAP.md`: map of the app.
+
 ## Git workflow
 
 Each feature gets its own commit (and ideally its own branch merged via PR) so history stays traceable feature by feature.
