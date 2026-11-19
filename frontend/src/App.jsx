@@ -13,7 +13,6 @@ import GroupsPage from './pages/GroupsPage.jsx';
 import GroupPage from './pages/GroupPage.jsx';
 import JoinGroupPage from './pages/JoinGroupPage.jsx';
 import SalaryPage from './pages/SalaryPage.jsx';
-import ReportsPage from './pages/ReportsPage.jsx';
 import BudgetsPage from './pages/BudgetsPage.jsx';
 import GoalsPage from './pages/GoalsPage.jsx';
 import AccountsPage from './pages/AccountsPage.jsx';
@@ -77,7 +76,7 @@ function App() {
                 <Route path="/expenses" element={<ExpensesPage />} />
                 <Route path="/bills" element={<BillsPage />} />
                 <Route path="/salary" element={<SalaryPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/budgets" element={<BudgetsPage />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />

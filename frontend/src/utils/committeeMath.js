@@ -5,6 +5,7 @@ const dayString = (date) => date.toISOString().slice(0, 10);
 export const roundDay = (startDay, frequency, round) => {
   const [year, month, day] = startDay.split('-').map(Number);
   const steps = round - 1;
+  if (frequency === 'daily') return dayString(new Date(Date.UTC(year, month - 1, day + steps)));
   if (frequency === 'weekly') return dayString(new Date(Date.UTC(year, month - 1, day + steps * 7)));
   const monthIndex = month - 1 + steps;
   const targetYear = year + Math.floor(monthIndex / 12);

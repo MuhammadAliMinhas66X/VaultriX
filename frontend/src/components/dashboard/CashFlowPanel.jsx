@@ -19,7 +19,7 @@ export default function CashFlowPanel({ trend, currentMonth, currency }) {
   const money = (value) => formatMoney(value, { decimals: 0, currency });
 
   return (
-    <Section icon={BarChart3} title={t('dash.trendTitle')} to="/reports" linkLabel={t('nav.reports')}>
+    <Section icon={BarChart3} title={t('dash.trendTitle')} to="/expenses" linkLabel={t('nav.expenses')}>
       <div className="px-5 pb-5">
         <div className="flex items-center gap-4 text-xs text-muted">
           <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-ink" />{t('dash.income')}</span>

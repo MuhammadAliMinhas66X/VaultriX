@@ -147,17 +147,6 @@ export function SalaryIcon({ className = '', strokeWidth = 1.75 }) {
   );
 }
 
-export function ReportsIcon({ className = '', strokeWidth = 1.75 }) {
-  return (
-    <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
-      <path d="M3.5 20.5h17" />
-      <rect className="ni-d1" x="5" y="12" width="3.4" height="6.5" rx="1" fill="currentColor" fillOpacity="0.08" />
-      <rect className="ni-d2" x="10.3" y="7" width="3.4" height="11.5" rx="1" fill="currentColor" fillOpacity="0.08" />
-      <rect className="ni-d3" x="15.6" y="3.5" width="3.4" height="15" rx="1" fill="currentColor" fillOpacity="0.08" />
-    </svg>
-  );
-}
-
 export function GroupsNavIcon({ className = '', strokeWidth = 1.75 }) {
   return (
     <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
@@ -166,4 +155,121 @@ export function GroupsNavIcon({ className = '', strokeWidth = 1.75 }) {
       <path className="ni-d2" d="M15.6 4.9a3.2 3.2 0 0 1 0 6.2M18.2 14.8c1.8.7 2.8 2.3 3 5.2" />
     </svg>
   );
+}
+
+const wrap = (strokeWidth, className, children) => (
+  <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>{children}</svg>
+);
+
+// Gauge with a needle that swings
+export function BudgetsIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path d="M3.5 17a8.5 8.5 0 0 1 17 0" />
+    <path d="M7 17h-3.5M20.5 17H17" />
+    <g className="ni-swing"><path d="M12 17l4-5" /></g>
+    <circle className="ni-coin" cx="12" cy="17" r="1.3" fill="currentColor" stroke="none" />
+    <path d="M7 20.5h10" />
+  </>);
+}
+
+// Jar where a coin drops in
+export function SavingsIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path d="M6.5 8.5h11l1 2.5v7a2.5 2.5 0 0 1-2.5 2.5H8a2.5 2.5 0 0 1-2.5-2.5v-7z" fill="currentColor" fillOpacity="0.08" />
+    <path d="M7 5h10" />
+    <circle className="ni-drop" cx="12" cy="3.6" r="1.1" fill="currentColor" stroke="none" />
+    <path className="ni-bob" d="M9.5 15.5l1.7 1.7 3.3-3.4" />
+  </>);
+}
+
+// Three people in a circle that turns
+export function CommitteesIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <g className="ni-orbit">
+      <circle cx="12" cy="4.6" r="2.1" fill="currentColor" fillOpacity="0.1" />
+      <circle cx="5" cy="16.6" r="2.1" fill="currentColor" fillOpacity="0.1" />
+      <circle cx="19" cy="16.6" r="2.1" fill="currentColor" fillOpacity="0.1" />
+    </g>
+    <path d="M9.2 8.2L6.4 14M14.8 8.2L17.6 14M8 17.6h8" strokeOpacity="0.55" />
+    <circle className="ni-coin" cx="12" cy="13" r="1.6" fill="currentColor" stroke="none" />
+  </>);
+}
+
+// Bank with columns that pop
+export function AccountsIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path className="ni-bob" d="M3.5 9.5L12 4l8.5 5.5z" fill="currentColor" fillOpacity="0.08" />
+    <path className="ni-d1" d="M6.5 11.5v6" />
+    <path className="ni-d2" d="M10.2 11.5v6" />
+    <path className="ni-d3" d="M13.8 11.5v6" />
+    <path className="ni-d4" d="M17.5 11.5v6" />
+    <path d="M4 20h16" />
+  </>);
+}
+
+// ---- Settings icons ----
+export function ProfileIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <circle className="ni-bob" cx="12" cy="8.2" r="3.7" fill="currentColor" fillOpacity="0.08" />
+    <path className="ni-d2" d="M4.8 20c.6-3.6 3.4-5.6 7.2-5.6s6.6 2 7.2 5.6" />
+  </>);
+}
+
+export function SecurityIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path className="ni-shake" d="M12 3l7.5 2.7v5.6c0 4.4-3 7.6-7.5 9.7-4.5-2.1-7.5-5.3-7.5-9.7V5.7z" fill="currentColor" fillOpacity="0.08" />
+    <path className="ni-bob" d="M8.8 12.2l2.2 2.2 4.2-4.4" />
+  </>);
+}
+
+export function DevicesIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <rect className="ni-sa" x="2.8" y="5" width="13.4" height="9.4" rx="1.9" fill="currentColor" fillOpacity="0.08" />
+    <path d="M1.5 18.2h16.2" />
+    <rect className="ni-sb" x="16.8" y="9.4" width="5" height="9.2" rx="1.4" />
+  </>);
+}
+
+export function PreferencesIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path d="M3.5 7h17M3.5 12h17M3.5 17h17" strokeOpacity="0.45" />
+    <circle className="ni-sa" cx="8" cy="7" r="2.2" fill="currentColor" fillOpacity="0.15" />
+    <circle className="ni-sb" cx="16" cy="12" r="2.2" fill="currentColor" fillOpacity="0.15" />
+    <circle className="ni-sa" cx="10" cy="17" r="2.2" fill="currentColor" fillOpacity="0.15" />
+  </>);
+}
+
+// Two people and a small plus
+export function PeopleIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <circle className="ni-d1" cx="9" cy="8.5" r="3.3" fill="currentColor" fillOpacity="0.08" />
+    <path className="ni-d2" d="M2.8 19.5c.5-3.3 3-5 6.2-5s5.7 1.7 6.2 5" />
+    <path className="ni-badge" d="M18.5 7.5v5M16 10h5" />
+  </>);
+}
+
+// Switches for the menu section
+export function MenuIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <rect className="ni-sa" x="3" y="4.5" width="18" height="6" rx="3" fill="currentColor" fillOpacity="0.08" />
+    <circle className="ni-sb" cx="7" cy="7.5" r="1.4" fill="currentColor" stroke="none" />
+    <rect x="3" y="13.5" width="18" height="6" rx="3" />
+    <circle className="ni-sa" cx="17" cy="16.5" r="1.4" fill="currentColor" stroke="none" />
+  </>);
+}
+
+export function DataIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <ellipse className="ni-bob" cx="12" cy="6" rx="7.5" ry="2.8" fill="currentColor" fillOpacity="0.08" />
+    <path d="M4.5 6v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6" />
+    <path className="ni-d3" d="M4.5 12v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" />
+  </>);
+}
+
+export function DangerIcon({ className = '', strokeWidth = 1.75 }) {
+  return wrap(strokeWidth, className, <>
+    <path className="ni-shake" d="M12 3.8l9 15.7H3z" fill="currentColor" fillOpacity="0.08" />
+    <path d="M12 10v4.2" />
+    <circle className="ni-coin" cx="12" cy="17" r="0.7" fill="currentColor" stroke="none" />
+  </>);
 }

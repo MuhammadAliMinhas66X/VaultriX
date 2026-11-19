@@ -22,7 +22,8 @@ import {
   Users,
 } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
-import { setGroupsInMenu, useGroupsInMenu } from '../hooks/useGroupsNav.js';
+import MenuSection from '../components/settings/MenuSection.jsx';
+import { ProfileIcon, SecurityIcon, DevicesIcon, PreferencesIcon, PeopleIcon, MenuIcon, DataIcon, DangerIcon } from '../components/icons/NavIcons.jsx';
 import PeopleSection from '../components/settings/PeopleSection.jsx';
 import DataSection from '../components/settings/DataSection.jsx';
 import FormField from '../components/FormField.jsx';
@@ -1129,7 +1130,6 @@ function PreferencesSection() {
   const { countries, languages, currencies } = useLocalizedOptions();
   const motionMode = useMotionMode();
   const secureOn = useSecureMode();
-  const groupsOn = useGroupsInMenu();
 
   // Everything here is a PENDING selection local to this form. Nothing is applied
   // to the app (or saved) until "Update preferences" succeeds; country, language
@@ -1296,23 +1296,6 @@ function PreferencesSection() {
         </div>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-5">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-ink">{t('settings.groupsLabel')}</p>
-          <p className="mt-0.5 text-xs text-muted">{t('settings.groupsHint')}</p>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={groupsOn}
-          aria-label={t('settings.groupsLabel')}
-          onClick={() => setGroupsInMenu(!groupsOn)}
-          className="relative h-7 w-12 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40"
-        >
-          <span className={`absolute inset-0 rounded-full transition-colors ${groupsOn ? 'bg-ink' : 'bg-border'}`} />
-          <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${groupsOn ? 'start-[1.375rem]' : 'start-0.5'}`} />
-        </button>
-      </div>
     </SettingsCard>
   );
 }
@@ -1560,13 +1543,14 @@ function SecuritySection() {
 const useSettingsSections = () => {
   const { t } = useTranslation();
   return [
-    { id: 'profile', label: t('settings.sectionProfile'), icon: CircleUserRound, Component: ProfileSection },
-    { id: 'security', label: t('settings.sectionSecurity'), icon: LockKeyhole, Component: SecuritySection },
-    { id: 'devices', label: t('settings.sectionDevices'), icon: Laptop, Component: DevicesSection },
-    { id: 'preferences', label: t('settings.sectionPreferences'), icon: SlidersHorizontal, Component: PreferencesSection },
-    { id: 'people', label: t('settings.sectionPeople'), icon: Users, Component: PeopleSection },
-    { id: 'data', label: t('settings.sectionData'), icon: FileSpreadsheet, Component: DataSection },
-    { id: 'danger', label: t('settings.sectionDanger'), icon: AlertTriangle, Component: DangerZoneSection, danger: true },
+    { id: 'profile', label: t('settings.sectionProfile'), icon: ProfileIcon, Component: ProfileSection },
+    { id: 'security', label: t('settings.sectionSecurity'), icon: SecurityIcon, Component: SecuritySection },
+    { id: 'devices', label: t('settings.sectionDevices'), icon: DevicesIcon, Component: DevicesSection },
+    { id: 'preferences', label: t('settings.sectionPreferences'), icon: PreferencesIcon, Component: PreferencesSection },
+    { id: 'menu', label: t('settings.sectionMenu'), icon: MenuIcon, Component: MenuSection },
+    { id: 'people', label: t('settings.sectionPeople'), icon: PeopleIcon, Component: PeopleSection },
+    { id: 'data', label: t('settings.sectionData'), icon: DataIcon, Component: DataSection },
+    { id: 'danger', label: t('settings.sectionDanger'), icon: DangerIcon, Component: DangerZoneSection, danger: true },
   ];
 };
 

@@ -82,7 +82,7 @@ export default function CommitteeForm({ committee, currency, onDone, onCancel })
             { value: 'member', icon: Users, title: t('committees.roleMember'), text: t('committees.roleMemberHint') },
             { value: 'organizer', icon: HandCoins, title: t('committees.roleOrganizer'), text: t('committees.roleOrganizerHint') },
           ].map((option) => (
-            <button key={option.value} type="button" aria-pressed={role === option.value} onClick={() => setRole(option.value)} className={`flex items-start gap-3 rounded-xl border p-3.5 text-start outline-none transition focus-visible:ring-2 focus-visible:ring-accent/30 ${role === option.value ? 'border-ink bg-surface' : 'border-border hover:border-ink/30'}`}>
+            <button key={option.value} type="button" aria-pressed={role === option.value} onClick={() => { setRole(option.value); if (!committee && option.value === 'organizer') { setMySlot('1'); setNotDrawn(false); } }} className={`flex items-start gap-3 rounded-xl border p-3.5 text-start outline-none transition focus-visible:ring-2 focus-visible:ring-accent/30 ${role === option.value ? 'border-ink bg-surface' : 'border-border hover:border-ink/30'}`}>
               <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${role === option.value ? 'bg-ink text-white' : 'bg-surface text-muted'}`}><option.icon className="h-4 w-4" strokeWidth={1.75} /></span>
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-ink">{option.title}</span>
@@ -113,7 +113,7 @@ export default function CommitteeForm({ committee, currency, onDone, onCancel })
         </label>
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted">{t('committees.frequency')}</span>
-          <Segmented label={t('committees.frequency')} value={frequency} onChange={setFrequency} disabled={locked} options={[{ value: 'monthly', label: t('committees.monthly') }, { value: 'weekly', label: t('committees.weekly') }]} />
+          <Segmented label={t('committees.frequency')} value={frequency} onChange={setFrequency} disabled={locked} options={[{ value: 'monthly', label: t('committees.monthly') }, { value: 'weekly', label: t('committees.weekly') }, { value: 'daily', label: t('committees.daily') }]} />
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted">{t('committees.startDate')}</span>

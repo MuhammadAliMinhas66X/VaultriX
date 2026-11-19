@@ -64,7 +64,7 @@ export const attentionItems = ({ bills, loans, budgetRows, overspent, today, lim
       amount: row.status === 'over' ? row.spent - row.limit : row.left,
       ratio: row.ratio,
       days: row.status === 'over' ? -500 : 0.5,
-      href: '/reports?tab=budgets',
+      href: '/budgets',
     });
   });
 

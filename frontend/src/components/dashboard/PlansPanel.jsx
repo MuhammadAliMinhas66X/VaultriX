@@ -35,11 +35,11 @@ export default function PlansPanel({ budgets, goals, nameOf, today, currency }) 
   if (shownBudgets.length === 0 && shownGoals.length === 0) return null;
 
   return (
-    <Section icon={Target} title={t('dash.plansTitle')} to="/reports?tab=budgets" linkLabel={t('nav.reports')}>
+    <Section icon={Target} title={t('dash.plansTitle')} to="/budgets" linkLabel={t('nav.budgets')}>
       <div className="flex flex-col gap-5 px-5 pb-5">
         {shownBudgets.length > 0 && (
           <div>
-            <Heading to="/reports?tab=budgets">{t('reports.tab.budgets')}</Heading>
+            <Heading to="/budgets">{t('nav.budgets')}</Heading>
             <ul className="flex flex-col gap-3.5">
               {shownBudgets.map((row) => (
                 <li key={row.id || row.categoryId}>
@@ -55,7 +55,7 @@ export default function PlansPanel({ budgets, goals, nameOf, today, currency }) 
         )}
         {shownGoals.length > 0 && (
           <div>
-            <Heading to="/reports?tab=goals">{t('reports.tab.goals')}</Heading>
+            <Heading to="/goals">{t('nav.goals')}</Heading>
             <ul className="flex flex-col gap-3.5">
               {shownGoals.map(({ goal, progress }) => (
                 <li key={goal.id}>

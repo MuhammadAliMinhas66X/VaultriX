@@ -103,8 +103,8 @@ function DashboardPage() {
   const hasOpenLoans = Boolean(loanSums && (loanSums.owedToMe.count > 0 || loanSums.iOwe.count > 0));
   const setupLinks = [
     !hasBills && billsResource.data && { to: '/bills?add=1', label: t('bills.add') },
-    budgetsResource.data && budgets.length === 0 && { to: '/reports?tab=budgets', label: t('dash.addBudget') },
-    goalsResource.data && goals.length === 0 && { to: '/reports?tab=goals', label: t('dash.addGoal') },
+    budgetsResource.data && budgets.length === 0 && { to: '/budgets', label: t('dash.addBudget') },
+    goalsResource.data && goals.length === 0 && { to: '/goals', label: t('dash.addGoal') },
   ].filter(Boolean);
 
   const hasIncome = balance.receipts.length > 0 || Boolean(balance.opening && balance.opening.amount > 0) || streams.some((item) => item.expectedAmount !== null);

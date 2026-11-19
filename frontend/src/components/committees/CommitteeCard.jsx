@@ -43,7 +43,7 @@ export default function CommitteeCard({ committee, canWrite, calm }) {
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
             <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" />{t('committees.membersCount', { count: committee.size })}</span>
             <span aria-hidden="true">·</span>
-            <span className="whitespace-nowrap tabular-nums">{t(committee.frequency === 'weekly' ? 'committees.perWeek' : 'committees.perMonth', { amount: money(committee.contribution) })}</span>
+            <span className="whitespace-nowrap tabular-nums">{t(committee.frequency === 'daily' ? 'committees.perDay' : committee.frequency === 'weekly' ? 'committees.perWeek' : 'committees.perMonth', { amount: money(committee.contribution) })}</span>
           </p>
         </div>
         {committee.finished ? (

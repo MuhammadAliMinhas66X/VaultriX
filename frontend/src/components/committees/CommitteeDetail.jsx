@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check, HandCoins, Pencil, Plus, Trash2, Undo2, Users, X } from 'lucide-react';
 import Combobox from '../Combobox.jsx';
 import { btn, card, inputClass } from '../salary/ui.js';
+import DiceDraw from './DiceDraw.jsx';
 import { pad, dayDate, shortDateOptions, RoundDots, StatusChip, RoleChip, ProgressBar, Tile, PayoutChip } from './parts.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
@@ -159,8 +160,8 @@ function Names({ committee, canWrite }) {
                 ) : (
                   <>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink">{member.name}</p>
-                      <p className="text-xs text-muted">{member.slot ? t('committees.turn', { n: member.slot }) : t('committees.undrawn')}</p>
+                      <p className="flex items-center gap-1.5 truncate text-sm font-medium text-ink">{member.name}{member.linked && <span title={member.email} className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">{t('committees.linked')}</span>}</p>
+                      <p className="text-xs text-muted">{member.slot ? t('committees.turn', { n: member.slot }) : t('committees.undrawn')} · {t('committees.totalPaid')} {member.paid}{member.lateRounds.length > 0 ? ` · ${t('committees.lateCount', { count: member.lateRounds.length })}` : ''}</p>
                     </div>
                     {canWrite && (
                       <span className="flex shrink-0 items-center">
@@ -234,6 +235,50 @@ function RoundRow({ committee, round, today, canWrite }) {
   );
 }
 
+function Totals({ committee, money, calm }) {
+  const { t } = useTranslation();
+  const organizer = committee.role === 'organizer';
+  const today = localDay();
+  const current = [...committee.rounds].reverse().find((round) => round.due <= today) || committee.rounds[0];
+  const outstanding = Math.max(0, committee.expectedTotal - (organizer ? committee.collectedTotal : committee.paid));
+  const mineLeft = Math.max(0, committee.total - committee.paid);
+  const collected = organizer ? committee.collectedTotal : committee.paid;
+  const ratio = committee.expectedTotal > 0 ? Math.min(1, collected / committee.expectedTotal) : 0;
+  const period = t(committee.frequency === 'daily' ? 'committees.periodDay' : committee.frequency === 'weekly' ? 'committees.periodWeek' : 'committees.periodMonth');
+  const cells = organizer
+    ? [
+        [t('committees.totalPot'), money(committee.pot)],
+        [t('committees.totalCollected'), money(committee.collectedTotal)],
+        [t('committees.totalOutstanding'), money(outstanding), outstanding > 0],
+        [period, t('committees.collected', { paid: current.collected, total: committee.size })],
+      ]
+    : [
+        [t('committees.totalPerRound'), money(committee.contribution)],
+        [t('committees.totalPaid'), money(committee.paid)],
+        [t('committees.totalLeft'), money(mineLeft)],
+        [t('committees.totalOverdue'), money(committee.overdueCount * committee.contribution), committee.overdueCount > 0],
+      ];
+  return (
+    <div className={`${card} ${pad}`}>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
+        {cells.map(([label, value, bad]) => (
+          <div key={label} className="min-w-0">
+            <p className="truncate text-xs font-medium text-muted">{label}</p>
+            <p className={`mt-1 whitespace-nowrap text-lg font-semibold tabular-nums ${bad ? 'text-red-600' : 'text-ink'}`}>{value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <div className="flex items-baseline justify-between gap-3 text-xs text-muted">
+          <span>{t('committees.totalDueSoFar', { count: committee.dueRounds })}</span>
+          <span className="whitespace-nowrap tabular-nums">{money(collected)} / {money(committee.expectedTotal)}</span>
+        </div>
+        <div className="mt-1.5"><ProgressBar ratio={ratio} calm={calm} label={t('committees.totalCollected')} /></div>
+      </div>
+    </div>
+  );
+}
+
 export default function CommitteeDetail({ committee, canWrite, calm, onEdit }) {
   const { t } = useTranslation();
   const { formatMoney, formatDate } = useFormat();
@@ -261,7 +306,7 @@ export default function CommitteeDetail({ committee, canWrite, calm, onEdit }) {
             <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted">
               <span>{t('committees.membersCount', { count: committee.size })}</span>
               <span aria-hidden="true">·</span>
-              <span className="whitespace-nowrap tabular-nums">{t(committee.frequency === 'weekly' ? 'committees.perWeek' : 'committees.perMonth', { amount: money(committee.contribution) })}</span>
+              <span className="whitespace-nowrap tabular-nums">{t(committee.frequency === 'daily' ? 'committees.perDay' : committee.frequency === 'weekly' ? 'committees.perWeek' : 'committees.perMonth', { amount: money(committee.contribution) })}</span>
               <span aria-hidden="true">·</span>
               <span className="whitespace-nowrap tabular-nums">{t('committees.potIs', { amount: money(committee.payout) })}</span>
               <span aria-hidden="true">·</span>
@@ -293,6 +338,10 @@ export default function CommitteeDetail({ committee, canWrite, calm, onEdit }) {
           <div className="mt-3"><RoundDots rounds={committee.rounds} calm={calm} /></div>
         </div>
       </div>
+
+      <Totals committee={committee} money={money} calm={calm} />
+
+      {canWrite && <DiceDraw committee={committee} />}
 
       <Section title={organizer ? t('committees.yourSide') : t('committees.overview')}>
         <div className="grid gap-3 sm:grid-cols-2">

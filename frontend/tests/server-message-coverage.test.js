@@ -16,6 +16,7 @@ import { translations } from '../src/i18n/translations.js';
 // confused user. Keep this list in sync with the backend's MESSAGES
 // objects and inline fail()/res.json(...) calls.
 const KNOWN_BACKEND_MESSAGES = [
+  'No Vaultrix account uses that email. Add the person by name instead.',
   'This workspace already has the most people it can hold.',
   'That invite code is not valid or has expired.',
   'There is already an open invite for that email.',

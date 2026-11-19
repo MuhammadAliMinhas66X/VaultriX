@@ -20,3 +20,7 @@ export const updateGoal = (id, payload) => run(() => api.put(`/goals/${id}`, pay
 export const removeGoal = (id) => run(() => api.delete(`/goals/${id}`));
 export const addContribution = (id, payload) => run(() => api.post(`/goals/${id}/contributions`, payload));
 export const removeContribution = (id, contributionId) => run(() => api.delete(`/goals/${id}/contributions/${contributionId}`));
+
+export const listSavings = () => run(() => api.get('/savings'));
+export const addSaving = (payload) => run(() => api.post('/savings', payload));
+export const removeSaving = (id) => run(() => api.delete(`/savings/${id}`));
