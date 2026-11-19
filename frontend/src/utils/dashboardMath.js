@@ -77,3 +77,13 @@ export const recentSpending = (expenses, limit = 5) =>
     .filter((expense) => expense.paidBy !== 'other')
     .sort((a, b) => String(b.spentAt).localeCompare(String(a.spentAt)) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
     .slice(0, limit);
+
+// One word for how the month is going. projected = where today's pace ends the month.
+export const paceVerdict = ({ received, spent, left, projected }) => {
+  if (left < -0.005) return 'over';
+  if (received <= 0.005) return 'noIncome';
+  if (spent <= 0.005) return 'noSpend';
+  if (projected > received) return 'fast';
+  if (projected > received * 0.9) return 'close';
+  return 'good';
+};

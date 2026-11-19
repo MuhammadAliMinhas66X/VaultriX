@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Banknote, Calculator, Plus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Calculator, Plus } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
 import useAppNav from '../components/layout/useAppNav.jsx';
 import BrandMark from '../components/BrandMark.jsx';
@@ -13,7 +13,7 @@ import CategoryPanel from '../components/dashboard/CategoryPanel.jsx';
 import LoansPanel from '../components/dashboard/LoansPanel.jsx';
 import PlansPanel from '../components/dashboard/PlansPanel.jsx';
 import RecentSpending from '../components/dashboard/RecentSpending.jsx';
-import GroupsHub from '../components/groups/GroupsHub.jsx';
+import RupeeNote from '../components/icons/RupeeNote.jsx';
 import { DashboardSkeleton } from '../components/Skeletons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useIncome } from '../context/IncomeContext.jsx';
@@ -98,7 +98,6 @@ function DashboardPage() {
     [insightsReady, bills, loans, budgetRows, data, left, billsToday]
   );
   const recent = useMemo(() => recentSpending(monthExpenses, 5), [monthExpenses]);
-  const previousMonth = trend.length > 1 ? trend[trend.length - 2] : null;
   const canWrite = user?.role !== 'viewer';
   const hasBills = Boolean(bills && bills.length > 0);
   const hasOpenLoans = Boolean(loanSums && (loanSums.owedToMe.count > 0 || loanSums.iOwe.count > 0));
@@ -239,7 +238,7 @@ function DashboardPage() {
     <div className="rounded-2xl border border-border bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
         <h2 className="flex items-center gap-3 text-base font-bold tracking-tight text-ink">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ink to-[#3a3a42] text-white shadow-sm"><Banknote className="h-[18px] w-[18px]" strokeWidth={2} /></span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ink to-[#3a3a42] text-white shadow-sm"><RupeeNote className="h-[18px] w-[18px]" strokeWidth={1.9} /></span>
           {t('dashboard.latest')}
         </h2>
         <Link to="/income" className="flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink transition hover:bg-border/60">
@@ -287,7 +286,7 @@ function DashboardPage() {
         ) : !hasIncome ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted">
-              <Banknote className="h-6 w-6" strokeWidth={1.5} />
+              <RupeeNote className="h-6 w-6" strokeWidth={1.5} />
             </span>
             <p className="mt-4 text-base font-medium text-ink">{t('dashboard.emptyTitle')}</p>
             {user?.role !== 'viewer' && (
@@ -299,7 +298,7 @@ function DashboardPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {heroCard}
-            {insightsReady && pace && <MonthPulse month={data.month} pace={pace} previous={previousMonth} currency={currency} />}
+            {insightsReady && pace && <MonthPulse month={data.month} pace={pace} currency={currency} />}
             {insightsReady && (
               <div className="-mb-5 lg:columns-2 lg:gap-5 [&>*]:mb-5 [&>*]:break-inside-avoid">
                 <AttentionPanel items={attention} nameOf={nameOf} currency={currency} />
@@ -337,7 +336,6 @@ function DashboardPage() {
           </Link>
         )}
 
-        {!loading && <div className="mt-5"><GroupsHub /></div>}
       </div>
     </AppShell>
   );

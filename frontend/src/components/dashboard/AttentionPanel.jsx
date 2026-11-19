@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Check, ChevronRight, Receipt, Target } from 'lucide-react';
 import Section from './Section.jsx';
+import IconTile from './IconTile.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { useFormat } from '../../i18n/useFormat.js';
 
@@ -50,7 +51,7 @@ export default function AttentionPanel({ items, nameOf, currency }) {
             return (
               <li key={item.key} className="border-b border-border last:border-b-0">
                 <Link to={item.href} className="group flex min-w-0 items-center gap-3 px-5 py-3 outline-none transition hover:bg-surface/60 focus-visible:bg-surface/60">
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${row.hot ? 'bg-ink text-white' : 'bg-surface text-ink'}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.75} /></span>
+                  <IconTile icon={Icon} variant={row.hot ? 'ink' : 'soft'} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-ink">{row.title}</span>
                     <span className="block truncate text-xs text-muted">{row.sub}</span>
