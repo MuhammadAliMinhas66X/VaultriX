@@ -32,7 +32,9 @@ const checks = [
   ['frontend/src/App.jsx', 'path="/salary"', 'the Salary planner route is missing from App.jsx'],
   ['frontend/src/App.jsx', 'path="/join-group"', 'the join-group page route is missing from App.jsx (invitation emails link to it)'],
   ['backend/src/routes/groupRoutes.js', '/invites/mine', 'group invitations (invites/mine) are missing'],
-  ['frontend/src/pages/DashboardPage.jsx', 'GroupsHub', 'the Dashboard lost the Groups card'],
+  // v1_161: Groups left the Dashboard on purpose; they show in the menu when switched on in Settings.
+  ['frontend/src/components/layout/useAppNav.jsx', 'useGroupsInMenu', 'the menu lost the Groups switch (Settings > Preferences)'],
+  ['frontend/src/pages/GroupsPage.jsx', 'GroupsHub', 'the Groups page lost GroupsHub'],
   ['frontend/src/components/layout/NotificationsBell.jsx', 'useGroupInvites', 'the bell lost group invitations'],
   ['backend/src/app.js', "app.use('/api/budgets'", 'the /api/budgets route is not mounted (Reports)'],
   ['backend/src/app.js', "app.use('/api/goals'", 'the /api/goals route is not mounted (Reports)'],
