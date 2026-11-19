@@ -1,16 +1,18 @@
 import { useLocation } from 'react-router-dom';
-import { ShieldCheck, Target, Gauge, Landmark, HandCoins } from 'lucide-react';
-import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon, SalaryIcon, ReportsIcon } from '../icons/NavIcons.jsx';
+import { ShieldCheck } from 'lucide-react';
+import { DashboardIcon, IncomeIcon, LoansIcon, ExpenseIcon, BillsIcon, SalaryIcon, ReportsIcon, GroupsNavIcon } from '../icons/NavIcons.jsx';
 import { ADMIN_EMAIL } from '../RequireAdmin.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useIncome } from '../../context/IncomeContext.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
+import { useGroupsInMenu } from '../../hooks/useGroupsNav.js';
 
 export default function useAppNav() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { streams } = useIncome();
   const location = useLocation();
+  const groupsOn = useGroupsInMenu();
 
   const onIncome = location.pathname === '/income';
   const onLoans = location.pathname === '/loans';
@@ -23,12 +25,12 @@ export default function useAppNav() {
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL;
 
   const items = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: DashboardIcon, big: true, to: '/dashboard', bar: true },
+    { id: 'dashboard', label: t('nav.dashboard'), icon: DashboardIcon, big: true, to: '/dashboard' },
     {
       type: 'group',
       id: 'income',
       label: t('income.headerStream'),
-      icon: IncomeIcon, big: true, bar: true,
+      icon: IncomeIcon, big: true,
       to: '/income',
       count: streams.length,
       activeChild: onIncome,
@@ -40,22 +42,17 @@ export default function useAppNav() {
         })),
       ],
     },
-    { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses', bar: true },
-    { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills', bar: true },
+    { id: 'expenses', label: t('nav.expenses'), icon: ExpenseIcon, big: true, to: '/expenses' },
+    { id: 'bills', label: t('nav.bills'), icon: BillsIcon, big: true, to: '/bills' },
     { id: 'loans', label: t('nav.loans'), icon: LoansIcon, big: true, to: '/loans' },
+    ...(groupsOn ? [{ id: 'groups', label: t('groups.title'), icon: GroupsNavIcon, big: true, to: '/groups' }] : []),
     { id: 'salary', label: t('nav.salary'), icon: SalaryIcon, big: true, to: '/salary' },
-    { id: 'budgets', label: t('nav.budgets'), icon: Gauge, to: '/budgets' },
-    { id: 'goals', label: t('nav.goals'), icon: Target, to: '/goals' },
-    { id: 'accounts', label: t('nav.accounts'), icon: Landmark, to: '/accounts' },
-    { id: 'committees', label: t('nav.committees'), icon: HandCoins, to: '/committees' },
-    { id: 'reports', label: t('nav.reports'), icon: ReportsIcon, big: true, to: '/reports', bar: true },
+    { id: 'reports', label: t('nav.reports'), icon: ReportsIcon, big: true, to: '/reports' },
     ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: ShieldCheck, to: '/admin' }] : []),
   ];
 
   const onSalary = location.pathname === '/salary';
   const onReports = location.pathname === '/reports';
-  const path = location.pathname;
-  const onCommittees = path === '/committees' || path.startsWith('/committees/');
-  const activeId = onCommittees ? 'committees' : path === '/budgets' ? 'budgets' : path === '/goals' ? 'goals' : path === '/accounts' ? 'accounts' : onReports ? 'reports' : onSalary ? 'salary' : onGroups ? 'dashboard' : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
+  const activeId = onReports ? 'reports' : onSalary ? 'salary' : onGroups ? (groupsOn ? 'groups' : 'dashboard') : onBills ? 'bills' : onExpenses ? 'expenses' : onLoans ? 'loans' : onDashboard ? 'dashboard' : onAdmin ? 'admin' : onIncome ? (focusedId ? `stream:${focusedId}` : 'income') : null;
   return { items, activeId };
 }

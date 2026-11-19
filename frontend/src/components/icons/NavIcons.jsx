@@ -51,7 +51,7 @@ export function IncomeIcon({ className = '', strokeWidth = 1.75 }) {
       <g mask={`url(#${id}-cut)`}>
         <g className="ni-note">
           <rect x="1.8" y="4.6" width="18.4" height="12.2" rx="2.6" fill="currentColor" fillOpacity="0.1" />
-          <Dollar cx={11} cy={10.7} scale={0.9} strokeWidth={strokeWidth * 0.9} />
+          <text x="11" y="13.4" textAnchor="middle" fontSize="6.6" fontWeight="800" fontFamily="Inter, system-ui, sans-serif" fill="currentColor" stroke="none">Rs</text>
           <path d="M4.7 8.2h.01M17.3 13.2h.01" strokeWidth={strokeWidth * 1.15} />
         </g>
       </g>
@@ -154,6 +154,16 @@ export function ReportsIcon({ className = '', strokeWidth = 1.75 }) {
       <rect className="ni-d1" x="5" y="12" width="3.4" height="6.5" rx="1" fill="currentColor" fillOpacity="0.08" />
       <rect className="ni-d2" x="10.3" y="7" width="3.4" height="11.5" rx="1" fill="currentColor" fillOpacity="0.08" />
       <rect className="ni-d3" x="15.6" y="3.5" width="3.4" height="15" rx="1" fill="currentColor" fillOpacity="0.08" />
+    </svg>
+  );
+}
+
+export function GroupsNavIcon({ className = '', strokeWidth = 1.75 }) {
+  return (
+    <svg {...base} strokeWidth={strokeWidth} className={`nav-icon ${className}`}>
+      <circle className="ni-d1" cx="9" cy="8" r="3.4" fill="currentColor" fillOpacity="0.1" />
+      <path d="M2.8 20c.4-3.5 3-5.6 6.2-5.6s5.8 2.1 6.2 5.6" />
+      <path className="ni-d2" d="M15.6 4.9a3.2 3.2 0 0 1 0 6.2M18.2 14.8c1.8.7 2.8 2.3 3 5.2" />
     </svg>
   );
 }

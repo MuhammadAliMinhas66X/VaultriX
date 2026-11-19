@@ -22,6 +22,7 @@ import {
   Users,
 } from 'lucide-react';
 import AppShell from '../components/layout/AppShell.jsx';
+import { setGroupsInMenu, useGroupsInMenu } from '../hooks/useGroupsNav.js';
 import PeopleSection from '../components/settings/PeopleSection.jsx';
 import DataSection from '../components/settings/DataSection.jsx';
 import FormField from '../components/FormField.jsx';
@@ -1128,6 +1129,7 @@ function PreferencesSection() {
   const { countries, languages, currencies } = useLocalizedOptions();
   const motionMode = useMotionMode();
   const secureOn = useSecureMode();
+  const groupsOn = useGroupsInMenu();
 
   // Everything here is a PENDING selection local to this form. Nothing is applied
   // to the app (or saved) until "Update preferences" succeeds; country, language
@@ -1292,6 +1294,24 @@ function PreferencesSection() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-ink">{t('settings.groupsLabel')}</p>
+          <p className="mt-0.5 text-xs text-muted">{t('settings.groupsHint')}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={groupsOn}
+          aria-label={t('settings.groupsLabel')}
+          onClick={() => setGroupsInMenu(!groupsOn)}
+          className="relative h-7 w-12 shrink-0 rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <span className={`absolute inset-0 rounded-full transition-colors ${groupsOn ? 'bg-ink' : 'bg-border'}`} />
+          <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${groupsOn ? 'start-[1.375rem]' : 'start-0.5'}`} />
+        </button>
       </div>
     </SettingsCard>
   );
