@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { paceStats, changePercent, loanTotals, attentionItems, recentSpending } from '../src/utils/dashboardMath.js';
+import { paceVerdict, paceStats, changePercent, loanTotals, attentionItems, recentSpending } from '../src/utils/dashboardMath.js';
 
 describe('paceStats', () => {
   it('projects the month and a safe daily amount', () => {
@@ -61,5 +61,16 @@ describe('recentSpending', () => {
       { id: 3, spentAt: '2026-11-03', paidBy: 'self' },
     ];
     expect(recentSpending(list, 5).map((item) => item.id)).toEqual([3, 1]);
+  });
+});
+
+describe('paceVerdict', () => {
+  it('names how the month is going', () => {
+    expect(paceVerdict({ received: 100, spent: 150, left: -50, projected: 300 })).toBe('over');
+    expect(paceVerdict({ received: 0, spent: 0, left: 0, projected: 0 })).toBe('noIncome');
+    expect(paceVerdict({ received: 100, spent: 0, left: 100, projected: 0 })).toBe('noSpend');
+    expect(paceVerdict({ received: 100, spent: 40, left: 60, projected: 130 })).toBe('fast');
+    expect(paceVerdict({ received: 100, spent: 30, left: 70, projected: 95 })).toBe('close');
+    expect(paceVerdict({ received: 100, spent: 20, left: 80, projected: 60 })).toBe('good');
   });
 });
