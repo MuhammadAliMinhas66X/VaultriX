@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Archive, ArchiveRestore, Banknote, ChevronDown, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronDown, Plus } from 'lucide-react';
+import RupeeNote from '../components/icons/RupeeNote.jsx';
 import { IncomeSkeleton } from '../components/Skeletons.jsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppShell from '../components/layout/AppShell.jsx';
@@ -313,7 +314,7 @@ function IncomePage() {
           <>
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted">
-              <Banknote className="h-6 w-6" strokeWidth={1.5} />
+              <RupeeNote className="h-6 w-6" strokeWidth={1.5} />
             </span>
             <p className="mt-4 text-base font-medium text-ink">{t('income.emptyTitle')}</p>
             {canWrite && (

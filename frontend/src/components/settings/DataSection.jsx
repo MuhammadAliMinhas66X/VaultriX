@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileSpreadsheet, Loader2, Upload, Banknote, Receipt, HandCoins, Wallet, Check } from 'lucide-react';
+import { Download, FileSpreadsheet, Loader2, Upload, Receipt, HandCoins, Wallet, Check } from 'lucide-react';
+import RupeeNote from '../icons/RupeeNote.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { notify } from '../../i18n/notifications.js';
@@ -32,7 +33,7 @@ function ExportBlock() {
   const [busy, setBusy] = useState('');
   const items = [
     { kind: 'expenses', icon: Wallet, label: t('data.exportExpenses') },
-    { kind: 'income', icon: Banknote, label: t('data.exportIncome') },
+    { kind: 'income', icon: RupeeNote, label: t('data.exportIncome') },
     { kind: 'bills', icon: Receipt, label: t('data.exportBills') },
     { kind: 'loans', icon: HandCoins, label: t('data.exportLoans') },
   ];

@@ -5,14 +5,15 @@ import Combobox from '../Combobox.jsx';
 import Select from '../Select.jsx';
 import BrandMark from '../BrandMark.jsx';
 import FieldError from '../FieldError.jsx';
-import { Banknote, Landmark, Smartphone } from 'lucide-react';
+import { Landmark, Smartphone } from 'lucide-react';
+import RupeeNote from '../icons/RupeeNote.jsx';
 import { useTranslation } from '../../i18n/useTranslation.js';
 import { todayInput, toInputDate } from '../../utils/dates.js';
 import { PAKISTANI_BANKS, DIGITAL_WALLETS } from '../../utils/paymentBrands.js';
 import { INCOME_TYPES, FREQUENCIES, METHODS, OTHER_VALUE, typeLabelKey, frequencyLabelKey, detailKind } from './incomeOptions.js';
 import ErrorSlot from '../ErrorSlot.jsx';
 
-const METHOD_ICON = { cash: Banknote, bank: Landmark, wallet: Smartphone };
+const METHOD_ICON = { cash: RupeeNote, bank: Landmark, wallet: Smartphone };
 
 const resolvePreset = (method, name) => {
   const list = method === 'bank' ? PAKISTANI_BANKS : method === 'wallet' ? DIGITAL_WALLETS : [];

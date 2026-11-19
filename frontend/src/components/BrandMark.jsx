@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Banknote, Landmark, Receipt, Smartphone } from 'lucide-react';
+import { Landmark, Receipt, Smartphone } from 'lucide-react';
+import RupeeNote from './icons/RupeeNote.jsx';
 import { findBrand } from '../utils/paymentBrands.js';
 
 const SIZES = {
@@ -11,7 +12,7 @@ const SIZES = {
 const MIN_REMOTE_WIDTH = 48;
 const SHARP_WIDTH = 96;
 
-const FALLBACK_ICON = { cash: Banknote, bank: Landmark, wallet: Smartphone, biller: Receipt };
+const FALLBACK_ICON = { cash: RupeeNote, bank: Landmark, wallet: Smartphone, biller: Receipt };
 
 let manifestPromise = null;
 const loadManifest = () => {

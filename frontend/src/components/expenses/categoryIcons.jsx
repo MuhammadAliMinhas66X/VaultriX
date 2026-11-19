@@ -1,8 +1,9 @@
 import {
   Baby, BookOpen, Briefcase, Bus, Car, Coffee, Dumbbell, Film, Fuel, Gamepad2, GraduationCap, Gift, HeartHandshake, HeartPulse, Home, Landmark,
   Music, PawPrint, Phone, PiggyBank, Pill, Plane, Scissors, Shirt, ShoppingBag, ShoppingCart, Tag, Tv, Utensils, Wifi, Wrench, Zap,
-  Apple, Armchair, Banknote, Bed, Beef, Bike, Building2, CalendarDays, Camera, CarTaxiFront, Cat, Church, Clapperboard, Clock, Cookie, CreditCard, Croissant, Dog, Droplets, Eye, FileText, Fish, Flame, Flower2, Gem, Glasses, Hammer, Headphones, Heart, Hospital, Hotel, IceCream, Laptop, Leaf, Lightbulb, Mail, Mic, Monitor, Mountain, Newspaper, Package, Paintbrush, Palette, PartyPopper, Pizza, Plug, Receipt, Repeat, Salad, Sandwich, School, Shield, Ship, Smile, Soup, SprayCan, Sprout, Star, Stethoscope, Store, Sun, Syringe, Tent, TrainFront, TreePine, Trophy, Truck, Umbrella, Users, Wallet, WashingMachine, Watch,
+  Apple, Armchair, Bed, Beef, Bike, Building2, CalendarDays, Camera, CarTaxiFront, Cat, Church, Clapperboard, Clock, Cookie, CreditCard, Croissant, Dog, Droplets, Eye, FileText, Fish, Flame, Flower2, Gem, Glasses, Hammer, Headphones, Heart, Hospital, Hotel, IceCream, Laptop, Leaf, Lightbulb, Mail, Mic, Monitor, Mountain, Newspaper, Package, Paintbrush, Palette, PartyPopper, Pizza, Plug, Receipt, Repeat, Salad, Sandwich, School, Shield, Ship, Smile, Soup, SprayCan, Sprout, Star, Stethoscope, Store, Sun, Syringe, Tent, TrainFront, TreePine, Trophy, Truck, Umbrella, Users, Wallet, WashingMachine, Watch,
 } from 'lucide-react';
+import RupeeNote from '../icons/RupeeNote.jsx';
 
 export const ICON_MAP = {
   food: Utensils,
@@ -81,7 +82,7 @@ export const ICON_MAP = {
   injection: Syringe,
   hospital: Hospital,
   card: CreditCard,
-  cash: Banknote,
+  cash: RupeeNote,
   wallet: Wallet,
   receipt: Receipt,
   document: FileText,
