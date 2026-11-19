@@ -42,6 +42,7 @@ const SERVER_MESSAGE_KEYS = {
   'Your session has expired. Please sign in again.': 'errors.sessionExpired',
   'Something went wrong on our end. Please try again in a moment.': 'errors.somethingWrong',
   'That action could not be completed.': 'errors.actionFailed',
+  'No Vaultrix account uses that email. Add the person by name instead.': 'errors.committeeNoAccount',
   'Live exchange rates are not available right now. Try again in a moment.': 'errors.ratesUnavailable',
   'That record already exists. Check the details and try again.': 'errors.recordExists',
   'Some of the details look incomplete. Check the form and try again.': 'errors.detailsIncomplete',
