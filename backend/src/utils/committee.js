@@ -1,6 +1,6 @@
 // Dates and status of a committee. Everything works on whole days (UTC) so a round never moves
 // because of a time zone.
-export const FREQUENCIES = ['monthly', 'weekly'];
+export const FREQUENCIES = ['monthly', 'weekly', 'daily'];
 export const ROLES = ['member', 'organizer'];
 
 const dayString = (date) => date.toISOString().slice(0, 10);
@@ -10,6 +10,7 @@ const dayString = (date) => date.toISOString().slice(0, 10);
 export const roundDay = (startDate, frequency, round) => {
   const start = new Date(startDate);
   const steps = round - 1;
+  if (frequency === 'daily') return dayString(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + steps)));
   if (frequency === 'weekly') return dayString(new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + steps * 7)));
   const monthIndex = start.getUTCMonth() + steps;
   const year = start.getUTCFullYear() + Math.floor(monthIndex / 12);
@@ -58,6 +59,8 @@ export const committeeSummary = (committee, today) => {
     return {
       id: idOf(member),
       name: member.name,
+      email: member.email || '',
+      userId: member.userId || null,
       slot: member.slot ?? null,
       paidRounds: [...paidSet].sort((a, b) => a - b),
       lateRounds: late,

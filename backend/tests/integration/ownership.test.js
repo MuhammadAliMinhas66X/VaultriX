@@ -12,6 +12,7 @@ import IncomeStream from '../../src/models/IncomeStream.js';
 import Bill from '../../src/models/Bill.js';
 import IncomeReceipt from '../../src/models/IncomeReceipt.js';
 import Goal from '../../src/models/Goal.js';
+import SavingEntry from '../../src/models/SavingEntry.js';
 import Budget from '../../src/models/Budget.js';
 import Organization from '../../src/models/Organization.js';
 
@@ -104,6 +105,14 @@ const cases = [
     make: (owner) => Goal.create({ orgId: owner.user.orgId, name: 'Original', targetMinor: 100000, currency: 'PKR' }),
     exists: async (id) => Boolean(await Goal.exists({ _id: id })),
     changed: async (id) => (await Goal.findById(id)).name !== 'Original',
+  },
+  {
+    name: 'savings',
+    path: '/api/savings',
+    patch: { amount: 1 },
+    make: (owner) => SavingEntry.create({ orgId: owner.user.orgId, amountMinor: 100000, currency: 'PKR', date: new Date(), note: 'Original' }),
+    exists: async (id) => Boolean(await SavingEntry.exists({ _id: id })),
+    changed: async (id) => (await SavingEntry.findById(id)).amountMinor !== 100000,
   },
   {
     name: 'budgets',

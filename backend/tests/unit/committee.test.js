@@ -102,3 +102,11 @@ describe('draw', () => {
     expect(slotsAreValid({ ...organizer, members: [person('Ali', 9)] })).toBe(false);
   });
 });
+
+describe('daily rounds', () => {
+  it('moves one day at a time across month ends', async () => {
+    const { roundDay } = await import('../../src/utils/committee.js');
+    expect(roundDay(new Date('2026-11-29T00:00:00Z'), 'daily', 1)).toBe('2026-11-29');
+    expect(roundDay(new Date('2026-11-29T00:00:00Z'), 'daily', 4)).toBe('2026-12-02');
+  });
+});

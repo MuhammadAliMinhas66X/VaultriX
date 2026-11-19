@@ -73,3 +73,21 @@ describe('goals', () => {
     expect((await as(viewer).post('/api/goals', { name: 'X', target: 5, currency: 'PKR' })).status).toBe(403);
   });
 });
+
+describe('savings', () => {
+  it('records money put in and taken out, keeps accounts apart and refuses bad input', async () => {
+    const ali = await createAuthedUser({ email: 'svali@vaultrix.test', name: 'Ali' });
+    const other = await createAuthedUser({ email: 'svother@vaultrix.test', name: 'Other' });
+    const put = await as(ali).post('/api/savings', { amount: 5000, currency: 'PKR', direction: 'in', note: 'Eid money' });
+    expect(put.status).toBe(201);
+    const took = await as(ali).post('/api/savings', { amount: 1000, currency: 'PKR', direction: 'out' });
+    expect(took.body.entry.amount).toBe(-1000);
+    const list = await as(ali).get('/api/savings');
+    expect(list.body.entries).toHaveLength(2);
+    expect((await as(other).get('/api/savings')).body.entries).toEqual([]);
+    expect((await as(ali).post('/api/savings', { amount: 0, currency: 'PKR' })).status).toBe(400);
+    expect((await as(ali).post('/api/savings', { amount: 5, currency: 'XXX' })).status).toBe(400);
+    expect((await as(other).del(`/api/savings/${put.body.entry.id}`)).status).toBe(404);
+    expect((await as(ali).del(`/api/savings/${put.body.entry.id}`)).status).toBe(200);
+  });
+});

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Budget from '../models/Budget.js';
 import Goal from '../models/Goal.js';
+import SavingEntry from '../models/SavingEntry.js';
 import Category from '../models/Category.js';
 import { toMajor, parseAmountMinor, parseDay, optionalText } from '../utils/financeInput.js';
 import { isSupportedCurrency } from '../utils/currencies.js';
@@ -165,6 +166,46 @@ export const removeContribution = async (req, res, next) => {
     item.deleteOne();
     await goal.save();
     res.json({ success: true, goal: goalDto(goal) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const MAX_SAVING_ENTRIES = 1000;
+const savingDto = (entry) => ({ id: String(entry._id), amount: toMajor(entry.amountMinor), currency: entry.currency, date: dayOf(entry.date), note: entry.note || '' });
+
+export const listSavings = async (req, res, next) => {
+  try {
+    const entries = await SavingEntry.find({ orgId: req.user.orgId }).sort({ date: -1, createdAt: -1 }).limit(MAX_SAVING_ENTRIES).lean();
+    res.json({ success: true, entries: entries.map(savingDto) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// body: { amount, currency, direction: 'in' | 'out', date?, note? }
+export const addSaving = async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const amountMinor = parseAmountMinor(body.amount);
+    const date = body.date ? parseDay(body.date) : parseDay(new Date().toISOString().slice(0, 10));
+    const note = optionalText(body.note, 80);
+    if (amountMinor === undefined || !date || note === undefined || !isSupportedCurrency(body.currency)) return fail(res, 400, GENERIC_INVALID);
+    if (body.direction !== undefined && body.direction !== 'in' && body.direction !== 'out') return fail(res, 400, GENERIC_INVALID);
+    if ((await SavingEntry.countDocuments({ orgId: req.user.orgId })) >= MAX_SAVING_ENTRIES) return fail(res, 400, GENERIC_INVALID);
+    const entry = await SavingEntry.create({ orgId: req.user.orgId, createdBy: req.user._id, amountMinor: body.direction === 'out' ? -amountMinor : amountMinor, currency: body.currency, date, note });
+    res.status(201).json({ success: true, entry: savingDto(entry) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeSaving = async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return fail(res, 404, NOT_FOUND);
+    const result = await SavingEntry.deleteOne({ _id: req.params.id, orgId: req.user.orgId });
+    if (!result.deletedCount) return fail(res, 404, NOT_FOUND);
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

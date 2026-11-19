@@ -1,11 +1,14 @@
 import mongoose from 'mongoose';
 import Committee from '../models/Committee.js';
+import User from '../models/User.js';
 import { toMajor, parseAmountMinor, parseDay, optionalText } from '../utils/financeInput.js';
 import { isSupportedCurrency } from '../utils/currencies.js';
 import { committeeSummary, assignWinner, slotsAreValid, FREQUENCIES, ROLES } from '../utils/committee.js';
 
 const GENERIC_INVALID = 'Some of the details look incomplete. Check the form and try again.';
 const NOT_FOUND = 'That action could not be completed.';
+const NO_ACCOUNT = 'No Vaultrix account uses that email. Add the person by name instead.';
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_COMMITTEES = 30;
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
 const dayOf = (date) => new Date(date).toISOString().slice(0, 10);
@@ -26,7 +29,11 @@ export const committeeDto = (committee, today) => {
     startDate: dayOf(committee.startDate),
     mySlot: committee.mySlot ?? null,
     rounds: summary.rounds.map(({ collectedMinor, ...item }) => ({ ...item, collectedAmount: toMajor(collectedMinor) })),
-    members: summary.members.map((member) => ({ id: member.id, name: member.name, slot: member.slot, paidRounds: member.paidRounds, lateRounds: member.lateRounds, paid: toMajor(member.paidMinor) })),
+    pot: toMajor(committee.contributionMinor * committee.size),
+    collectedTotal: toMajor(summary.rounds.reduce((sum, item) => sum + item.collectedMinor, 0)),
+    expectedTotal: toMajor(summary.rounds.filter((item) => item.due <= today).length * committee.contributionMinor * (committee.role === 'organizer' ? committee.size : 1)),
+    dueRounds: summary.rounds.filter((item) => item.due <= today).length,
+    members: summary.members.map((member) => ({ id: member.id, name: member.name, slot: member.slot, linked: Boolean(member.userId), email: member.email || '', paidRounds: member.paidRounds, lateRounds: member.lateRounds, paid: toMajor(member.paidMinor) })),
     paidCount: summary.paidCount,
     paid: toMajor(summary.paidMinor),
     total: toMajor(summary.totalMinor),
@@ -207,13 +214,23 @@ export const undoPayout = async (req, res, next) => {
 export const addMember = async (req, res, next) => {
   try {
     if (!validId(req.params.id)) return fail(res, 404, NOT_FOUND);
-    const name = optionalText((req.body || {}).name, 40);
-    if (!name) return fail(res, 400, GENERIC_INVALID);
+    const input = optionalText((req.body || {}).name, 80);
+    if (!input) return fail(res, 400, GENERIC_INVALID);
+    let member = { name: input.slice(0, 40) };
+    // Something with an @ is an email: it must belong to a Vaultrix account, and the person is linked to it.
+    if (input.includes('@')) {
+      const email = input.toLowerCase();
+      if (!EMAIL_SHAPE.test(email)) return fail(res, 400, GENERIC_INVALID);
+      const account = await User.findOne({ email }).select('name email').lean();
+      if (!account) return fail(res, 404, NO_ACCOUNT);
+      member = { name: String(account.name || email.split('@')[0]).slice(0, 40), email, userId: account._id };
+    }
     const committee = await Committee.findOne({ _id: req.params.id, orgId: req.user.orgId }).lean();
     if (!committee) return fail(res, 404, NOT_FOUND);
+    if (member.userId && (committee.members || []).some((item) => String(item.userId) === String(member.userId))) return fail(res, 400, GENERIC_INVALID);
     const updated = await Committee.findOneAndUpdate(
       { _id: committee._id, orgId: req.user.orgId, [`members.${committee.size - 1 - 1}`]: { $exists: false } },
-      { $push: { members: { name } } },
+      { $push: { members: member } },
       { new: true }
     ).lean();
     if (!updated) return fail(res, 400, GENERIC_INVALID);

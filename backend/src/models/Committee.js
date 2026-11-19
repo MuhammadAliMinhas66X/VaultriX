@@ -14,6 +14,9 @@ const paidSchema = new mongoose.Schema(
 const memberSchema = new mongoose.Schema({
   name: { type: String, required: true, maxlength: 40 },
   slot: { type: Number, min: 1, default: null },
+  // Set when the person was added by an email that belongs to a Vaultrix account.
+  email: { type: String, default: '' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   payments: { type: [paidSchema], default: [] },
 });
 
@@ -39,7 +42,7 @@ const committeeSchema = new mongoose.Schema(
     currency: { type: String, required: true },
     contributionMinor: { type: Number, required: true, min: 1 },
     size: { type: Number, required: true, min: 2, max: 60 },
-    frequency: { type: String, enum: ['monthly', 'weekly'], default: 'monthly' },
+    frequency: { type: String, enum: ['monthly', 'weekly', 'daily'], default: 'monthly' },
     startDate: { type: Date, required: true },
     mySlot: { type: Number, min: 1, default: null },
     paid: { type: [paidSchema], default: [] },
