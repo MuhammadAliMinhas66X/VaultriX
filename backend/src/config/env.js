@@ -41,8 +41,9 @@ export const validateEnv = () => {
     warnings.push('TRUST_PROXY is not set. Behind a proxy or host like Render, set it to 1 so rate limits use real visitor IPs');
   }
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    (isProduction ? problems : warnings).push('SMTP settings are missing, so OTP emails cannot be sent');
+  const smtpSet = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+  if (!process.env.BREVO_API_KEY && !smtpSet) {
+    (isProduction ? problems : warnings).push('Email is not set up (BREVO_API_KEY or SMTP settings are missing), so OTP emails cannot be sent');
   }
 
   const cloudinaryKeys = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];

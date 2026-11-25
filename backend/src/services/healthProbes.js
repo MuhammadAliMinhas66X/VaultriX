@@ -37,6 +37,15 @@ const verifySmtp = async () => {
   }
 };
 
+const verifyBrevo = async () => {
+  // Read-only account lookup, so it sends no email.
+  const res = await fetch('https://api.brevo.com/v3/account', {
+    headers: { 'api-key': process.env.BREVO_API_KEY, accept: 'application/json' },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) throw new Error(`Brevo responded ${res.status}`);
+};
+
 export const buildProbes = () => [
   {
     id: 'backend',
@@ -60,13 +69,13 @@ export const buildProbes = () => [
   },
   {
     id: 'email',
-    label: 'Email (SMTP)',
+    label: 'Email',
     kind: 'external',
     ttlMs: FIVE_MINUTES,
     timeoutMs: 8000,
     degradedMs: 3000,
-    isConfigured: smtpConfigured,
-    run: verifySmtp,
+    isConfigured: () => Boolean(process.env.BREVO_API_KEY) || smtpConfigured(),
+    run: () => (process.env.BREVO_API_KEY ? verifyBrevo() : verifySmtp()),
   },
   {
     id: 'cloudinary',
