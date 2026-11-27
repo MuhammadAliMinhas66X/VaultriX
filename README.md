@@ -52,7 +52,7 @@ npm start
 
 ## Technology stack
 
-React (Vite, Tailwind) frontend; Node/Express backend; MongoDB (Mongoose); JWT access tokens plus an HttpOnly refresh cookie; Cloudinary for private images; SMTP email; six languages (English, French, Spanish, Arabic, Hindi, Urdu). Tests use vitest (and supertest on the backend).
+React (Vite, Tailwind) frontend; Node/Express backend; MongoDB (Mongoose); JWT access tokens plus an HttpOnly refresh cookie; Cloudinary for private images; Resend email (SMTP fallback); six languages (English, French, Spanish, Arabic, Hindi, Urdu). Tests use vitest (and supertest on the backend).
 
 ## Commands
 

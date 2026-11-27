@@ -1,46 +1,62 @@
+// Email sending. Two providers, tried in this order:
+//
+//   1. Resend (HTTPS API)  - used when RESEND_API_KEY is set.
+//        RESEND_API_KEY  API key from the Resend dashboard (starts with "re_")
+//        MAIL_FROM       Sender on a domain verified in Resend,
+//                        e.g. "Vaultrix <noreply@vaultrix.org>"
+//   2. SMTP (e.g. Gmail)   - used when Resend is not set, or when a Resend send fails.
+//        SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS
+//        SMTP_FROM       optional; defaults to "Vaultrix <SMTP_USER>"
+//
+// With neither configured, development prints a mail preview to the console and
+// production refuses to start (see config/env.js).
 import nodemailer from 'nodemailer';
 
-// Email goes out over HTTPS through Brevo when BREVO_API_KEY is set (works on
-// Railway Hobby, which blocks outbound SMTP). If it is not set, the old SMTP
-// path is used, so local development and paid plans keep working.
+const RESEND_URL = 'https://api.resend.com/emails';
+const MAX_ATTEMPTS = 3;
 
 let transporter = null;
 
-export const brevoConfigured = () => Boolean(process.env.BREVO_API_KEY);
-const smtpConfigured = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+export const resendConfigured = () => Boolean(process.env.RESEND_API_KEY);
+export const smtpConfigured = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
-// MAIL_FROM can be "Vaultrix <me@example.com>" or just "me@example.com".
-const parseFrom = () => {
-  const raw = (process.env.MAIL_FROM || '').trim();
-  if (!raw) return null;
-  const match = raw.match(/^"?([^"<]*?)"?\s*<([^>]+)>$/);
-  if (match) return { name: match[1].trim() || 'Vaultrix', email: match[2].trim() };
-  return { name: 'Vaultrix', email: raw };
-};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const sendViaBrevo = async ({ to, subject, text, html }) => {
-  const sender = parseFrom();
-  if (!sender) throw new Error('MAIL_FROM must be set to a sender verified in Brevo');
+const sendViaResend = async ({ to, subject, text, html }) => {
+  const from = (process.env.MAIL_FROM || '').trim();
+  if (!from) throw new Error('MAIL_FROM must be set to a sender on a domain verified in Resend');
 
-  const payload = { sender, to: [{ email: to }], subject };
-  if (html) payload.htmlContent = html;
-  if (text) payload.textContent = text;
-  if (!html && !text) payload.textContent = subject;
+  const payload = { from, to: [to], subject };
+  if (html) payload.html = html;
+  if (text) payload.text = text;
+  if (!html && !text) payload.text = subject;
 
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': process.env.BREVO_API_KEY,
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10000),
-  });
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    const res = await fetch(RESEND_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'vaultrix-backend/0.1',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
+    });
 
-  if (!res.ok) {
+    if (res.ok) return;
+
+    // Resend limits requests per second (429) and can have brief server errors
+    // (5xx). Those are worth a short retry; anything else (bad key, unverified
+    // domain, invalid address) will not fix itself, so fail right away.
+    const retryable = res.status === 429 || res.status >= 500;
+    if (retryable && attempt < MAX_ATTEMPTS) {
+      const retryAfter = Number(res.headers.get('retry-after'));
+      await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 5) * 1000 : 500 * attempt);
+      continue;
+    }
+
     const detail = await res.text().catch(() => '');
-    throw new Error(`Brevo error ${res.status}: ${detail.slice(0, 300)}`);
+    throw new Error(`Resend error ${res.status}: ${detail.slice(0, 300)}`);
   }
 };
 
@@ -57,25 +73,36 @@ const getTransporter = () => {
   return transporter;
 };
 
-export const sendMail = async ({ to, subject, text, html }) => {
-  if (brevoConfigured()) {
-    await sendViaBrevo({ to, subject, text, html });
-    return;
-  }
-
-  if (!smtpConfigured()) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Email is not configured (set BREVO_API_KEY or SMTP_*)');
-    }
-    console.log(`\n[mail preview] to: ${to}\nsubject: ${subject}\n${text}\n`);
-    return;
-  }
-
+const sendViaSmtp = async ({ to, subject, text, html }) => {
   await getTransporter().sendMail({
-    from: process.env.MAIL_FROM || `Vaultrix <${process.env.SMTP_USER}>`,
+    from: process.env.SMTP_FROM || `Vaultrix <${process.env.SMTP_USER}>`,
     to,
     subject,
     text,
     html,
   });
+};
+
+export const sendMail = async ({ to, subject, text, html }) => {
+  if (resendConfigured()) {
+    try {
+      await sendViaResend({ to, subject, text, html });
+      return;
+    } catch (error) {
+      // Resend failed (for example the domain is not verified yet). If SMTP is
+      // set up, deliver through it instead of losing the email.
+      if (!smtpConfigured()) throw error;
+      console.warn(`[mail] ${error.message} - falling back to SMTP`);
+    }
+  }
+
+  if (smtpConfigured()) {
+    await sendViaSmtp({ to, subject, text, html });
+    return;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Email is not configured (set RESEND_API_KEY + MAIL_FROM, or SMTP_HOST + SMTP_USER + SMTP_PASS)');
+  }
+  console.log(`\n[mail preview] to: ${to}\nsubject: ${subject}\n${text}\n`);
 };

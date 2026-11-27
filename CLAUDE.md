@@ -172,7 +172,7 @@ The owner's rules for it (v1_128, from his marked screenshots):
 - UI: Groups live on the Dashboard (`GroupsHub`, animated `GroupsIcon`, how-it-works steps when empty, invitations on top); NOT in the sidebar or bottom bar. `/groups` and `/groups/:id` remain as pages. The bell (`NotificationsBell`) lists invitations via `useGroupInvites`.
 - Repeating group costs (v1_153): `GroupExpense.repeatFrequency` none/weekly/monthly/yearly, head makes copies via `utils/groupRepeat.js generateGroupRepeats` (runs when a group or the group list is read; unique index (repeatOf, repeatKey)); copies keep payer, split and shares; the repeat switches itself off if the payer or a sharer left the group.
 - Checks: `docs/dev/groups-browser-check.cjs`, `groups-invite-browser-check.cjs`, `people-browser-check.cjs`.
-- Open: viewers can still open edit drawers by clicking rows (server answers 403); groups have no currency conversion or per-person share weights; real SMTP delivery of invites and the MongoDB integration tests (`groups`, `team`) are not run in the sandbox.
+- Open: viewers can still open edit drawers by clicking rows (server answers 403); groups have no currency conversion or per-person share weights; real email delivery (Resend or SMTP) of invites and the MongoDB integration tests (`groups`, `team`) are not run in the sandbox.
 
 ## 6D. Salary planner (v1_146, rebuilt in v1_147, route `/salary`, sidebar "Salary plan", Dashboard promo card)
 

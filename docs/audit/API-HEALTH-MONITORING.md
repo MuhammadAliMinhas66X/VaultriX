@@ -10,7 +10,7 @@
 |---|---|---|---|
 | backend | core | event-loop delay | 60 s |
 | database | core | MongoDB `ping` command | 60 s |
-| email | external | SMTP connect and login, no mail sent; "not configured" if SMTP env is missing | 5 min |
+| email | external | Resend API key check (or SMTP connect and login when Resend is not set), no mail sent; "not configured" if neither is set | 5 min |
 | cloudinary | external | Admin API ping; "not configured" if absent | 5 min |
 | exchangeRates | external | a rate table can be produced (uses the service's 10 min cache) | 5 min |
 

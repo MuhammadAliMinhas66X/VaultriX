@@ -41,9 +41,12 @@ export const validateEnv = () => {
     warnings.push('TRUST_PROXY is not set. Behind a proxy or host like Render, set it to 1 so rate limits use real visitor IPs');
   }
 
-  const smtpSet = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
-  if (!process.env.BREVO_API_KEY && !smtpSet) {
-    (isProduction ? problems : warnings).push('Email is not set up (BREVO_API_KEY or SMTP settings are missing), so OTP emails cannot be sent');
+  const resendSet = Boolean(process.env.RESEND_API_KEY);
+  const smtpSet = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  if (!resendSet && !smtpSet) {
+    (isProduction ? problems : warnings).push('Email is not set up (set RESEND_API_KEY, or SMTP_HOST + SMTP_USER + SMTP_PASS), so OTP emails cannot be sent');
+  } else if (resendSet && !process.env.MAIL_FROM) {
+    (isProduction ? problems : warnings).push('MAIL_FROM is not set. Use a sender on your verified Resend domain, e.g. Vaultrix <noreply@vaultrix.org>');
   }
 
   const cloudinaryKeys = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];

@@ -1,5 +1,5 @@
 // The real probes behind the admin System health screen. Only integrations
-// that exist in this codebase are listed (MongoDB, SMTP, Cloudinary and the
+// that exist in this codebase are listed (MongoDB, email via Resend or SMTP, Cloudinary and the
 // exchange-rate sources). Targets come from the server's own environment,
 // never from a request, so there is no SSRF surface.
 //
@@ -37,13 +37,20 @@ const verifySmtp = async () => {
   }
 };
 
-const verifyBrevo = async () => {
-  // Read-only account lookup, so it sends no email.
-  const res = await fetch('https://api.brevo.com/v3/account', {
-    headers: { 'api-key': process.env.BREVO_API_KEY, accept: 'application/json' },
+const verifyResend = async () => {
+  // Read-only call, so it sends no email. A "Sending access" key is not allowed
+  // to list domains: Resend answers 401 restricted_api_key, which still proves
+  // the key is valid and the API is reachable, so that counts as healthy.
+  const res = await fetch('https://api.resend.com/domains', {
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'User-Agent': 'vaultrix-backend/0.1' },
     signal: AbortSignal.timeout(5000),
   });
-  if (!res.ok) throw new Error(`Brevo responded ${res.status}`);
+  if (res.ok) return;
+  if (res.status === 401) {
+    const body = await res.json().catch(() => null);
+    if (body?.name === 'restricted_api_key') return;
+  }
+  throw new Error(`Resend responded ${res.status}`);
 };
 
 export const buildProbes = () => [
@@ -74,8 +81,9 @@ export const buildProbes = () => [
     ttlMs: FIVE_MINUTES,
     timeoutMs: 8000,
     degradedMs: 3000,
-    isConfigured: () => Boolean(process.env.BREVO_API_KEY) || smtpConfigured(),
-    run: () => (process.env.BREVO_API_KEY ? verifyBrevo() : verifySmtp()),
+    isConfigured: () => Boolean(process.env.RESEND_API_KEY) || smtpConfigured(),
+    // Mirrors the mailer: Resend first, SMTP when Resend is not set.
+    run: () => (process.env.RESEND_API_KEY ? verifyResend() : verifySmtp()),
   },
   {
     id: 'cloudinary',
